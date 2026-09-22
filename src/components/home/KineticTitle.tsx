@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético con estrella SVG galáctica, física DVD con desaceleración orgánica y acoplamiento suave en el molde (sin imantación brusca).
+ * @description Título cinético con estrella SVG galáctica, física DVD con desaceleración orgánica y acoplamiento suave en el molde (sin temblores ni sobre-giros).
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -44,6 +44,7 @@ export default function KineticTitle({
 
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
+  const lockedIndicesCountRef = useRef(0);
 
   // Estado de la estrella SVG
   const [starVisible, setStarVisible] = useState(false);
@@ -140,6 +141,7 @@ export default function KineticTitle({
       starX = -200;
       starActive = true;
       setStarVisible(true);
+      lockedIndicesCountRef.current = 0;
       setLockedIndices(new Set());
     }, 1000);
 
@@ -172,15 +174,14 @@ export default function KineticTitle({
             if (starX >= letterCenterX) {
               p.isHit = true;
               p.isLocked = false;
-              // Tiempo antes de permitir acoplamiento
               p.canLockTime = currentTime + 3200 + (p.index * 280);
 
-              // Teoría del Caos: Dispersión angular variada en 360 grados
+              // Dispersión angular caótica suave
               const baseAngle = (p.index / totalLetters) * Math.PI * 2;
               const jitter = (Math.random() - 0.5) * 1.4;
               const angle = baseAngle + jitter;
 
-              const speed = 1.35 + Math.random() * 1.4; // Velocidad pausada y natural
+              const speed = 1.35 + Math.random() * 1.4;
 
               p.vx = Math.cos(angle) * speed;
               p.vy = Math.sin(angle) * speed;
@@ -188,7 +189,7 @@ export default function KineticTitle({
               if (Math.abs(p.vx) < 0.6) p.vx = p.vx >= 0 ? 0.9 : -0.9;
               if (Math.abs(p.vy) < 0.6) p.vy = p.vy >= 0 ? 0.9 : -0.9;
 
-              p.vRot = (Math.random() - 0.5) * 2.0;
+              p.vRot = (Math.random() - 0.5) * 1.8;
             }
           }
         });
@@ -200,8 +201,9 @@ export default function KineticTitle({
         }
       }
 
-      // 2. Física de Rebote DVD y Acoplamiento Desacelerado Orgánico
+      // 2. Física de Rebote DVD y Acoplamiento Sedoso (Sin Temblores)
       let activeCount = 0;
+      let newlyLockedCount = 0;
       const currentLocked = new Set<number>();
 
       particles.forEach((p) => {
@@ -210,14 +212,15 @@ export default function KineticTitle({
 
         if (p.isLocked) {
           currentLocked.add(p.index);
+          newlyLockedCount++;
           p.x = p.targetX;
           p.y = p.targetY;
           p.rot = 0;
         } else if (p.isDocking) {
           activeCount++;
 
-          // Transición suave de acoplamiento orgánico (Deceleración cúbica)
-          p.dockProgress += 0.035; // ~0.5s de deslizamiento suave
+          // Deslizamiento sedoso con deceleración cuártica (Zero temblor)
+          p.dockProgress += 0.028; // ~0.6s de deslizamiento calmado
 
           if (p.dockProgress >= 1) {
             p.isDocking = false;
@@ -226,8 +229,9 @@ export default function KineticTitle({
             p.y = p.targetY;
             p.rot = 0;
             currentLocked.add(p.index);
+            newlyLockedCount++;
           } else {
-            const ease = 1 - Math.pow(1 - p.dockProgress, 3);
+            const ease = 1 - Math.pow(1 - p.dockProgress, 4);
             p.x = p.dockStartX + (p.targetX - p.dockStartX) * ease;
             p.y = p.dockStartY + (p.targetY - p.dockStartY) * ease;
             p.rot = p.dockStartRot * (1 - ease);
@@ -262,24 +266,39 @@ export default function KineticTitle({
           if (currentTime >= p.canLockTime) {
             const dist = Math.hypot(p.x - p.targetX, p.y - p.targetY);
 
-            // Si cruza a menos de 45px de su molde, inicia acoplamiento orgánico
+            // Si cruza a menos de 45px de su molde, inicia acoplamiento sedoso
             if (dist < 45) {
               p.isDocking = true;
               p.dockStartX = p.x;
               p.dockStartY = p.y;
-              p.dockStartRot = p.rot;
+
+              // Normalizar rotación a [-180, 180] para que solo gire lo mínimo indispensable (cero vueltas locas)
+              let normalizedRot = p.rot % 360;
+              if (normalizedRot > 180) normalizedRot -= 360;
+              if (normalizedRot < -180) normalizedRot += 360;
+
+              p.dockStartRot = normalizedRot;
               p.dockProgress = 0;
             }
           }
         }
 
-        // Renderizar con aceleración por GPU
-        const renderDx = p.x - p.targetX;
-        const renderDy = p.y - p.targetY;
-        el.style.transform = `translate3d(${renderDx}px, ${renderDy}px, 0) rotate(${p.rot}deg)`;
+        // Renderizar con aceleración pura por GPU
+        let renderDx = p.x - p.targetX;
+        let renderDy = p.y - p.targetY;
+
+        // Limpiar micro-fracciones al asentarse
+        if (p.isLocked || Math.abs(renderDx) < 0.05) renderDx = 0;
+        if (p.isLocked || Math.abs(renderDy) < 0.05) renderDy = 0;
+
+        el.style.transform = `translate3d(${renderDx.toFixed(2)}px, ${renderDy.toFixed(2)}px, 0) rotate(${p.rot.toFixed(2)}deg)`;
       });
 
-      setLockedIndices(new Set(currentLocked));
+      // Solo actualizar estado de React cuando cambie el número de letras bloqueadas (cero re-renders innecesarios)
+      if (newlyLockedCount !== lockedIndicesCountRef.current) {
+        lockedIndicesCountRef.current = newlyLockedCount;
+        setLockedIndices(new Set(currentLocked));
+      }
 
       // Concluir de forma definitiva
       if (particles.every((p) => p.isHit) && activeCount === 0 && currentLocked.size === totalLetters) {
