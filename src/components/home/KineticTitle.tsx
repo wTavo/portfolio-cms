@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético de gran escala tipográfica con estrella SVG cósmica e iluminación ambiental dinámica que baña el fondo a su paso.
+ * @description Título cinético de gran escala tipográfica con cometa cósmico galáctico (núcleo incandescente, arco de choque frontal, cola dual de plasma y polvo estelar) e iluminación ambiental volumétrica profunda.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -149,12 +149,12 @@ export default function KineticTitle({
       });
     };
 
-    let starX = -280;
+    let starX = -580;
     let starY = window.innerHeight / 2;
-    let starSpeed = 26;
+    let starSpeed = 28;
     let starActive = false;
 
-    // Lanzar estrella tras el asentamiento (~1.9s)
+    // Lanzar cometa cósmico tras el tipeo (~1.9s)
     const starTimer = setTimeout(() => {
       if (!isRunning) return;
       measureTargets();
@@ -164,7 +164,7 @@ export default function KineticTitle({
         starY = rect.top + rect.height / 2;
       }
 
-      starX = -280;
+      starX = -580;
       starActive = true;
       setStarVisible(true);
       lockedIndicesCountRef.current = 0;
@@ -183,7 +183,7 @@ export default function KineticTitle({
       const minY = 65;
       const maxY = screenH - letterH - 16;
 
-      // Movimiento de la estrella
+      // Movimiento del Cometa Cósmico
       if (starActive) {
         starX += starSpeed;
 
@@ -191,11 +191,14 @@ export default function KineticTitle({
           starRef.current.style.transform = `translate3d(${starX}px, ${starY}px, 0)`;
         }
 
+        // El núcleo incandescente del cometa se ubica 208px por delante del centro del SVG
+        const cometHeadX = starX + 208;
+
         particles.forEach((p) => {
           if (!p.isHit) {
             const letterCenterX = p.targetX + letterW / 2;
 
-            if (starX >= letterCenterX) {
+            if (cometHeadX >= letterCenterX) {
               p.isHit = true;
               p.isLocked = false;
               p.canLockTime = currentTime + 3200 + (p.index * 280);
@@ -216,7 +219,7 @@ export default function KineticTitle({
           }
         });
 
-        if (starX > screenW + 400) {
+        if (starX > screenW + 500) {
           starActive = false;
           setStarVisible(false);
         }
@@ -348,7 +351,7 @@ export default function KineticTitle({
 
   return (
     <div className="relative w-full flex items-center justify-center">
-      {/* Estrella Fugaz Galáctica SVG con Iluminación Ambiental que Baña el Fondo */}
+      {/* Cometa Cósmico Galáctico con Núcleo Incandescente, Cola Dual e Iluminación Ambiental Profunda */}
       <div
         ref={starRef}
         style={{
@@ -363,62 +366,171 @@ export default function KineticTitle({
         className="-translate-x-1/2 -translate-y-1/2"
       >
         <div className="relative flex items-center">
-          {/* Aura Gigante de Iluminación Ambiental que Ilumina el Fondo al Pasar */}
+          {/* 1. Aura Gigante de Iluminación Ambiental Volumétrica que Baña el Fondo Oscuro */}
           <div
-            className="absolute -top-36 -left-48 w-[600px] h-[350px] bg-radial from-[var(--color-brand-accent)]/35 via-[var(--color-brand-primary)]/20 to-transparent blur-3xl pointer-events-none -z-10"
+            className="absolute -top-48 -left-64 w-[950px] h-[500px] bg-radial from-cyan-400/45 via-sky-500/25 via-indigo-600/10 to-transparent blur-3xl pointer-events-none -z-10"
             aria-hidden="true"
           />
+          {/* 2. Resplandor Concentrado de Alta Intensidad en el Núcleo */}
           <div
-            className="absolute -top-20 -left-16 w-[280px] h-[280px] bg-radial from-cyan-300/45 via-[var(--color-brand-accent)]/25 to-transparent blur-2xl pointer-events-none -z-10"
+            className="absolute -top-32 -left-20 w-[420px] h-[420px] bg-radial from-white/70 via-cyan-300/50 via-sky-500/20 to-transparent blur-2xl pointer-events-none -z-10"
+            aria-hidden="true"
+          />
+          {/* 3. Iluminación Longitudinal de la Estela de Polvo */}
+          <div
+            className="absolute -top-16 -left-80 w-[650px] h-[200px] bg-radial from-cyan-300/35 via-blue-500/15 to-transparent blur-xl pointer-events-none -z-10"
             aria-hidden="true"
           />
 
-          {/* Estela de Plasma con Doble Capa y Gradientes */}
-          <div className="w-80 h-4 bg-gradient-to-l from-cyan-300 via-[var(--color-brand-primary)] to-transparent blur-[2px] -mr-4 opacity-95" />
-          <div className="absolute right-4 w-52 h-1.5 bg-gradient-to-l from-white via-cyan-100 to-transparent blur-[0.5px]" />
-
-          {/* Estrella Cósmica de 8 Puntas Vectorial Iluminada */}
+          {/* Gráfico Vectorial Completo del Cometa Cósmico */}
           <svg
-            viewBox="0 0 64 64"
-            className="w-16 h-16 drop-shadow-[0_0_25px_rgba(255,255,255,1)] drop-shadow-[0_0_45px_rgba(56,189,248,1)] animate-pulse"
+            viewBox="0 0 520 120"
+            className="w-[520px] h-[120px] overflow-visible drop-shadow-[0_0_35px_rgba(56,189,248,0.95)] drop-shadow-[0_0_70px_rgba(14,165,233,0.7)]"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Halo de Resplandor Circular */}
-            <circle cx="32" cy="32" r="16" fill="url(#star-glow-ambient)" opacity="0.6" />
-
-            {/* Rayos Diagonales Menores */}
-            <path
-              d="M32 14 L36 28 L50 32 L36 36 L32 50 L28 36 L14 32 L28 28 Z"
-              fill="url(#star-diagonal-grad-ambient)"
-              opacity="0.95"
-            />
-
-            {/* Puntas Principales de la Estrella de 4 Puntas */}
-            <path
-              d="M32 2 C32 18 20 32 2 32 C20 32 32 46 32 62 C32 46 44 32 62 32 C44 32 32 18 32 2 Z"
-              fill="url(#star-core-grad-ambient)"
-            />
-
-            {/* Núcleo de Cristal Brillante */}
-            <circle cx="32" cy="32" r="4.5" fill="#FFFFFF" />
-
+            {/* DEFS: Gradientes y Filtros de Resplandor */}
             <defs>
-              <radialGradient id="star-glow-ambient" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="50%" stopColor="#38BDF8" />
-                <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
-              </radialGradient>
-              <linearGradient id="star-core-grad-ambient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="45%" stopColor="#E0F2FE" />
-                <stop offset="100%" stopColor="#38BDF8" />
+              {/* Gradiente Cono de Polvo Cósmico */}
+              <linearGradient id="comet-dust-tail" x1="100%" y1="50%" x2="0%" y2="50%">
+                <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.85" />
+                <stop offset="35%" stopColor="#0EA5E9" stopOpacity="0.6" />
+                <stop offset="70%" stopColor="#6366F1" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#312E81" stopOpacity="0" />
               </linearGradient>
-              <linearGradient id="star-diagonal-grad-ambient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#38BDF8" />
-                <stop offset="100%" stopColor="#818CF8" />
+
+              {/* Gradiente Cola de Plasma / Iones */}
+              <linearGradient id="comet-ion-tail" x1="100%" y1="50%" x2="0%" y2="50%">
+                <stop offset="0%" stopColor="#FFFFFF" stopOpacity="1" />
+                <stop offset="25%" stopColor="#E0F2FE" stopOpacity="0.95" />
+                <stop offset="60%" stopColor="#38BDF8" stopOpacity="0.75" />
+                <stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+              </linearGradient>
+
+              {/* Gradiente Núcleo Blanco-Caliente */}
+              <radialGradient id="comet-core-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="40%" stopColor="#E0F2FE" />
+                <stop offset="75%" stopColor="#38BDF8" />
+                <stop offset="100%" stopColor="#0284C7" stopOpacity="0" />
+              </radialGradient>
+
+              {/* Gradiente Arco de Choque Frontal */}
+              <linearGradient id="bow-shock-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#38BDF8" stopOpacity="0.2" />
+                <stop offset="60%" stopColor="#E0F2FE" stopOpacity="0.9" />
+                <stop offset="100%" stopColor="#FFFFFF" stopOpacity="1" />
+              </linearGradient>
+
+              {/* Gradiente Destello Horizontal Flare */}
+              <linearGradient id="lens-flare-h" x1="0%" y1="50%" x2="100%" y2="50%">
+                <stop offset="0%" stopColor="#38BDF8" stopOpacity="0" />
+                <stop offset="50%" stopColor="#FFFFFF" stopOpacity="1" />
+                <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
               </linearGradient>
             </defs>
+
+            {/* A. COLA 1: Cono de Polvo Cósmico Difuso y Envolvente (Curvada y en Expansión) */}
+            <path
+              d="M 460 60 Q 300 45 40 15 L 40 105 Q 300 75 460 60 Z"
+              fill="url(#comet-dust-tail)"
+              filter="blur(4px)"
+            />
+
+            {/* B. COLA 2: Haz de Plasma Ionizado Hiper-Brillante Rectilíneo */}
+            <path
+              d="M 465 60 L 120 48 L 80 60 L 120 72 Z"
+              fill="url(#comet-ion-tail)"
+              filter="blur(1px)"
+            />
+            {/* Núcleo interno rectilíneo de plasma ultra-fino */}
+            <line
+              x1="468"
+              y1="60"
+              x2="160"
+              y2="60"
+              stroke="#FFFFFF"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              filter="drop-shadow(0 0 4px #E0F2FE)"
+            />
+
+            {/* C. CHISPAS Y FRAGMENTOS CÓSMICOS (Stardust Embers) */}
+            {/* Chispa 1 */}
+            <circle cx="390" cy="46" r="2.2" fill="#FFFFFF" opacity="0.9" />
+            <circle cx="390" cy="46" r="4.5" fill="#38BDF8" opacity="0.5" filter="blur(1px)" />
+
+            {/* Chispa 2 */}
+            <circle cx="340" cy="74" r="1.8" fill="#E0F2FE" opacity="0.85" />
+            <circle cx="340" cy="74" r="3.5" fill="#38BDF8" opacity="0.4" filter="blur(1px)" />
+
+            {/* Chispa 3 */}
+            <circle cx="280" cy="52" r="2.5" fill="#FFFFFF" opacity="0.8" />
+            <circle cx="280" cy="52" r="5" fill="#0EA5E9" opacity="0.45" filter="blur(1px)" />
+
+            {/* Chispa 4 */}
+            <circle cx="230" cy="68" r="1.5" fill="#E0F2FE" opacity="0.75" />
+
+            {/* Chispa 5 */}
+            <circle cx="170" cy="42" r="2" fill="#FFFFFF" opacity="0.65" />
+            <circle cx="170" cy="42" r="4" fill="#6366F1" opacity="0.35" filter="blur(1px)" />
+
+            {/* Chispa 6 */}
+            <circle cx="110" cy="78" r="1.4" fill="#E0F2FE" opacity="0.5" />
+
+            {/* D. CABEZA DEL COMETA: Corona de Gas (Coma) y Arco de Choque */}
+            {/* Corona radial exterior */}
+            <circle cx="468" cy="60" r="36" fill="url(#comet-core-glow)" opacity="0.85" />
+
+            {/* Arco de Choque Frontal (Bow Shock Wave) */}
+            <path
+              d="M 460 30 C 495 42 495 78 460 90"
+              stroke="url(#bow-shock-grad)"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              fill="none"
+              filter="drop-shadow(0 0 8px #38BDF8)"
+            />
+            {/* Arco de choque secundario sutil */}
+            <path
+              d="M 454 38 C 484 48 484 72 454 82"
+              stroke="#FFFFFF"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.85"
+            />
+
+            {/* Destello Óptico Horizontal (Lens Flare Spike) */}
+            <line
+              x1="390"
+              y1="60"
+              x2="520"
+              y2="60"
+              stroke="url(#lens-flare-h)"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+            {/* Destello Óptico Vertical sutil */}
+            <line
+              x1="468"
+              y1="32"
+              x2="468"
+              y2="88"
+              stroke="url(#lens-flare-h)"
+              strokeWidth="2"
+              strokeLinecap="round"
+              opacity="0.75"
+            />
+
+            {/* Núcleo Incandescente (Core Head) */}
+            <circle
+              cx="468"
+              cy="60"
+              r="8"
+              fill="#FFFFFF"
+              className="drop-shadow-[0_0_12px_rgba(255,255,255,1)]"
+            />
           </svg>
         </div>
       </div>
