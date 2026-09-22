@@ -27,7 +27,12 @@ export type IconName =
   | 'alert-circle'
   | 'briefcase'
   | 'code'
-  | 'layers';
+  | 'layers'
+  | 'search'
+  | 'x'
+  | 'filter'
+  | 'palette'
+  | 'smartphone';
 
 export interface IconProps {
   name: IconName;

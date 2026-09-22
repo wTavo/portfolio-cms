@@ -267,6 +267,195 @@ export function LockIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props
   );
 }
 
+export function SearchIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
+export function XIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  );
+}
+
+export function FilterIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+    </svg>
+  );
+}
+
+export function PaletteIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <circle cx="13.5" cy="6.5" r=".5" fill="currentColor" />
+      <circle cx="17.5" cy="10.5" r=".5" fill="currentColor" />
+      <circle cx="8.5" cy="7.5" r=".5" fill="currentColor" />
+      <circle cx="6.5" cy="12.5" r=".5" fill="currentColor" />
+      <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+    </svg>
+  );
+}
+
+export function SmartphoneIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+      <path d="M12 18h.01" />
+    </svg>
+  );
+}
+
+export function EyeIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+export function CodeIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <polyline points="16 18 22 12 16 6" />
+      <polyline points="8 6 2 12 8 18" />
+    </svg>
+  );
+}
+
+export function SparklesIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+      <path d="M5 3v4" />
+      <path d="M19 17v4" />
+      <path d="M3 5h4" />
+      <path d="M17 19h4" />
+    </svg>
+  );
+}
+
 export function Icon({ name, ...props }: IconProps) {
   switch (name) {
     case 'rocket':
@@ -291,6 +480,22 @@ export function Icon({ name, ...props }: IconProps) {
       return <UserIcon {...props} />;
     case 'lock':
       return <LockIcon {...props} />;
+    case 'search':
+      return <SearchIcon {...props} />;
+    case 'x':
+      return <XIcon {...props} />;
+    case 'filter':
+      return <FilterIcon {...props} />;
+    case 'palette':
+      return <PaletteIcon {...props} />;
+    case 'smartphone':
+      return <SmartphoneIcon {...props} />;
+    case 'eye':
+      return <EyeIcon {...props} />;
+    case 'code':
+      return <CodeIcon {...props} />;
+    case 'sparkles':
+      return <SparklesIcon {...props} />;
     default:
       return null;
   }
