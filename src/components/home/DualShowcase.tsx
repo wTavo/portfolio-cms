@@ -1,21 +1,14 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo minimalista para el dúo de creadores con animación de título por scroll e iluminación reactiva.
+ * @description Portal interactivo profesional para el dúo de creadores con navegación fija unificada, animación suave de título por scroll y tarjetas minimalistas.
  */
 
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
-import {
-  ArrowRightIcon,
-  SparklesIcon,
-  RocketIcon,
-} from '../icons/Icons';
-import {
-  staggerContainerVariants,
-  fadeSlideUpVariants,
-} from '../../lib/motion';
+import { ArrowRightIcon, RocketIcon } from '../icons/Icons';
+import { staggerContainerVariants, fadeSlideUpVariants } from '../../lib/motion';
 
 interface DualShowcaseProps {
   data: ShowcaseData;
@@ -36,14 +29,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   const { scrollY } = useScroll();
 
-  // Transiciones basadas en el desplazamiento del scroll
-  const heroScale = useTransform(scrollY, [0, 200], [1, 0.85]);
-  const heroOpacity = useTransform(scrollY, [0, 250], [1, 0.15]);
-  const heroTranslateY = useTransform(scrollY, [0, 250], [0, -40]);
+  // Animaciones de escala, opacidad y elevación del Hero basadas en el scroll
+  const heroScale = useTransform(scrollY, [0, 180], [1, 0.9]);
+  const heroOpacity = useTransform(scrollY, [0, 220], [1, 0]);
+  const heroTranslateY = useTransform(scrollY, [0, 220], [0, -30]);
 
   useEffect(() => {
     return scrollY.on('change', (latest) => {
-      setIsScrolled(latest > 60);
+      setIsScrolled(latest > 50);
     });
   }, [scrollY]);
 
@@ -51,35 +44,37 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   return (
     <div className="w-full relative selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
-      {/* Barra de Navegación Superior Fija (Aparece con animación suave al hacer scroll) */}
+      {/* Barra de Navegación Superior Única (Sticky / Fixed) */}
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
             ? 'bg-[var(--color-bg-base)]/85 backdrop-blur-md border-b border-[var(--color-border-subtle)] py-3 shadow-[var(--shadow-card)]'
-            : 'bg-transparent border-b border-transparent py-5 pointer-events-none'
+            : 'bg-transparent border-b border-transparent py-4'
         }`}
       >
-        <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between pointer-events-auto">
-          <AnimatePresence>
-            {isScrolled ? (
-              <motion.a
-                href="/"
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-                className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity"
-              >
-                <div className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
-                  <RocketIcon size={14} className="text-[var(--color-brand-accent)]" />
-                </div>
-                <span>{i18n.showcase.title}</span>
-              </motion.a>
-            ) : (
-              <div />
-            )}
-          </AnimatePresence>
+        <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Título en la barra superior que entra con animación al scrollear */}
+          <div className="min-w-[180px] flex items-center">
+            <AnimatePresence>
+              {isScrolled && (
+                <motion.a
+                  href="/"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+                  className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity"
+                >
+                  <div className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
+                    <RocketIcon size={14} className="text-[var(--color-brand-accent)]" />
+                  </div>
+                  <span>{i18n.showcase.title}</span>
+                </motion.a>
+              )}
+            </AnimatePresence>
+          </div>
 
+          {/* Botón único de Acceso */}
           <a
             href="/login"
             className="min-h-(--size-touch-target) px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)]/80 backdrop-blur-xs border border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] hover:border-[var(--color-brand-accent)] transition-all inline-flex items-center shadow-[var(--shadow-card)]"
@@ -89,47 +84,34 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </div>
       </header>
 
-      {/* Hero Central (Aparece en el centro al inicio del scroll y se desplaza hacia arriba con suavidad) */}
+      {/* Hero Central (Limpio, sin badges ni elementos encima del título) */}
       <motion.section
         style={{
           scale: heroScale,
           opacity: heroOpacity,
           y: heroTranslateY,
         }}
-        className="min-h-[48vh] sm:min-h-[52vh] flex flex-col items-center justify-center text-center px-4 pt-16 pb-8 max-w-3xl mx-auto space-y-4"
+        className="min-h-[42vh] sm:min-h-[48vh] flex flex-col items-center justify-center text-center px-4 pt-20 pb-6 max-w-3xl mx-auto space-y-3"
       >
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] text-xs font-semibold text-[var(--color-text-secondary)] shadow-[var(--shadow-card)]">
-          <SparklesIcon size={14} className="text-[var(--color-brand-accent)]" />
-          <span>Portales de ingeniería</span>
-        </div>
-
         <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-[1.1]">
           {i18n.showcase.title}
         </h1>
 
-        <p className="text-sm sm:text-base text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg text-[var(--color-text-secondary)] max-w-lg mx-auto leading-relaxed pt-1">
           {i18n.showcase.subtitle}
         </p>
-
-        {/* Indicador animado sutil de scroll */}
-        <div className="pt-6 animate-bounce opacity-60">
-          <span className="text-xs text-[var(--color-text-muted)] font-mono tracking-widest uppercase">
-            ↓ Scroll
-          </span>
-        </div>
       </motion.section>
 
       {/* Sección de Tarjetas Duales Minimalistas (Gateways) */}
-      <motion.main
+      <motion.section
         variants={staggerContainerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-50px' }}
-        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-28"
+        viewport={{ once: true, margin: '-40px' }}
+        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {creators.map((creator) => {
-            const isHovered = hoveredId === creator.id;
             const monogram = getMonogram(creator.name);
 
             return (
@@ -143,9 +125,9 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                 transition={{ duration: 0.25, ease: [0, 0, 0, 1] }}
                 className="group relative flex flex-col justify-between p-8 sm:p-10 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-brand-accent)] transition-all overflow-hidden cursor-pointer block"
               >
-                {/* Resplandor ambiental suave al posar el cursor */}
+                {/* Resplandor ambiental suave reactivo al cursor */}
                 <div
-                  className={`absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[var(--radius-xl)] bg-radial from-[var(--color-brand-accent)]/15 via-transparent to-transparent`}
+                  className="absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[var(--radius-xl)] bg-radial from-[var(--color-brand-accent)]/15 via-transparent to-transparent"
                   aria-hidden="true"
                 />
 
@@ -187,7 +169,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             );
           })}
         </div>
-      </motion.main>
+      </motion.section>
     </div>
   );
 }
