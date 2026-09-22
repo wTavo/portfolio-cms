@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título con estrella SVG que atraviesa el centro cortando las letras, dispersión física progresiva y rebote DVD con encaje natural sin saltos de coordenadas.
+ * @description Título cinético con estrella SVG, dispersión por teoría del caos (ángulos y velocidades únicas), física de rebote DVD real en bordes y encaje natural en el molde.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -10,21 +10,23 @@ interface KineticTitleProps {
   className?: string;
 }
 
-interface LetterPhysics {
+interface LetterParticle {
   char: string;
   index: number;
   wordIdx: number;
   charIdx: number;
-  // Desplazamiento relativo respecto a su propio molde (dx=0, dy=0 es la posición perfecta)
-  dx: number;
-  dy: number;
+  // Posiciones absolutas de pantalla
+  targetX: number;
+  targetY: number;
+  x: number;
+  y: number;
   vx: number;
   vy: number;
-  rotation: number;
+  rot: number;
   vRot: number;
   isHit: boolean;
   isLocked: boolean;
-  lockAllowedTime: number;
+  canLockTime: number;
 }
 
 export default function KineticTitle({
@@ -37,7 +39,7 @@ export default function KineticTitle({
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
 
-  // Estado de la estrella SVG
+  // Estrella SVG
   const [starVisible, setStarVisible] = useState(false);
   const starRef = useRef<HTMLDivElement>(null);
 
@@ -72,40 +74,60 @@ export default function KineticTitle({
     let isRunning = true;
 
     const totalLetters = allLetters.length;
-    const particles: LetterPhysics[] = allLetters.map((item) => ({
+    const particles: LetterParticle[] = allLetters.map((item) => ({
       char: item.char,
       index: item.globalIndex,
       wordIdx: item.wordIdx,
       charIdx: item.charIdx,
-      dx: 0,
-      dy: 0,
+      targetX: 0,
+      targetY: 0,
+      x: 0,
+      y: 0,
       vx: 0,
       vy: 0,
-      rotation: 0,
+      rot: 0,
       vRot: 0,
       isHit: false,
       isLocked: true,
-      lockAllowedTime: 0,
+      canLockTime: 0,
     }));
 
-    // Variables de la estrella fugaz atravesando la pantalla
-    let starX = -120;
-    let starY = 0;
-    let starSpeed = 22; // Velocidad de corte de la estrella
+    // Medir y fijar coordenadas absolutas de destino una sola vez
+    const measureTargets = () => {
+      particles.forEach((p) => {
+        const el = letterRefs.current.get(p.index);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          p.targetX = rect.left;
+          p.targetY = rect.top;
+          p.x = rect.left;
+          p.y = rect.top;
+        }
+      });
+    };
+
+    // Medición tras montaje
+    const measureTimer = setTimeout(() => {
+      measureTargets();
+    }, 150);
+
+    // Variables del cometa / estrella SVG
+    let starX = -180;
+    let starY = window.innerHeight / 2;
+    let starSpeed = 24;
     let starActive = false;
 
-    // Iniciar el paso de la estrella tras 1.0s
-    const startTimeout = setTimeout(() => {
+    // Iniciar estrella tras 1.0s
+    const starTimer = setTimeout(() => {
       if (!isRunning) return;
+      measureTargets();
 
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         starY = rect.top + rect.height / 2;
-      } else {
-        starY = window.innerHeight / 2;
       }
 
-      starX = -150;
+      starX = -180;
       starActive = true;
       setStarVisible(true);
       setLockedIndices(new Set());
@@ -117,9 +139,14 @@ export default function KineticTitle({
 
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
-      const pad = 24;
+      const letterW = 44;
+      const letterH = 55;
+      const minX = 16;
+      const maxX = screenW - letterW - 16;
+      const minY = 65; // Margen superior para no solapar el navbar
+      const maxY = screenH - letterH - 16;
 
-      // 1. Mover la estrella SVG atravesando el centro
+      // 1. Desplazar estrella SVG atravesando el centro
       if (starActive) {
         starX += starSpeed;
 
@@ -127,40 +154,47 @@ export default function KineticTitle({
           starRef.current.style.transform = `translate3d(${starX}px, ${starY}px, 0)`;
         }
 
-        // Detectar corte con cada letra a medida que la estrella pasa por su posición X
+        // Impacto caótico en cada letra a medida que la estrella cruza su X
         particles.forEach((p) => {
           if (!p.isHit) {
-            const el = letterRefs.current.get(p.index);
-            if (el) {
-              const rect = el.getBoundingClientRect();
-              const letterCenterX = rect.left + rect.width / 2;
+            const letterCenterX = p.targetX + letterW / 2;
 
-              // Si la estrella cruza la letra
-              if (starX >= letterCenterX) {
-                p.isHit = true;
-                p.isLocked = false;
-                p.lockAllowedTime = currentTime + 3500 + (p.index % 5) * 450;
+            if (starX >= letterCenterX) {
+              p.isHit = true;
+              p.isLocked = false;
+              // Permitir encaje natural tras unos segundos de vuelo libre
+              p.canLockTime = currentTime + 3000 + (p.index * 320);
 
-                // Impulso cinético transmitido por el corte de la estrella
-                const angle = (p.index % 2 === 0 ? -1 : 1) * (0.4 + Math.random() * 0.9) + (p.vy > 0 ? 0.2 : -0.2);
-                const speed = 1.35 + (p.index % 4) * 0.12;
+              // Teoría del Caos: Dispersión omnidireccional en 360 grados con turbulencia
+              // Generamos un ángulo único aleatorio repartido en todo el círculo
+              const baseAngle = (p.index / totalLetters) * Math.PI * 2;
+              const chaosJitter = (Math.random() - 0.5) * 1.2;
+              const angle = baseAngle + chaosJitter;
 
-                p.vx = (Math.random() > 0.4 ? 1 : -1) * (1.1 + Math.random() * 0.6);
-                p.vy = (p.index % 2 === 0 ? -1 : 1) * (speed * Math.sin(angle));
-                p.vRot = (Math.random() - 0.5) * 0.8;
-              }
+              // Velocidades dispares y variadas (no sincronizadas)
+              const speed = 1.4 + Math.random() * 1.3; // entre 1.4 y 2.7 px/frame
+
+              p.vx = Math.cos(angle) * speed;
+              p.vy = Math.sin(angle) * speed;
+
+              // Evitar ejes estáticos
+              if (Math.abs(p.vx) < 0.6) p.vx = p.vx >= 0 ? 1.0 : -1.0;
+              if (Math.abs(p.vy) < 0.6) p.vy = p.vy >= 0 ? 1.0 : -1.0;
+
+              // Rotación caótica
+              p.vRot = (Math.random() - 0.5) * 2.2;
             }
           }
         });
 
-        // La estrella sale de la pantalla
-        if (starX > screenW + 200) {
+        // La estrella concluye su vuelo al salir de la pantalla
+        if (starX > screenW + 250) {
           starActive = false;
           setStarVisible(false);
         }
       }
 
-      // 2. Física DVD y Rebotes de las letras impactadas
+      // 2. Física DVD pura y Rebotes en los 4 bordes de la pantalla
       let activeCount = 0;
       const currentLocked = new Set<number>();
 
@@ -170,76 +204,71 @@ export default function KineticTitle({
 
         if (p.isLocked) {
           currentLocked.add(p.index);
-          p.dx = 0;
-          p.dy = 0;
-          p.rotation = 0;
+          p.x = p.targetX;
+          p.y = p.targetY;
+          p.rot = 0;
         } else if (p.isHit) {
           activeCount++;
 
-          // Medir la posición absoluta del molde para calcular rebotes en los bordes de la pantalla
-          const parentRect = el.parentElement?.getBoundingClientRect();
-          const baseLeft = parentRect ? parentRect.left : screenW / 2;
-          const baseTop = parentRect ? parentRect.top : screenH / 2;
-          const letterW = parentRect ? parentRect.width : 40;
-          const letterH = parentRect ? parentRect.height : 50;
+          // Integrar velocidad
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vRot;
 
-          const currentScreenX = baseLeft + p.dx;
-          const currentScreenY = baseTop + p.dy;
-
-          // Mover según su vector DVD
-          p.dx += p.vx;
-          p.dy += p.vy;
-          p.rotation += p.vRot;
-
-          // Rebotes con los bordes de la ventana
-          if (currentScreenX <= pad) {
-            p.dx = pad - baseLeft;
-            p.vx = Math.abs(p.vx);
-          } else if (currentScreenX >= screenW - pad - letterW) {
-            p.dx = (screenW - pad - letterW) - baseLeft;
-            p.vx = -Math.abs(p.vx);
+          // Rebote horizontal garantizado (DVD puro)
+          if (p.x <= minX) {
+            p.x = minX;
+            p.vx = Math.abs(p.vx); // Rebota hacia la derecha
+          } else if (p.x >= maxX) {
+            p.x = maxX;
+            p.vx = -Math.abs(p.vx); // Rebota hacia la izquierda
           }
 
-          if (currentScreenY <= pad + 30) {
-            p.dy = (pad + 30) - baseTop;
-            p.vy = Math.abs(p.vy);
-          } else if (currentScreenY >= screenH - pad - letterH) {
-            p.dy = (screenH - pad - letterH) - baseTop;
-            p.vy = -Math.abs(p.vy);
+          // Rebote vertical garantizado (DVD puro)
+          if (p.y <= minY) {
+            p.y = minY;
+            p.vy = Math.abs(p.vy); // Rebota hacia abajo
+          } else if (p.y >= maxY) {
+            p.y = maxY;
+            p.vy = -Math.abs(p.vy); // Rebota hacia arriba
           }
 
-          // Detección natural de cruce por su molde original (dx ≈ 0, dy ≈ 0)
-          if (currentTime >= p.lockAllowedTime) {
-            const dist = Math.hypot(p.dx, p.dy);
+          // Detección de colisión / encaje natural con su propio molde
+          if (currentTime >= p.canLockTime) {
+            const distX = Math.abs(p.x - p.targetX);
+            const distY = Math.abs(p.y - p.targetY);
+            const distance = Math.hypot(p.x - p.targetX, p.y - p.targetY);
 
             // Si pasa directamente por encima de su molde
-            if (dist < 26) {
+            if (distX < 26 && distY < 26) {
               p.isLocked = true;
-              p.dx = 0;
-              p.dy = 0;
-              p.rotation = 0;
+              p.x = p.targetX;
+              p.y = p.targetY;
+              p.rot = 0;
               currentLocked.add(p.index);
-            } else if (dist < 75) {
-              // Suave asistencia cuando está a punto de cruzar su molde
-              p.vx -= p.dx * 0.012;
-              p.vy -= p.dy * 0.012;
+            } else if (distance < 95) {
+              // Cono de atracción natural suave si está cruzando cerca
+              p.vx += (p.targetX - p.x) * 0.012;
+              p.vy += (p.targetY - p.y) * 0.012;
             }
           }
         }
 
-        // Aplicar transformación relativa por GPU (cero saltos, 100% fluido)
-        el.style.transform = `translate3d(${p.dx}px, ${p.dy}px, 0) rotate(${p.rotation}deg)`;
+        // Renderizar con GPU Transform relativo a su targetX, targetY
+        const renderDx = p.x - p.targetX;
+        const renderDy = p.y - p.targetY;
+        el.style.transform = `translate3d(${renderDx}px, ${renderDy}px, 0) rotate(${p.rot}deg)`;
       });
 
       setLockedIndices(new Set(currentLocked));
 
-      // Finalizar cuando todas las letras hayan encajado
+      // Finalizar de forma definitiva cuando todas hayan encajado
       if (particles.every((p) => p.isHit) && activeCount === 0 && currentLocked.size === totalLetters) {
         particles.forEach((p) => {
           const el = letterRefs.current.get(p.index);
           if (el) el.style.transform = `none`;
         });
-        return; // Fin permanente de la animación
+        return; // Fin permanente
       }
 
       animationFrameId = requestAnimationFrame(loop);
@@ -249,7 +278,8 @@ export default function KineticTitle({
 
     return () => {
       isRunning = false;
-      clearTimeout(startTimeout);
+      clearTimeout(measureTimer);
+      clearTimeout(starTimer);
       cancelAnimationFrame(animationFrameId);
     };
   }, [allLetters, prefersReducedMotion]);
@@ -264,7 +294,7 @@ export default function KineticTitle({
 
   return (
     <div className="relative w-full flex items-center justify-center">
-      {/* Estrella Fugaz SVG Vectorial que Atraviesa el Título */}
+      {/* Estrella Fugaz SVG Vectorial */}
       <div
         ref={starRef}
         style={{
@@ -279,32 +309,30 @@ export default function KineticTitle({
         className="-translate-x-1/2 -translate-y-1/2"
       >
         <div className="relative flex items-center">
-          {/* Cola de Cometa Luminosa */}
-          <div className="w-56 h-2 bg-gradient-to-l from-[var(--color-brand-accent)] via-blue-400 to-transparent blur-[1px] -mr-3" />
-          
-          {/* Estrella SVG de 4 Puntas con Resplandor */}
+          {/* Estela de cometa brillante */}
+          <div className="w-56 h-2 bg-gradient-to-l from-[var(--color-brand-accent)] via-sky-300 to-transparent blur-[1px] -mr-3" />
+
+          {/* Estrella de 4 puntas con vector SVG */}
           <svg
             viewBox="0 0 48 48"
             className="w-10 h-10 drop-shadow-[0_0_16px_rgba(255,255,255,1)] drop-shadow-[0_0_24px_var(--color-brand-accent)]"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Núcleo de la estrella de 4 puntas */}
             <path
               d="M24 2 C24 14 14 24 2 24 C14 24 24 34 24 46 C24 34 34 24 46 24 C34 24 24 14 24 2 Z"
               fill="#FFFFFF"
             />
-            {/* Destello secundario diagonal */}
             <path
               d="M24 10 C24 18 18 24 10 24 C18 24 24 30 24 38 C24 30 30 24 38 24 C30 24 24 18 24 10 Z"
               fill="var(--color-brand-accent)"
-              opacity="0.8"
+              opacity="0.85"
             />
           </svg>
         </div>
       </div>
 
-      {/* Título Principal con Silueta Pura y Letras */}
+      {/* Título Principal con Silueta Pura de Molde y Letras */}
       <h1
         ref={containerRef}
         className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 select-none relative ${className}`}
@@ -328,17 +356,17 @@ export default function KineticTitle({
                     className="relative inline-flex items-center justify-center"
                     style={{ minWidth: '0.68em', height: '1.2em' }}
                   >
-                    {/* Molde: Silueta Pura en Bajo Relieve (SIN RECTÁNGULOS) */}
+                    {/* Molde: Silueta Pura Tallada en Bajo Relieve */}
                     <span
                       className="absolute inset-0 flex items-center justify-center font-black select-none pointer-events-none"
                       aria-hidden="true"
                     >
-                      <span className="text-[#151924] select-none [text-shadow:_0_3px_6px_rgba(0,0,0,0.95),_0_1px_2px_rgba(0,0,0,1),_0_-1px_1px_rgba(255,255,255,0.08)]">
+                      <span className="text-[#141824] select-none [text-shadow:_0_3px_6px_rgba(0,0,0,0.95),_0_1px_2px_rgba(0,0,0,1),_0_-1px_1px_rgba(255,255,255,0.08)]">
                         {char}
                       </span>
                     </span>
 
-                    {/* Letra Cinética Activa (Posicionamiento Relativo Puro a su Molde) */}
+                    {/* Letra Activa */}
                     <span
                       ref={(el) => {
                         if (el) letterRefs.current.set(globalIdx, el);
