@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético con estrella SVG galáctica, física DVD con desaceleración orgánica, molde siempre en capa de fondo (z-index inferior) y acoplamiento suave.
+ * @description Título cinético con efecto de escritura (typewriter) + simulación de tecla Enter, seguido por el corte de estrella SVG y física DVD con encaje suave en moldes.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -15,7 +15,6 @@ interface LetterParticle {
   index: number;
   wordIdx: number;
   charIdx: number;
-  // Coordenadas absolutas
   targetX: number;
   targetY: number;
   x: number;
@@ -25,7 +24,6 @@ interface LetterParticle {
   rot: number;
   vRot: number;
   isHit: boolean;
-  // Estados de acoplamiento suave
   isDocking: boolean;
   dockStartX: number;
   dockStartY: number;
@@ -45,6 +43,11 @@ export default function KineticTitle({
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
   const lockedIndicesCountRef = useRef(0);
+
+  // Estados de la fase de tipeo
+  const [typedCount, setTypedCount] = useState(0);
+  const [cursorVisible, setCursorVisible] = useState(true);
+  const [enterPressed, setEnterPressed] = useState(false);
 
   // Estado de la estrella SVG
   const [starVisible, setStarVisible] = useState(false);
@@ -74,13 +77,43 @@ export default function KineticTitle({
     );
   }, [words, uppercaseText]);
 
+  const totalLetters = allLetters.length;
+
+  // 1. Fase de Escritura (Typewriter) y Simulación de Enter
+  useEffect(() => {
+    if (prefersReducedMotion) {
+      setTypedCount(totalLetters);
+      setCursorVisible(false);
+      return;
+    }
+
+    let current = 0;
+    const typeInterval = setInterval(() => {
+      current++;
+      setTypedCount(current);
+      if (current >= totalLetters) {
+        clearInterval(typeInterval);
+
+        // Pulsación de Enter tras terminar de escribir
+        setTimeout(() => {
+          setEnterPressed(true);
+          setTimeout(() => {
+            setCursorVisible(false);
+          }, 300);
+        }, 350);
+      }
+    }, 60);
+
+    return () => clearInterval(typeInterval);
+  }, [totalLetters, prefersReducedMotion]);
+
+  // 2. Motor de Física y Corte por Estrella tras el Enter
   useEffect(() => {
     if (prefersReducedMotion) return;
 
     let animationFrameId: number;
     let isRunning = true;
 
-    const totalLetters = allLetters.length;
     const particles: LetterParticle[] = allLetters.map((item) => ({
       char: item.char,
       index: item.globalIndex,
@@ -104,7 +137,6 @@ export default function KineticTitle({
       canLockTime: 0,
     }));
 
-    // Medición exacta de coordenadas iniciales
     const measureTargets = () => {
       particles.forEach((p) => {
         const el = letterRefs.current.get(p.index);
@@ -118,17 +150,13 @@ export default function KineticTitle({
       });
     };
 
-    const measureTimer = setTimeout(() => {
-      measureTargets();
-    }, 150);
-
-    // Variables de la estrella SVG
-    let starX = -200;
+    // Variables de la estrella
+    let starX = -220;
     let starY = window.innerHeight / 2;
     let starSpeed = 26;
     let starActive = false;
 
-    // Iniciar estrella tras 1.0s
+    // Lanzar estrella después de que se haya escrito todo el texto y presionado Enter (~2.0s)
     const starTimer = setTimeout(() => {
       if (!isRunning) return;
       measureTargets();
@@ -138,14 +166,13 @@ export default function KineticTitle({
         starY = rect.top + rect.height / 2;
       }
 
-      starX = -200;
+      starX = -220;
       starActive = true;
       setStarVisible(true);
       lockedIndicesCountRef.current = 0;
       setLockedIndices(new Set());
-    }, 1000);
+    }, 2000);
 
-    // Bucle principal de física
     const loop = (currentTime: number) => {
       if (!isRunning) return;
 
@@ -158,7 +185,7 @@ export default function KineticTitle({
       const minY = 65;
       const maxY = screenH - letterH - 16;
 
-      // 1. Trayectoria de la Estrella SVG
+      // Movimiento de la estrella
       if (starActive) {
         starX += starSpeed;
 
@@ -166,7 +193,6 @@ export default function KineticTitle({
           starRef.current.style.transform = `translate3d(${starX}px, ${starY}px, 0)`;
         }
 
-        // Detección de corte con cada letra
         particles.forEach((p) => {
           if (!p.isHit) {
             const letterCenterX = p.targetX + letterW / 2;
@@ -176,11 +202,10 @@ export default function KineticTitle({
               p.isLocked = false;
               p.canLockTime = currentTime + 3200 + (p.index * 280);
 
-              // Dispersión angular caótica suave
+              // Dispersión angular caótica en 360°
               const baseAngle = (p.index / totalLetters) * Math.PI * 2;
               const jitter = (Math.random() - 0.5) * 1.4;
               const angle = baseAngle + jitter;
-
               const speed = 1.35 + Math.random() * 1.4;
 
               p.vx = Math.cos(angle) * speed;
@@ -194,14 +219,13 @@ export default function KineticTitle({
           }
         });
 
-        // La estrella sale del viewport
         if (starX > screenW + 300) {
           starActive = false;
           setStarVisible(false);
         }
       }
 
-      // 2. Física de Rebote DVD y Acoplamiento Sedoso
+      // Física DVD y Acoplamiento Suave
       let activeCount = 0;
       let newlyLockedCount = 0;
       const currentLocked = new Set<number>();
@@ -219,9 +243,8 @@ export default function KineticTitle({
           el.style.zIndex = '10';
         } else if (p.isDocking) {
           activeCount++;
-          el.style.zIndex = '35'; // Capa intermedia durante acoplamiento
+          el.style.zIndex = '35';
 
-          // Deslizamiento sedoso con deceleración cuártica
           p.dockProgress += 0.028;
 
           if (p.dockProgress >= 1) {
@@ -241,14 +264,13 @@ export default function KineticTitle({
           }
         } else if (p.isHit) {
           activeCount++;
-          el.style.zIndex = '40'; // Siempre en capa superior absoluta mientras vuela
+          el.style.zIndex = '40';
 
-          // Integrar velocidad
           p.x += p.vx;
           p.y += p.vy;
           p.rot += p.vRot;
 
-          // Rebote horizontal elástico garantizado
+          // Rebote horizontal garantizado
           if (p.x <= minX) {
             p.x = minX;
             p.vx = Math.abs(p.vx);
@@ -257,7 +279,7 @@ export default function KineticTitle({
             p.vx = -Math.abs(p.vx);
           }
 
-          // Rebote vertical elástico garantizado
+          // Rebote vertical garantizado
           if (p.y <= minY) {
             p.y = minY;
             p.vy = Math.abs(p.vy);
@@ -266,17 +288,15 @@ export default function KineticTitle({
             p.vy = -Math.abs(p.vy);
           }
 
-          // Detección de cruce natural con su molde
+          // Detección de cruce natural
           if (currentTime >= p.canLockTime) {
             const dist = Math.hypot(p.x - p.targetX, p.y - p.targetY);
 
-            // Si cruza a menos de 45px de su molde, inicia acoplamiento sedoso
             if (dist < 45) {
               p.isDocking = true;
               p.dockStartX = p.x;
               p.dockStartY = p.y;
 
-              // Normalizar rotación a [-180, 180]
               let normalizedRot = p.rot % 360;
               if (normalizedRot > 180) normalizedRot -= 360;
               if (normalizedRot < -180) normalizedRot += 360;
@@ -287,7 +307,6 @@ export default function KineticTitle({
           }
         }
 
-        // Renderizar con aceleración pura por GPU
         let renderDx = p.x - p.targetX;
         let renderDy = p.y - p.targetY;
 
@@ -297,13 +316,11 @@ export default function KineticTitle({
         el.style.transform = `translate3d(${renderDx.toFixed(2)}px, ${renderDy.toFixed(2)}px, 0) rotate(${p.rot.toFixed(2)}deg)`;
       });
 
-      // Solo actualizar estado de React cuando cambie el número de letras bloqueadas
       if (newlyLockedCount !== lockedIndicesCountRef.current) {
         lockedIndicesCountRef.current = newlyLockedCount;
         setLockedIndices(new Set(currentLocked));
       }
 
-      // Concluir de forma definitiva
       if (particles.every((p) => p.isHit) && activeCount === 0 && currentLocked.size === totalLetters) {
         particles.forEach((p) => {
           const el = letterRefs.current.get(p.index);
@@ -322,11 +339,10 @@ export default function KineticTitle({
 
     return () => {
       isRunning = false;
-      clearTimeout(measureTimer);
       clearTimeout(starTimer);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [allLetters, prefersReducedMotion]);
+  }, [allLetters, totalLetters, prefersReducedMotion]);
 
   if (prefersReducedMotion) {
     return (
@@ -338,7 +354,7 @@ export default function KineticTitle({
 
   return (
     <div className="relative w-full flex items-center justify-center">
-      {/* Estrella Fugaz Galáctica SVG de Alto Impacto Visual */}
+      {/* Estrella Fugaz Galáctica SVG */}
       <div
         ref={starRef}
         style={{
@@ -353,34 +369,25 @@ export default function KineticTitle({
         className="-translate-x-1/2 -translate-y-1/2"
       >
         <div className="relative flex items-center">
-          {/* Estela de Plasma con Doble Capa y Gradientes */}
           <div className="w-72 h-3.5 bg-gradient-to-l from-cyan-400 via-[var(--color-brand-primary)] to-transparent blur-[2px] -mr-4 opacity-90" />
           <div className="absolute right-4 w-44 h-1 bg-gradient-to-l from-white via-cyan-200 to-transparent blur-[0.5px]" />
 
-          {/* Estrella Cósmica de 8 Puntas Vectorial */}
           <svg
             viewBox="0 0 64 64"
             className="w-14 h-14 drop-shadow-[0_0_20px_rgba(255,255,255,1)] drop-shadow-[0_0_35px_rgba(56,189,248,0.9)] animate-pulse"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            {/* Halo de Resplandor Circular */}
             <circle cx="32" cy="32" r="14" fill="url(#star-glow)" opacity="0.4" />
-
-            {/* Rayos Diagonales Menores */}
             <path
               d="M32 16 L35 29 L48 32 L35 35 L32 48 L29 35 L16 32 L29 29 Z"
               fill="url(#star-diagonal-grad)"
               opacity="0.9"
             />
-
-            {/* Puntas Principales de la Estrella de 4 Puntas */}
             <path
               d="M32 2 C32 18 20 32 2 32 C20 32 32 46 32 62 C32 46 44 32 62 32 C44 32 32 18 32 2 Z"
               fill="url(#star-core-grad)"
             />
-
-            {/* Núcleo de Cristal Brillante */}
             <circle cx="32" cy="32" r="4" fill="#FFFFFF" />
 
             <defs>
@@ -403,7 +410,7 @@ export default function KineticTitle({
         </div>
       </div>
 
-      {/* Capa 1 (Fondo): Moldes en Silueta Pura Tallada (z-index 0 fijo) */}
+      {/* Capa 1 (Fondo): Moldes de Silueta Pura */}
       <div
         className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none"
         aria-hidden="true"
@@ -427,7 +434,7 @@ export default function KineticTitle({
         </div>
       </div>
 
-      {/* Capa 2 (Frente): Letras Cinéticas Activas (z-index superior siempre por encima del molde) */}
+      {/* Capa 2 (Frente): Letras con Efecto Typewriter y Física Dinámica */}
       <h1
         ref={containerRef}
         className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 select-none relative z-10 ${className}`}
@@ -443,6 +450,8 @@ export default function KineticTitle({
                 }
                 globalIdx += charIdx;
 
+                const isVisible = globalIdx < typedCount;
+                const isCurrentCursor = globalIdx === typedCount - 1 && cursorVisible;
                 const isLocked = lockedIndices.has(globalIdx);
 
                 return (
@@ -457,6 +466,8 @@ export default function KineticTitle({
                         if (el) letterRefs.current.set(globalIdx, el);
                       }}
                       className={`relative inline-block font-black text-white select-none pointer-events-none transition-shadow duration-300 ${
+                        isVisible ? 'opacity-100' : 'opacity-0'
+                      } ${
                         isLocked
                           ? 'drop-shadow-[0_2px_14px_rgba(255,255,255,0.4)]'
                           : 'drop-shadow-[0_6px_20px_rgba(0,0,0,0.85)]'
@@ -468,6 +479,17 @@ export default function KineticTitle({
                     >
                       {char}
                     </span>
+
+                    {/* Cursor de Escritura de Terminal */}
+                    {isCurrentCursor && (
+                      <span
+                        className={`absolute -right-1 sm:-right-2 top-1 bottom-1 w-[3px] bg-[var(--color-brand-accent)] rounded-full ${
+                          enterPressed
+                            ? 'scale-y-125 shadow-[0_0_16px_var(--color-brand-accent)] bg-white'
+                            : 'animate-pulse shadow-[0_0_8px_var(--color-brand-accent)]'
+                        } transition-all duration-200 pointer-events-none z-50`}
+                      />
+                    )}
                   </span>
                 );
               })}
