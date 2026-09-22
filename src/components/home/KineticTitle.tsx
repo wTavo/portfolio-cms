@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título con molde en bajo relieve (hundido), física de rebote estilo DVD Screensaver y retorno aleatorio uno por uno en bucle continuo.
+ * @description Título en mayúsculas grandes, molde gris con profundidad tridimensional (bajo relieve), física calmada de DVD y encaje natural por colisión directa sin repetición ni temporizadores forzados.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -15,23 +15,21 @@ interface LetterParticle {
   index: number;
   wordIdx: number;
   charIdx: number;
-  // Posiciones actuales en pantalla
+  // Posición actual en el viewport
   x: number;
   y: number;
   vx: number;
   vy: number;
-  // Estado de encaje
+  // Estado de encaje natural
   isLocked: boolean;
-  lockTargetTime: number; // Momento en que esta letra emprende el retorno a su molde
-  lockProgress: number;   // Interpolación 0 -> 1 hacia el molde
-  startLockX: number;
-  startLockY: number;
+  canLock: boolean;
+  lockTimeAllowed: number; // Tiempo mínimo antes de permitir encaje (tras salir del molde)
   rotation: number;
   vRot: number;
 }
 
 export default function KineticTitle({
-  text = 'Portafolio Builder',
+  text = 'PORTAFOLIO BUILDER',
   className = '',
 }: KineticTitleProps) {
   const containerRef = useRef<HTMLHeadingElement>(null);
@@ -40,6 +38,9 @@ export default function KineticTitle({
 
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
+
+  // Convertir texto a mayúsculas
+  const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
 
   // Verificar accesibilidad
   useEffect(() => {
@@ -50,7 +51,7 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  const words = useMemo(() => text.split(' '), [text]);
+  const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
 
   const allLetters = useMemo(() => {
     let globalIndex = 0;
@@ -62,43 +63,21 @@ export default function KineticTitle({
         charIdx,
       }))
     );
-  }, [words, text]);
+  }, [words, uppercaseText]);
 
-  // Motor de física DVD y ciclo de animación continuo
+  // Motor de física DVD pura y encaje por colisión natural
   useEffect(() => {
     if (prefersReducedMotion) return;
 
     let animationFrameId: number;
     let isRunning = true;
 
-    // Inicializar partículas
     const particles: LetterParticle[] = [];
     const totalLetters = allLetters.length;
+    let isLaunched = false;
+    let launchTime = 0;
 
-    // Generar orden aleatorio para el retorno de las letras
-    const generateLockTimes = (startTime: number) => {
-      // Barajar índices aleatoriamente (Fisher-Yates)
-      const shuffledIndices = Array.from({ length: totalLetters }, (_, i) => i);
-      for (let i = shuffledIndices.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledIndices[i], shuffledIndices[j]] = [shuffledIndices[j], shuffledIndices[i]];
-      }
-
-      // Asignar tiempos de retorno espaciados aleatoriamente entre 4.5s y 11.5s
-      const times = new Map<number, number>();
-      shuffledIndices.forEach((letterIdx, order) => {
-        const lockDelay = 4000 + order * 480 + (Math.random() * 250);
-        times.set(letterIdx, startTime + lockDelay);
-      });
-      return times;
-    };
-
-    let cycleStartTime = performance.now();
-    let lockTimes = generateLockTimes(cycleStartTime);
-    let cycleState: 'initial_pause' | 'bouncing' | 'all_locked_pause' = 'initial_pause';
-    let allLockedTime = 0;
-
-    // Inicializar posiciones y velocidades tipo DVD
+    // Inicializar partículas en la posición exacta de cada molde
     const initParticles = () => {
       particles.length = 0;
       allLetters.forEach((item) => {
@@ -112,11 +91,15 @@ export default function KineticTitle({
           origY = rect.top;
         }
 
-        // Velocidad tipo DVD con ángulo diagonal
-        const speed = 2.2 + Math.random() * 1.6;
+        // Velocidad pausada y suave estilo DVD screensaver clásico (1.1 a 1.6 px/frame)
         const angle = (Math.random() * Math.PI * 2);
-        const vx = Math.cos(angle) * speed;
-        const vy = Math.sin(angle) * speed;
+        const speed = 1.15 + (item.globalIndex % 4) * 0.12;
+        let vx = Math.cos(angle) * speed;
+        let vy = Math.sin(angle) * speed;
+
+        // Asegurar que no quede en ejes completamente rectos
+        if (Math.abs(vx) < 0.6) vx = vx > 0 ? 0.9 : -0.9;
+        if (Math.abs(vy) < 0.6) vy = vy > 0 ? 0.9 : -0.9;
 
         particles.push({
           char: item.char,
@@ -125,48 +108,45 @@ export default function KineticTitle({
           charIdx: item.charIdx,
           x: origX,
           y: origY,
-          vx: Math.abs(vx) < 1 ? (vx > 0 ? 1.5 : -1.5) : vx,
-          vy: Math.abs(vy) < 1 ? (vy > 0 ? 1.5 : -1.5) : vy,
+          vx,
+          vy,
           isLocked: true,
-          lockTargetTime: lockTimes.get(item.globalIndex) || 0,
-          lockProgress: 0,
-          startLockX: origX,
-          startLockY: origY,
+          canLock: false,
+          lockTimeAllowed: 0,
           rotation: 0,
-          vRot: (Math.random() - 0.5) * 2.5,
+          vRot: (Math.random() - 0.5) * 0.8, // Rotación muy suave
         });
       });
     };
 
-    // Esperar primer render para medir moldes
-    setTimeout(() => {
+    // Medir tras montar en el DOM
+    const initTimer = setTimeout(() => {
       initParticles();
-    }, 100);
+    }, 120);
 
-    // Loop de renderizado y física de rebote
+    // Lanzamiento de las letras tras 1.2 segundos
+    const launchTimer = setTimeout(() => {
+      isLaunched = true;
+      launchTime = performance.now();
+      setLockedIndices(new Set());
+
+      particles.forEach((p, idx) => {
+        p.isLocked = false;
+        // Permitir que cada letra pueda encajar solo después de haber viajado al menos 3 a 5 segundos
+        p.lockTimeAllowed = launchTime + 3000 + (idx % 5) * 600;
+      });
+    }, 1200);
+
+    // Bucle de animación y física a 60 FPS
     const loop = (currentTime: number) => {
       if (!isRunning) return;
 
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
-      const pad = 30; // Margen de rebote con los bordes
+      const padX = 24;
+      const padY = 32;
 
-      const elapsed = currentTime - cycleStartTime;
-
-      // Fase 1: Pausa inicial de 1.4s antes de liberar las letras
-      if (cycleState === 'initial_pause') {
-        if (elapsed > 1400) {
-          cycleState = 'bouncing';
-          setLockedIndices(new Set());
-          particles.forEach((p) => {
-            p.isLocked = false;
-            p.lockProgress = 0;
-          });
-        }
-      }
-
-      // Fase 2: Rebote activo en pantalla estilo DVD y retorno gradual
-      if (cycleState === 'bouncing') {
+      if (isLaunched) {
         let activeCount = 0;
         const currentLocked = new Set<number>();
 
@@ -174,103 +154,92 @@ export default function KineticTitle({
           const moldEl = moldRefs.current.get(p.index);
           let targetX = p.x;
           let targetY = p.y;
+          let moldWidth = 40;
+          let moldHeight = 50;
 
           if (moldEl) {
             const rect = moldEl.getBoundingClientRect();
             targetX = rect.left;
             targetY = rect.top;
+            moldWidth = rect.width;
+            moldHeight = rect.height;
           }
 
           if (p.isLocked) {
             currentLocked.add(p.index);
-            // Ya está en el molde
             p.x = targetX;
             p.y = targetY;
             p.rotation = 0;
           } else {
             activeCount++;
 
-            // Verificar si es momento de regresar a su molde
-            if (currentTime >= p.lockTargetTime) {
-              if (p.lockProgress === 0) {
-                p.startLockX = p.x;
-                p.startLockY = p.y;
-              }
+            // Mover según velocidad DVD
+            p.x += p.vx;
+            p.y += p.vy;
+            p.rotation += p.vRot;
 
-              p.lockProgress += 0.035; // Suavidad de aproximación
+            // Rebote en los 4 bordes del navegador (DVD Screensaver puro)
+            if (p.x <= padX) {
+              p.x = padX;
+              p.vx = Math.abs(p.vx);
+            } else if (p.x >= screenW - padX - moldWidth) {
+              p.x = screenW - padX - moldWidth;
+              p.vx = -Math.abs(p.vx);
+            }
 
-              if (p.lockProgress >= 1) {
+            if (p.y <= padY + 40) {
+              p.y = padY + 40;
+              p.vy = Math.abs(p.vy);
+            } else if (p.y >= screenH - padY - moldHeight) {
+              p.y = screenH - padY - moldHeight;
+              p.vy = -Math.abs(p.vy);
+            }
+
+            // Detección de colisión natural con su molde
+            if (currentTime >= p.lockTimeAllowed) {
+              const distX = Math.abs(p.x - targetX);
+              const distY = Math.abs(p.y - targetY);
+              const distance = Math.hypot(p.x - targetX, p.y - targetY);
+
+              // Si la letra pasa directamente por encima de su molde o muy cerca
+              if (distX < moldWidth * 0.75 && distY < moldHeight * 0.75) {
+                // Encaje natural instantáneo
                 p.isLocked = true;
-                p.lockProgress = 1;
                 p.x = targetX;
                 p.y = targetY;
                 p.rotation = 0;
                 currentLocked.add(p.index);
-              } else {
-                // Interpolación desacelerada hacia el molde
-                const ease = 1 - Math.pow(1 - p.lockProgress, 3);
-                p.x = p.startLockX + (targetX - p.startLockX) * ease;
-                p.y = p.startLockY + (targetY - p.startLockY) * ease;
-                p.rotation = p.rotation * (1 - ease);
-              }
-            } else {
-              // Física DVD estándar (velocidad constante y rebote puro en bordes)
-              p.x += p.vx;
-              p.y += p.vy;
-              p.rotation += p.vRot;
-
-              // Rebote horizontal
-              if (p.x <= pad) {
-                p.x = pad;
-                p.vx = Math.abs(p.vx);
-              } else if (p.x >= screenW - pad - 40) {
-                p.x = screenW - pad - 40;
-                p.vx = -Math.abs(p.vx);
-              }
-
-              // Rebote vertical
-              if (p.y <= pad + 60) {
-                p.y = pad + 60;
-                p.vy = Math.abs(p.vy);
-              } else if (p.y >= screenH - pad - 60) {
-                p.y = screenH - pad - 60;
-                p.vy = -Math.abs(p.vy);
+              } else if (distance < 90) {
+                // Suave atracción natural solo si ya está a punto de cruzar su molde
+                p.vx += (targetX - p.x) * 0.012;
+                p.vy += (targetY - p.y) * 0.012;
               }
             }
           }
 
-          // Aplicar posición directamente en GPU para máximo rendimiento
+          // Aplicar posición con aceleración por GPU
           const el = letterRefs.current.get(p.index);
           if (el) {
-            if (p.isLocked && cycleState === 'all_locked_pause') {
-              el.style.transform = `none`;
-              el.style.position = `static`;
-            } else {
-              el.style.position = `fixed`;
-              el.style.left = `0px`;
-              el.style.top = `0px`;
-              el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) rotate(${p.rotation}deg)`;
-            }
+            el.style.position = `fixed`;
+            el.style.left = `0px`;
+            el.style.top = `0px`;
+            el.style.transform = `translate3d(${p.x}px, ${p.y}px, 0) rotate(${p.rotation}deg)`;
           }
         });
 
         setLockedIndices(new Set(currentLocked));
 
-        // Si todas las letras han regresado al molde
+        // Cuando todas las piezas se hayan colocado naturalmente, concluye la animación
         if (activeCount === 0 && currentLocked.size === totalLetters) {
-          cycleState = 'all_locked_pause';
-          allLockedTime = currentTime;
-        }
-      }
-
-      // Fase 3: Pausa con el título completo en reposo y reinicio del bucle
-      if (cycleState === 'all_locked_pause') {
-        if (currentTime - allLockedTime > 3500) {
-          // Reiniciar ciclo
-          cycleStartTime = performance.now();
-          lockTimes = generateLockTimes(cycleStartTime);
-          initParticles();
-          cycleState = 'initial_pause';
+          // Permanecen en su lugar de forma definitiva
+          particles.forEach((p) => {
+            const el = letterRefs.current.get(p.index);
+            if (el) {
+              el.style.position = `static`;
+              el.style.transform = `none`;
+            }
+          });
+          return; // Termina la animación y no se repite
         }
       }
 
@@ -281,14 +250,16 @@ export default function KineticTitle({
 
     return () => {
       isRunning = false;
+      clearTimeout(initTimer);
+      clearTimeout(launchTimer);
       cancelAnimationFrame(animationFrameId);
     };
   }, [allLetters, prefersReducedMotion]);
 
   if (prefersReducedMotion) {
     return (
-      <h1 className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-[1.08] ${className}`}>
-        {text}
+      <h1 className={`text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-[var(--color-text-primary)] leading-[1.05] uppercase select-none ${className}`}>
+        {uppercaseText}
       </h1>
     );
   }
@@ -296,14 +267,13 @@ export default function KineticTitle({
   return (
     <h1
       ref={containerRef}
-      className={`text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08] flex flex-wrap justify-center gap-x-4 sm:gap-x-6 select-none relative ${className}`}
-      aria-label={text}
+      className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 select-none relative ${className}`}
+      aria-label={uppercaseText}
     >
       {words.map((word, wordIdx) => {
         return (
-          <span key={`word-${wordIdx}`} className="inline-flex gap-x-1 sm:gap-x-1.5">
+          <span key={`word-${wordIdx}`} className="inline-flex gap-x-1.5 sm:gap-x-2.5">
             {word.split('').map((char, charIdx) => {
-              // Calcular índice global
               let globalIdx = 0;
               for (let w = 0; w < wordIdx; w++) {
                 globalIdx += words[w].length;
@@ -316,22 +286,22 @@ export default function KineticTitle({
                 <span
                   key={`slot-${globalIdx}-${char}`}
                   className="relative inline-flex items-center justify-center"
-                  style={{ minWidth: '0.65em', height: '1.2em' }}
+                  style={{ minWidth: '0.72em', height: '1.25em' }}
                 >
-                  {/* Molde Hundido (Efecto grabado en bajo relieve / Inset Debossed) */}
+                  {/* Molde Gris en Bajo Relieve con Profundidad Tridimensional */}
                   <span
                     ref={(el) => {
                       if (el) moldRefs.current.set(globalIdx, el);
                     }}
-                    className="absolute inset-0 rounded-[var(--radius-md)] bg-[#04060a] border border-white/[0.04] shadow-[inset_0_4px_8px_rgba(0,0,0,0.95),inset_0_-1px_1px_rgba(255,255,255,0.05),0_1px_0_rgba(255,255,255,0.03)] flex items-center justify-center pointer-events-none transition-all duration-300"
+                    className="absolute inset-0 rounded-[var(--radius-md)] bg-[#1a1f2c] border border-white/10 shadow-[inset_0_4px_8px_rgba(0,0,0,0.85),inset_0_1px_3px_rgba(0,0,0,0.95),inset_0_-1px_2px_rgba(255,255,255,0.12),0_2px_4px_rgba(0,0,0,0.4)] flex items-center justify-center pointer-events-none"
                     aria-hidden="true"
                   >
-                    {/* Silueta sumida con profundidad */}
-                    <span className="text-[#0e131f] font-extrabold select-none drop-shadow-[0_-1px_1px_rgba(0,0,0,0.9)]">
+                    {/* Silueta interior sumida de la letra en tono gris profundo */}
+                    <span className="text-[#252c3d] font-black select-none drop-shadow-[0_-1px_1px_rgba(0,0,0,0.9)]">
                       {char}
                     </span>
-                    {/* Borde inferior interno tenue para efecto de profundidad de ranura */}
-                    <span className="absolute inset-x-1 bottom-0.5 h-[1.5px] bg-black/80 rounded-full" />
+                    {/* Borde biselado interior para máxima profundidad */}
+                    <span className="absolute inset-x-1 bottom-1 h-[2px] bg-black/50 rounded-full" />
                   </span>
 
                   {/* Letra Cinética Activa con Física DVD */}
@@ -339,10 +309,10 @@ export default function KineticTitle({
                     ref={(el) => {
                       if (el) letterRefs.current.set(globalIdx, el);
                     }}
-                    className={`inline-block font-extrabold text-[var(--color-text-primary)] z-20 pointer-events-none select-none transition-shadow duration-300 ${
+                    className={`inline-block font-black text-white z-20 pointer-events-none select-none transition-all duration-200 ${
                       isLocked
-                        ? 'drop-shadow-[0_2px_12px_rgba(59,130,246,0.25)] text-white'
-                        : 'drop-shadow-[0_4px_16px_rgba(0,0,0,0.7)]'
+                        ? 'drop-shadow-[0_2px_14px_rgba(255,255,255,0.4)]'
+                        : 'drop-shadow-[0_6px_20px_rgba(0,0,0,0.8)]'
                     }`}
                     style={{
                       willChange: 'transform',

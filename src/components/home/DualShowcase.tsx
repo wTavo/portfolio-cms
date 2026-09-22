@@ -148,14 +148,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       <div className="flex-1 w-full h-full relative flex items-center justify-center">
         <AnimatePresence mode="wait">
           {currentView === 'hero' ? (
-            /* Vista 1: Pantalla de Bienvenida (Título Cinético) */
+            /* Vista 1: Pantalla de Bienvenida (Título Cinético Grande) */
             <motion.section
               key="hero-view"
               initial={{ opacity: 0, y: 30, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -40, scale: 0.95 }}
               transition={{ duration: MOTION_DURATIONS.deliberate, ease: MOTION_EASINGS.decelerate }}
-              className="w-full h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto relative select-none"
+              className="w-full h-full flex flex-col items-center justify-center text-center px-4 max-w-6xl mx-auto relative select-none"
             >
               <KineticTitle text={i18n.showcase.title} />
 
