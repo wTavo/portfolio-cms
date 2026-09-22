@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético universal (sin etiquetas de código). Escritura tipográfica limpia, pulso de confirmación, corte por destello cósmico SVG y física DVD con acoplamiento sedoso en moldes exactos.
+ * @description Título cinético de gran escala tipográfica con estrella SVG cósmica e iluminación ambiental dinámica que baña el fondo a su paso.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -44,7 +44,7 @@ export default function KineticTitle({
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
   const lockedIndicesCountRef = useRef(0);
 
-  // Estados de tipeo tipográfico universal
+  // Estados de tipeo tipográfico
   const [typedCount, setTypedCount] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [titleConfirmed, setTitleConfirmed] = useState(false);
@@ -79,7 +79,7 @@ export default function KineticTitle({
 
   const totalLetters = allLetters.length;
 
-  // 1. Fase de Escritura Tipográfica Universal (Sin Tags)
+  // 1. Fase de Escritura Tipográfica Limpia
   useEffect(() => {
     if (prefersReducedMotion) {
       setTypedCount(totalLetters);
@@ -94,7 +94,6 @@ export default function KineticTitle({
       if (current >= totalLetters) {
         clearInterval(typeInterval);
 
-        // Pulso de asentamiento / confirmación del título
         setTimeout(() => {
           setTitleConfirmed(true);
           setTimeout(() => {
@@ -107,7 +106,7 @@ export default function KineticTitle({
     return () => clearInterval(typeInterval);
   }, [totalLetters, prefersReducedMotion]);
 
-  // 2. Motor de Física y Corte por Destello Cósmico SVG
+  // 2. Motor de Física y Corte por Estrella Iluminadora
   useEffect(() => {
     if (prefersReducedMotion) return;
 
@@ -150,12 +149,12 @@ export default function KineticTitle({
       });
     };
 
-    let starX = -220;
+    let starX = -280;
     let starY = window.innerHeight / 2;
     let starSpeed = 26;
     let starActive = false;
 
-    // Lanzar destello tras completar y asentar el título (~1.9s)
+    // Lanzar estrella tras el asentamiento (~1.9s)
     const starTimer = setTimeout(() => {
       if (!isRunning) return;
       measureTargets();
@@ -165,7 +164,7 @@ export default function KineticTitle({
         starY = rect.top + rect.height / 2;
       }
 
-      starX = -220;
+      starX = -280;
       starActive = true;
       setStarVisible(true);
       lockedIndicesCountRef.current = 0;
@@ -177,14 +176,14 @@ export default function KineticTitle({
 
       const screenW = window.innerWidth;
       const screenH = window.innerHeight;
-      const letterW = 44;
-      const letterH = 55;
+      const letterW = 56;
+      const letterH = 70;
       const minX = 16;
       const maxX = screenW - letterW - 16;
       const minY = 65;
       const maxY = screenH - letterH - 16;
 
-      // Movimiento del destello cósmico
+      // Movimiento de la estrella
       if (starActive) {
         starX += starSpeed;
 
@@ -217,7 +216,7 @@ export default function KineticTitle({
           }
         });
 
-        if (starX > screenW + 300) {
+        if (starX > screenW + 400) {
           starActive = false;
           setStarVisible(false);
         }
@@ -341,7 +340,7 @@ export default function KineticTitle({
 
   if (prefersReducedMotion) {
     return (
-      <h1 className={`text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight text-[var(--color-text-primary)] leading-[1.05] uppercase select-none ${className}`}>
+      <h1 className={`text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight text-[var(--color-text-primary)] leading-[1.05] uppercase select-none ${className}`}>
         {uppercaseText}
       </h1>
     );
@@ -349,7 +348,7 @@ export default function KineticTitle({
 
   return (
     <div className="relative w-full flex items-center justify-center">
-      {/* Destello Cósmico SVG de Alta Definición */}
+      {/* Estrella Fugaz Galáctica SVG con Iluminación Ambiental que Baña el Fondo */}
       <div
         ref={starRef}
         style={{
@@ -364,39 +363,58 @@ export default function KineticTitle({
         className="-translate-x-1/2 -translate-y-1/2"
       >
         <div className="relative flex items-center">
-          <div className="w-72 h-3.5 bg-gradient-to-l from-cyan-400 via-[var(--color-brand-primary)] to-transparent blur-[2px] -mr-4 opacity-90" />
-          <div className="absolute right-4 w-44 h-1 bg-gradient-to-l from-white via-cyan-200 to-transparent blur-[0.5px]" />
+          {/* Aura Gigante de Iluminación Ambiental que Ilumina el Fondo al Pasar */}
+          <div
+            className="absolute -top-36 -left-48 w-[600px] h-[350px] bg-radial from-[var(--color-brand-accent)]/35 via-[var(--color-brand-primary)]/20 to-transparent blur-3xl pointer-events-none -z-10"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute -top-20 -left-16 w-[280px] h-[280px] bg-radial from-cyan-300/45 via-[var(--color-brand-accent)]/25 to-transparent blur-2xl pointer-events-none -z-10"
+            aria-hidden="true"
+          />
 
+          {/* Estela de Plasma con Doble Capa y Gradientes */}
+          <div className="w-80 h-4 bg-gradient-to-l from-cyan-300 via-[var(--color-brand-primary)] to-transparent blur-[2px] -mr-4 opacity-95" />
+          <div className="absolute right-4 w-52 h-1.5 bg-gradient-to-l from-white via-cyan-100 to-transparent blur-[0.5px]" />
+
+          {/* Estrella Cósmica de 8 Puntas Vectorial Iluminada */}
           <svg
             viewBox="0 0 64 64"
-            className="w-14 h-14 drop-shadow-[0_0_20px_rgba(255,255,255,1)] drop-shadow-[0_0_35px_rgba(56,189,248,0.9)] animate-pulse"
+            className="w-16 h-16 drop-shadow-[0_0_25px_rgba(255,255,255,1)] drop-shadow-[0_0_45px_rgba(56,189,248,1)] animate-pulse"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <circle cx="32" cy="32" r="14" fill="url(#star-glow)" opacity="0.4" />
+            {/* Halo de Resplandor Circular */}
+            <circle cx="32" cy="32" r="16" fill="url(#star-glow-ambient)" opacity="0.6" />
+
+            {/* Rayos Diagonales Menores */}
             <path
-              d="M32 16 L35 29 L48 32 L35 35 L32 48 L29 35 L16 32 L29 29 Z"
-              fill="url(#star-diagonal-grad)"
-              opacity="0.9"
+              d="M32 14 L36 28 L50 32 L36 36 L32 50 L28 36 L14 32 L28 28 Z"
+              fill="url(#star-diagonal-grad-ambient)"
+              opacity="0.95"
             />
+
+            {/* Puntas Principales de la Estrella de 4 Puntas */}
             <path
               d="M32 2 C32 18 20 32 2 32 C20 32 32 46 32 62 C32 46 44 32 62 32 C44 32 32 18 32 2 Z"
-              fill="url(#star-core-grad)"
+              fill="url(#star-core-grad-ambient)"
             />
-            <circle cx="32" cy="32" r="4" fill="#FFFFFF" />
+
+            {/* Núcleo de Cristal Brillante */}
+            <circle cx="32" cy="32" r="4.5" fill="#FFFFFF" />
 
             <defs>
-              <radialGradient id="star-glow" cx="50%" cy="50%" r="50%">
+              <radialGradient id="star-glow-ambient" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="60%" stopColor="#38BDF8" />
+                <stop offset="50%" stopColor="#38BDF8" />
                 <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
               </radialGradient>
-              <linearGradient id="star-core-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="star-core-grad-ambient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="50%" stopColor="#E0F2FE" />
+                <stop offset="45%" stopColor="#E0F2FE" />
                 <stop offset="100%" stopColor="#38BDF8" />
               </linearGradient>
-              <linearGradient id="star-diagonal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="star-diagonal-grad-ambient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#38BDF8" />
                 <stop offset="100%" stopColor="#818CF8" />
               </linearGradient>
@@ -405,15 +423,15 @@ export default function KineticTitle({
         </div>
       </div>
 
-      {/* Título Principal Universal con Moldes Integrados en la Misma Ranura */}
+      {/* Título Principal de Mayor Escala con Moldes Integrados en la Misma Ranura */}
       <h1
         ref={containerRef}
-        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-10 select-none relative z-10 ${className}`}
+        className={`text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-wider leading-[1.08] flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-12 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
       >
         {words.map((word, wordIdx) => {
           return (
-            <span key={`word-${wordIdx}`} className="inline-flex gap-x-1.5 sm:gap-x-2.5">
+            <span key={`word-${wordIdx}`} className="inline-flex gap-x-2 sm:gap-x-3.5">
               {word.split('').map((char, charIdx) => {
                 let globalIdx = 0;
                 for (let w = 0; w < wordIdx; w++) {
@@ -429,7 +447,7 @@ export default function KineticTitle({
                   <span
                     key={`slot-${globalIdx}-${char}`}
                     className="inline-flex items-center justify-center relative"
-                    style={{ minWidth: '0.68em', height: '1.2em' }}
+                    style={{ minWidth: '0.74em', height: '1.25em' }}
                   >
                     {/* Molde: Silueta Pura Tallada en Bajo Relieve */}
                     <span
@@ -450,8 +468,8 @@ export default function KineticTitle({
                         isVisible ? 'opacity-100' : 'opacity-0'
                       } ${
                         isLocked
-                          ? 'drop-shadow-[0_2px_14px_rgba(255,255,255,0.4)]'
-                          : 'drop-shadow-[0_6px_20px_rgba(0,0,0,0.85)]'
+                          ? 'drop-shadow-[0_2px_16px_rgba(255,255,255,0.45)]'
+                          : 'drop-shadow-[0_6px_22px_rgba(0,0,0,0.9)]'
                       }`}
                       style={{
                         willChange: 'transform',
@@ -461,7 +479,7 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* Cursor de Escritura Tipográfica */}
+                    {/* Cursor de Escritura */}
                     {isCurrentCursor && (
                       <span
                         className={`absolute -right-1 sm:-right-2 top-1 bottom-1 w-[3px] bg-[var(--color-brand-accent)] rounded-full ${

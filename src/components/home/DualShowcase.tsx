@@ -155,7 +155,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -40, scale: 0.95 }}
               transition={{ duration: MOTION_DURATIONS.deliberate, ease: MOTION_EASINGS.decelerate }}
-              className="w-full h-full flex flex-col items-center justify-center text-center px-4 max-w-6xl mx-auto relative select-none"
+              className="w-full h-full flex flex-col items-center justify-center text-center px-2 sm:px-6 max-w-7xl mx-auto relative select-none"
             >
               <KineticTitle text={i18n.showcase.title} />
 
