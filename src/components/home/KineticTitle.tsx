@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético con efecto de escritura (typewriter) + simulación de tecla Enter, seguido por el corte de estrella SVG y física DVD con encaje suave en moldes.
+ * @description Título con escritura en formato de código sintáctico `<PORTAFOLIO BUILDER />`, confirmación visual por tecla Enter (↵) y posterior corte de estrella SVG con física DVD.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -44,10 +44,11 @@ export default function KineticTitle({
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
   const lockedIndicesCountRef = useRef(0);
 
-  // Estados de la fase de tipeo
+  // Estados de la fase de código y tipeo
   const [typedCount, setTypedCount] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [enterPressed, setEnterPressed] = useState(false);
+  const [codeTagsVisible, setCodeTagsVisible] = useState(true);
 
   // Estado de la estrella SVG
   const [starVisible, setStarVisible] = useState(false);
@@ -79,11 +80,12 @@ export default function KineticTitle({
 
   const totalLetters = allLetters.length;
 
-  // 1. Fase de Escritura (Typewriter) y Simulación de Enter
+  // 1. Fase de Escritura en Código `< ... />` y Confirmación con Enter
   useEffect(() => {
     if (prefersReducedMotion) {
       setTypedCount(totalLetters);
       setCursorVisible(false);
+      setCodeTagsVisible(false);
       return;
     }
 
@@ -94,20 +96,23 @@ export default function KineticTitle({
       if (current >= totalLetters) {
         clearInterval(typeInterval);
 
-        // Pulsación de Enter tras terminar de escribir
+        // Disparar confirmación de tecla Enter tras completar la escritura
         setTimeout(() => {
           setEnterPressed(true);
+
+          // Compilar y desvanecer las etiquetas de código </ >
           setTimeout(() => {
+            setCodeTagsVisible(false);
             setCursorVisible(false);
-          }, 300);
+          }, 450);
         }, 350);
       }
-    }, 60);
+    }, 55);
 
     return () => clearInterval(typeInterval);
   }, [totalLetters, prefersReducedMotion]);
 
-  // 2. Motor de Física y Corte por Estrella tras el Enter
+  // 2. Motor de Física y Corte por Estrella tras la Confirmación
   useEffect(() => {
     if (prefersReducedMotion) return;
 
@@ -150,13 +155,12 @@ export default function KineticTitle({
       });
     };
 
-    // Variables de la estrella
     let starX = -220;
     let starY = window.innerHeight / 2;
     let starSpeed = 26;
     let starActive = false;
 
-    // Lanzar estrella después de que se haya escrito todo el texto y presionado Enter (~2.0s)
+    // Lanzar estrella tras compilar y confirmar el título (~2.1s)
     const starTimer = setTimeout(() => {
       if (!isRunning) return;
       measureTargets();
@@ -171,7 +175,7 @@ export default function KineticTitle({
       setStarVisible(true);
       lockedIndicesCountRef.current = 0;
       setLockedIndices(new Set());
-    }, 2000);
+    }, 2100);
 
     const loop = (currentTime: number) => {
       if (!isRunning) return;
@@ -185,7 +189,7 @@ export default function KineticTitle({
       const minY = 65;
       const maxY = screenH - letterH - 16;
 
-      // Movimiento de la estrella
+      // Movimiento de la estrella SVG
       if (starActive) {
         starX += starSpeed;
 
@@ -202,7 +206,6 @@ export default function KineticTitle({
               p.isLocked = false;
               p.canLockTime = currentTime + 3200 + (p.index * 280);
 
-              // Dispersión angular caótica en 360°
               const baseAngle = (p.index / totalLetters) * Math.PI * 2;
               const jitter = (Math.random() - 0.5) * 1.4;
               const angle = baseAngle + jitter;
@@ -225,7 +228,7 @@ export default function KineticTitle({
         }
       }
 
-      // Física DVD y Acoplamiento Suave
+      // Física DVD y Acoplamiento Sedoso
       let activeCount = 0;
       let newlyLockedCount = 0;
       const currentLocked = new Set<number>();
@@ -270,7 +273,6 @@ export default function KineticTitle({
           p.y += p.vy;
           p.rot += p.vRot;
 
-          // Rebote horizontal garantizado
           if (p.x <= minX) {
             p.x = minX;
             p.vx = Math.abs(p.vx);
@@ -279,7 +281,6 @@ export default function KineticTitle({
             p.vx = -Math.abs(p.vx);
           }
 
-          // Rebote vertical garantizado
           if (p.y <= minY) {
             p.y = minY;
             p.vy = Math.abs(p.vy);
@@ -288,7 +289,6 @@ export default function KineticTitle({
             p.vy = -Math.abs(p.vy);
           }
 
-          // Detección de cruce natural
           if (currentTime >= p.canLockTime) {
             const dist = Math.hypot(p.x - p.targetX, p.y - p.targetY);
 
@@ -434,12 +434,23 @@ export default function KineticTitle({
         </div>
       </div>
 
-      {/* Capa 2 (Frente): Letras con Efecto Typewriter y Física Dinámica */}
+      {/* Capa 2 (Frente): Letras con Sintaxis de Código `</>` y Confirmación Enter */}
       <h1
         ref={containerRef}
-        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 select-none relative z-10 ${className}`}
+        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-8 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
       >
+        {/* Etiqueta de Apertura de Código `<` */}
+        <span
+          className={`font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none ${
+            codeTagsVisible ? 'opacity-90 scale-100' : 'opacity-0 scale-90 pointer-events-none'
+          }`}
+          aria-hidden="true"
+        >
+          &lt;
+        </span>
+
+        {/* Palabras y Caracteres */}
         {words.map((word, wordIdx) => {
           return (
             <span key={`word-${wordIdx}`} className="inline-flex gap-x-1.5 sm:gap-x-2.5">
@@ -496,6 +507,23 @@ export default function KineticTitle({
             </span>
           );
         })}
+
+        {/* Etiqueta de Cierre de Código `/>` */}
+        <span
+          className={`font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none relative ${
+            codeTagsVisible ? 'opacity-90 scale-100' : 'opacity-0 scale-90 pointer-events-none'
+          }`}
+          aria-hidden="true"
+        >
+          /&gt;
+
+          {/* Indicador Flotante de Tecla [Enter ↵] al confirmar */}
+          {enterPressed && codeTagsVisible && (
+            <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-[var(--radius-sm)] bg-cyan-500/20 border border-cyan-400/50 text-[10px] font-mono text-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.5)] animate-bounce">
+              Enter ↵
+            </span>
+          )}
+        </span>
       </h1>
     </div>
   );
