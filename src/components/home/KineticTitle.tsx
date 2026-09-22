@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético con estrella SVG galáctica, física DVD con desaceleración orgánica y acoplamiento suave en el molde (sin temblores ni sobre-giros).
+ * @description Título cinético con estrella SVG galáctica, física DVD con desaceleración orgánica, molde siempre en capa de fondo (z-index inferior) y acoplamiento suave.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -201,7 +201,7 @@ export default function KineticTitle({
         }
       }
 
-      // 2. Física de Rebote DVD y Acoplamiento Sedoso (Sin Temblores)
+      // 2. Física de Rebote DVD y Acoplamiento Sedoso
       let activeCount = 0;
       let newlyLockedCount = 0;
       const currentLocked = new Set<number>();
@@ -216,11 +216,13 @@ export default function KineticTitle({
           p.x = p.targetX;
           p.y = p.targetY;
           p.rot = 0;
+          el.style.zIndex = '10';
         } else if (p.isDocking) {
           activeCount++;
+          el.style.zIndex = '35'; // Capa intermedia durante acoplamiento
 
-          // Deslizamiento sedoso con deceleración cuártica (Zero temblor)
-          p.dockProgress += 0.028; // ~0.6s de deslizamiento calmado
+          // Deslizamiento sedoso con deceleración cuártica
+          p.dockProgress += 0.028;
 
           if (p.dockProgress >= 1) {
             p.isDocking = false;
@@ -230,6 +232,7 @@ export default function KineticTitle({
             p.rot = 0;
             currentLocked.add(p.index);
             newlyLockedCount++;
+            el.style.zIndex = '10';
           } else {
             const ease = 1 - Math.pow(1 - p.dockProgress, 4);
             p.x = p.dockStartX + (p.targetX - p.dockStartX) * ease;
@@ -238,6 +241,7 @@ export default function KineticTitle({
           }
         } else if (p.isHit) {
           activeCount++;
+          el.style.zIndex = '40'; // Siempre en capa superior absoluta mientras vuela
 
           // Integrar velocidad
           p.x += p.vx;
@@ -272,7 +276,7 @@ export default function KineticTitle({
               p.dockStartX = p.x;
               p.dockStartY = p.y;
 
-              // Normalizar rotación a [-180, 180] para que solo gire lo mínimo indispensable (cero vueltas locas)
+              // Normalizar rotación a [-180, 180]
               let normalizedRot = p.rot % 360;
               if (normalizedRot > 180) normalizedRot -= 360;
               if (normalizedRot < -180) normalizedRot += 360;
@@ -287,14 +291,13 @@ export default function KineticTitle({
         let renderDx = p.x - p.targetX;
         let renderDy = p.y - p.targetY;
 
-        // Limpiar micro-fracciones al asentarse
         if (p.isLocked || Math.abs(renderDx) < 0.05) renderDx = 0;
         if (p.isLocked || Math.abs(renderDy) < 0.05) renderDy = 0;
 
         el.style.transform = `translate3d(${renderDx.toFixed(2)}px, ${renderDy.toFixed(2)}px, 0) rotate(${p.rot.toFixed(2)}deg)`;
       });
 
-      // Solo actualizar estado de React cuando cambie el número de letras bloqueadas (cero re-renders innecesarios)
+      // Solo actualizar estado de React cuando cambie el número de letras bloqueadas
       if (newlyLockedCount !== lockedIndicesCountRef.current) {
         lockedIndicesCountRef.current = newlyLockedCount;
         setLockedIndices(new Set(currentLocked));
@@ -304,7 +307,10 @@ export default function KineticTitle({
       if (particles.every((p) => p.isHit) && activeCount === 0 && currentLocked.size === totalLetters) {
         particles.forEach((p) => {
           const el = letterRefs.current.get(p.index);
-          if (el) el.style.transform = `none`;
+          if (el) {
+            el.style.transform = `none`;
+            el.style.zIndex = '10';
+          }
         });
         return;
       }
@@ -341,7 +347,7 @@ export default function KineticTitle({
           top: 0,
           display: starVisible ? 'block' : 'none',
           pointerEvents: 'none',
-          zIndex: 50,
+          zIndex: 60,
           willChange: 'transform',
         }}
         className="-translate-x-1/2 -translate-y-1/2"
@@ -397,10 +403,34 @@ export default function KineticTitle({
         </div>
       </div>
 
-      {/* Título Principal con Silueta Pura y Letras Cinéticas */}
+      {/* Capa 1 (Fondo): Moldes en Silueta Pura Tallada (z-index 0 fijo) */}
+      <div
+        className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none"
+        aria-hidden="true"
+      >
+        <div className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 ${className}`}>
+          {words.map((word, wordIdx) => (
+            <span key={`mold-word-${wordIdx}`} className="inline-flex gap-x-1.5 sm:gap-x-2.5">
+              {word.split('').map((char, charIdx) => (
+                <span
+                  key={`mold-slot-${wordIdx}-${charIdx}`}
+                  className="inline-flex items-center justify-center"
+                  style={{ minWidth: '0.68em', height: '1.2em' }}
+                >
+                  <span className="text-[#141824] select-none [text-shadow:_0_3px_6px_rgba(0,0,0,0.95),_0_1px_2px_rgba(0,0,0,1),_0_-1px_1px_rgba(255,255,255,0.08)]">
+                    {char}
+                  </span>
+                </span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Capa 2 (Frente): Letras Cinéticas Activas (z-index superior siempre por encima del molde) */}
       <h1
         ref={containerRef}
-        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 select-none relative ${className}`}
+        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
       >
         {words.map((word, wordIdx) => {
@@ -418,20 +448,10 @@ export default function KineticTitle({
                 return (
                   <span
                     key={`slot-${globalIdx}-${char}`}
-                    className="relative inline-flex items-center justify-center"
+                    className="inline-flex items-center justify-center relative"
                     style={{ minWidth: '0.68em', height: '1.2em' }}
                   >
-                    {/* Molde: Silueta Pura Tallada en Bajo Relieve */}
-                    <span
-                      className="absolute inset-0 flex items-center justify-center font-black select-none pointer-events-none"
-                      aria-hidden="true"
-                    >
-                      <span className="text-[#141824] select-none [text-shadow:_0_3px_6px_rgba(0,0,0,0.95),_0_1px_2px_rgba(0,0,0,1),_0_-1px_1px_rgba(255,255,255,0.08)]">
-                        {char}
-                      </span>
-                    </span>
-
-                    {/* Letra Cinética Activa */}
+                    {/* Letra Activa */}
                     <span
                       ref={(el) => {
                         if (el) letterRefs.current.set(globalIdx, el);
@@ -443,6 +463,7 @@ export default function KineticTitle({
                       }`}
                       style={{
                         willChange: 'transform',
+                        zIndex: isLocked ? 10 : 40,
                       }}
                     >
                       {char}
