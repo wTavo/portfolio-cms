@@ -57,14 +57,10 @@ export const i18n = {
     preview: 'Vista previa',
   },
   showcase: {
-    badge: 'Ingeniería y diseño de software',
-    heroTitle: 'Construyendo software con precisión, rendimiento y diseño',
-    heroSubtitle: 'Explora el trabajo, arquitectura y proyectos individuales de nuestros creadores.',
+    title: 'Portafolio Builder',
+    subtitle: 'Selecciona un portafolio para explorar proyectos y experiencia',
     explorePortfolio: 'Explorar portafolio',
-    featuredProjects: 'Proyectos destacados',
-    keySkills: 'Habilidades clave',
-    viewDetails: 'Ver detalles',
-    collaborativeWorks: 'Proyectos y tecnologías compartidas',
+    login: 'Acceso',
   },
   errors: {
     generic: 'Ocurrió un error inesperado. Intenta de nuevo',

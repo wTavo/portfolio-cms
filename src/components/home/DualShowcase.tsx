@@ -1,202 +1,193 @@
 /**
  * @file DualShowcase.tsx
- * @description Presentación dual interactiva de los dos creadores con animaciones fluidas y microinteracciones.
+ * @description Portal interactivo minimalista para el dúo de creadores con animación de título por scroll e iluminación reactiva.
  */
 
-import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
 import {
+  ArrowRightIcon,
   SparklesIcon,
-  ExternalLinkIcon,
-  MapPinIcon,
-  CodeIcon,
-  LayersIcon,
+  RocketIcon,
 } from '../icons/Icons';
 import {
   staggerContainerVariants,
   fadeSlideUpVariants,
-  cardHoverVariants,
 } from '../../lib/motion';
 
 interface DualShowcaseProps {
   data: ShowcaseData;
 }
 
-export default function DualShowcase({ data }: DualShowcaseProps) {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+/** Obtiene las iniciales o monograma a partir del nombre */
+function getMonogram(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
 
-  const { creators, sharedTechnologies } = data;
+export default function DualShowcase({ data }: DualShowcaseProps) {
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  const { scrollY } = useScroll();
+
+  // Transiciones basadas en el desplazamiento del scroll
+  const heroScale = useTransform(scrollY, [0, 200], [1, 0.85]);
+  const heroOpacity = useTransform(scrollY, [0, 250], [1, 0.15]);
+  const heroTranslateY = useTransform(scrollY, [0, 250], [0, -40]);
+
+  useEffect(() => {
+    return scrollY.on('change', (latest) => {
+      setIsScrolled(latest > 60);
+    });
+  }, [scrollY]);
+
+  const { creators } = data;
 
   return (
-    <motion.div
-      variants={staggerContainerVariants}
-      initial="hidden"
-      animate="visible"
-      className="w-full max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 space-y-16"
-    >
-      {/* Sección Principal: Dual Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10">
-        {creators.map((creator, index) => {
-          const isHovered = hoveredCard === creator.id;
-          return (
-            <motion.article
-              key={creator.id}
-              variants={fadeSlideUpVariants}
-              initial="rest"
-              whileHover="hover"
-              onHoverStart={() => setHoveredCard(creator.id)}
-              onHoverEnd={() => setHoveredCard(null)}
-              className="relative rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] p-6 sm:p-8 flex flex-col justify-between shadow-[var(--shadow-card)] transition-colors overflow-hidden group hover:border-[var(--color-brand-accent)]"
-            >
-              {/* Resplandor ambiental de fondo reactivo */}
-              <div
-                className={`absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[var(--radius-xl)] bg-radial from-[var(--color-brand-accent)]/10 via-transparent to-transparent`}
-                aria-hidden="true"
-              />
-
-              <div className="relative z-10 space-y-6">
-                {/* Cabecera del Creador */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-[var(--color-border-default)] shrink-0 bg-[var(--color-bg-subtle)] group-hover:border-[var(--color-brand-accent)] transition-colors">
-                      {creator.photoUrl ? (
-                        <img
-                          src={creator.photoUrl}
-                          alt={creator.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center font-bold text-xl text-[var(--color-brand-accent)]">
-                          {creator.name.charAt(0)}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)]">
-                        {creator.name}
-                      </h3>
-                      <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)]">
-                        {creator.role}
-                      </p>
-                      {creator.location && (
-                        <p className="text-[11px] text-[var(--color-text-muted)] flex items-center gap-1 mt-0.5">
-                          <MapPinIcon size={12} />
-                          <span>{creator.location}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {creator.statusBadge && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-status-success-bg)] text-[var(--color-status-success)] text-[11px] font-semibold self-start sm:self-auto">
-                      <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                      <span>{creator.statusBadge}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Biografía */}
-                <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">
-                  {creator.bio}
-                </p>
-
-                {/* Habilidades Principales */}
-                <div className="space-y-2">
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)] flex items-center gap-1.5">
-                    <CodeIcon size={14} />
-                    <span>{i18n.showcase.keySkills}</span>
-                  </h4>
-                  <div className="flex flex-wrap gap-1.5">
-                    {creator.skills.map((skill) => (
-                      <span
-                        key={skill}
-                        className="px-2.5 py-1 rounded-[var(--radius-sm)] text-xs font-medium bg-[var(--color-bg-subtle)] text-[var(--color-text-primary)] border border-[var(--color-border-subtle)]"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Proyectos Insignia */}
-                {creator.featuredProjects.length > 0 && (
-                  <div className="space-y-2.5 pt-2">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)] flex items-center gap-1.5">
-                      <SparklesIcon size={14} />
-                      <span>{i18n.showcase.featuredProjects}</span>
-                    </h4>
-                    <div className="space-y-2">
-                      {creator.featuredProjects.map((proj, pIdx) => (
-                        <div
-                          key={pIdx}
-                          className="p-3.5 rounded-[var(--radius-md)] bg-[var(--color-bg-base)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] transition-colors space-y-1"
-                        >
-                          <div className="flex items-center justify-between">
-                            <h5 className="text-xs sm:text-sm font-bold text-[var(--color-text-primary)]">
-                              {proj.title}
-                            </h5>
-                          </div>
-                          <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed line-clamp-2">
-                            {proj.description}
-                          </p>
-                          <div className="flex flex-wrap gap-1 pt-1">
-                            {proj.technologies.map((t) => (
-                              <span
-                                key={t}
-                                className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-[var(--color-bg-surface)] text-[var(--color-text-muted)]"
-                              >
-                                {t}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Botón de Acción Principal */}
-              <div className="relative z-10 pt-6 mt-6 border-t border-[var(--color-border-subtle)]">
-                <a
-                  href={`/${creator.slug}`}
-                  className="w-full min-h-(--size-button-height) px-6 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm font-semibold hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2 shadow-[var(--shadow-card)] cursor-pointer"
-                >
-                  <span>{i18n.showcase.explorePortfolio}</span>
-                  <ExternalLinkIcon size={14} />
-                </a>
-              </div>
-            </motion.article>
-          );
-        })}
-      </div>
-
-      {/* Barra de Tecnologías y Arquitectura Compartida */}
-      {sharedTechnologies.length > 0 && (
-        <motion.div
-          variants={fadeSlideUpVariants}
-          className="p-6 sm:p-8 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] text-center space-y-4"
-        >
-          <div className="flex items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
-            <LayersIcon size={16} className="text-[var(--color-brand-accent)]" />
-            <span>{i18n.showcase.collaborativeWorks}</span>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-center gap-2 max-w-3xl mx-auto">
-            {sharedTechnologies.map((tech) => (
-              <span
-                key={tech}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-default)] transition-colors"
+    <div className="w-full relative selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+      {/* Barra de Navegación Superior Fija (Aparece con animación suave al hacer scroll) */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
+          isScrolled
+            ? 'bg-[var(--color-bg-base)]/85 backdrop-blur-md border-b border-[var(--color-border-subtle)] py-3 shadow-[var(--shadow-card)]'
+            : 'bg-transparent border-b border-transparent py-5 pointer-events-none'
+        }`}
+      >
+        <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between pointer-events-auto">
+          <AnimatePresence>
+            {isScrolled ? (
+              <motion.a
+                href="/"
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
+                className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity"
               >
-                {tech}
-              </span>
-            ))}
-          </div>
-        </motion.div>
-      )}
-    </motion.div>
+                <div className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
+                  <RocketIcon size={14} className="text-[var(--color-brand-accent)]" />
+                </div>
+                <span>{i18n.showcase.title}</span>
+              </motion.a>
+            ) : (
+              <div />
+            )}
+          </AnimatePresence>
+
+          <a
+            href="/login"
+            className="min-h-(--size-touch-target) px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)]/80 backdrop-blur-xs border border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] hover:border-[var(--color-brand-accent)] transition-all inline-flex items-center shadow-[var(--shadow-card)]"
+          >
+            <span>{i18n.showcase.login}</span>
+          </a>
+        </div>
+      </header>
+
+      {/* Hero Central (Aparece en el centro al inicio del scroll y se desplaza hacia arriba con suavidad) */}
+      <motion.section
+        style={{
+          scale: heroScale,
+          opacity: heroOpacity,
+          y: heroTranslateY,
+        }}
+        className="min-h-[48vh] sm:min-h-[52vh] flex flex-col items-center justify-center text-center px-4 pt-16 pb-8 max-w-3xl mx-auto space-y-4"
+      >
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] text-xs font-semibold text-[var(--color-text-secondary)] shadow-[var(--shadow-card)]">
+          <SparklesIcon size={14} className="text-[var(--color-brand-accent)]" />
+          <span>Portales de ingeniería</span>
+        </div>
+
+        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-[1.1]">
+          {i18n.showcase.title}
+        </h1>
+
+        <p className="text-sm sm:text-base text-[var(--color-text-secondary)] max-w-md mx-auto leading-relaxed">
+          {i18n.showcase.subtitle}
+        </p>
+
+        {/* Indicador animado sutil de scroll */}
+        <div className="pt-6 animate-bounce opacity-60">
+          <span className="text-xs text-[var(--color-text-muted)] font-mono tracking-widest uppercase">
+            ↓ Scroll
+          </span>
+        </div>
+      </motion.section>
+
+      {/* Sección de Tarjetas Duales Minimalistas (Gateways) */}
+      <motion.main
+        variants={staggerContainerVariants}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: '-50px' }}
+        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-28"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+          {creators.map((creator) => {
+            const isHovered = hoveredId === creator.id;
+            const monogram = getMonogram(creator.name);
+
+            return (
+              <motion.a
+                key={creator.id}
+                href={`/${creator.slug}`}
+                variants={fadeSlideUpVariants}
+                onHoverStart={() => setHoveredId(creator.id)}
+                onHoverEnd={() => setHoveredId(null)}
+                whileHover={{ y: -4, scale: 1.01 }}
+                transition={{ duration: 0.25, ease: [0, 0, 0, 1] }}
+                className="group relative flex flex-col justify-between p-8 sm:p-10 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-brand-accent)] transition-all overflow-hidden cursor-pointer block"
+              >
+                {/* Resplandor ambiental suave al posar el cursor */}
+                <div
+                  className={`absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[var(--radius-xl)] bg-radial from-[var(--color-brand-accent)]/15 via-transparent to-transparent`}
+                  aria-hidden="true"
+                />
+
+                {/* Contenido Principal de la Tarjeta */}
+                <div className="relative z-10 space-y-6">
+                  {/* Monograma / Glifo de Identidad */}
+                  <div className="flex items-center justify-between">
+                    <div className="w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] flex items-center justify-center font-mono font-bold text-sm text-[var(--color-brand-accent)] group-hover:border-[var(--color-brand-accent)] group-hover:bg-[var(--color-bg-surface)] transition-colors">
+                      {monogram}
+                    </div>
+
+                    <span className="text-xs font-mono text-[var(--color-text-muted)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                      /{creator.slug}
+                    </span>
+                  </div>
+
+                  {/* Nombre y Especialidad */}
+                  <div className="space-y-1.5 pt-2">
+                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                      {creator.name}
+                    </h2>
+                    <p className="text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
+                      {creator.role}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Pie con Acción Interactiva */}
+                <div className="relative z-10 pt-8 mt-8 border-t border-[var(--color-border-subtle)] flex items-center justify-between">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                    {i18n.showcase.explorePortfolio}
+                  </span>
+
+                  <div className="w-8 h-8 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-text-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)] group-hover:translate-x-1 transition-all">
+                    <ArrowRightIcon size={14} />
+                  </div>
+                </div>
+              </motion.a>
+            );
+          })}
+        </div>
+      </motion.main>
+    </div>
   );
 }
