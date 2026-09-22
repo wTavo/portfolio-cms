@@ -1,10 +1,11 @@
 ---
 /**
  * @file index.astro
- * @description Panel principal del Superadmin para gestionar usuarios e invitaciones.
+ * @description Panel principal del Superadmin con gestión reactiva de usuarios.
  */
 
 import SEOHead from '../../components/ui/SEOHead.astro';
+import UserManager from '../../components/admin/UserManager';
 import { i18n } from '../../lib/i18n/es';
 import '../../styles/global.css';
 
@@ -22,13 +23,13 @@ const currentUser = Astro.locals.user;
     />
   </head>
   <body class="min-h-screen flex flex-col bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased">
-    <header class="border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] py-4 px-6">
+    <header class="border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] py-4 px-6 sticky top-0 z-30">
       <div class="max-w-(--container-max-w) mx-auto flex items-center justify-between">
-        <div>
-          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-status-error)]">
-            Superadministrador
+        <div class="flex items-center gap-3">
+          <span class="px-2.5 py-1 rounded-[var(--radius-sm)] bg-[var(--color-status-error-bg)] text-[var(--color-status-error)] text-xs font-bold uppercase tracking-wider">
+            Superadmin
           </span>
-          <h1 class="text-lg font-bold">Control de Plataforma</h1>
+          <h1 class="text-base sm:text-lg font-bold">Control de Plataforma</h1>
         </div>
 
         <div class="flex items-center gap-4">
@@ -46,16 +47,8 @@ const currentUser = Astro.locals.user;
     </header>
 
     <main class="flex-1 max-w-(--container-max-w) mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
-      <div class="p-8 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)]">
-        <h2 class="text-xl font-bold mb-2">{i18n.admin.users}</h2>
-        <p class="text-sm text-[var(--color-text-secondary)] mb-6">
-          Da de alta nuevos usuarios enviando invitaciones automáticas por correo electrónico.
-        </p>
-
-        <div class="p-4 rounded-[var(--radius-md)] bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-xs text-[var(--color-text-muted)]">
-          💡 En el Paso 5 conectaremos el formulario reactivo completo de creación y suspensión de usuarios.
-        </div>
-      </div>
+      <!-- Isla interactiva de React con client:load -->
+      <UserManager client:load />
     </main>
 
     <script>
