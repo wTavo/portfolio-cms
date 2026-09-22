@@ -14,7 +14,7 @@ const showcaseData = await getShowcaseData();
 ---
 
 <!doctype html>
-<html lang="es" class="scroll-smooth">
+<html lang="es" class="scroll-smooth snap-y snap-mandatory overflow-x-hidden">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -23,7 +23,7 @@ const showcaseData = await getShowcaseData();
       description={i18n.showcase.subtitle}
     />
   </head>
-  <body class="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased relative overflow-x-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+  <body class="bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased relative selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
     <!-- Gradiente ambiental sutil de iluminación de fondo -->
     <div
       class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-radial from-[var(--color-brand-accent)]/10 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none -z-10"
@@ -34,10 +34,5 @@ const showcaseData = await getShowcaseData();
     <main>
       <DualShowcase client:load data={showcaseData} />
     </main>
-
-    <!-- Pie de Página -->
-    <footer class="border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] py-8 text-center text-xs text-[var(--color-text-muted)]">
-      <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
-    </footer>
   </body>
 </html>

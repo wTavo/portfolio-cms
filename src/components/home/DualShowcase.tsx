@@ -1,6 +1,6 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo con transición fluida bidireccional por scroll entre la pantalla de bienvenida y los portafolios.
+ * @description Portal interactivo con transición fluida bidireccional por scroll (1 solo gesto) entre la pantalla de bienvenida y los portafolios.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -29,65 +29,120 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   const { scrollY } = useScroll();
 
-  // El título central se desvanece por completo antes de los 140px
+  // El título central se desvanece por completo antes de los 120px
   const heroScale = useTransform(scrollY, [0, 140], [1, 0.92]);
-  const heroOpacity = useTransform(scrollY, [0, 120], [1, 0]);
+  const heroOpacity = useTransform(scrollY, [0, 100], [1, 0]);
   const heroTranslateY = useTransform(scrollY, [0, 140], [0, -30]);
   const indicatorOpacity = useTransform(scrollY, [0, 60], [1, 0]);
+
+  // Desplazamiento preciso entre secciones
+  const goToSection = useCallback((sectionIndex: number) => {
+    if (sectionIndex === 0) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const el = document.getElementById('portfolios');
+      if (el) {
+        window.scrollTo({ top: el.offsetTop, behavior: 'smooth' });
+      }
+    }
+  }, []);
 
   // La barra de navegación y su título solo aparecen cuando el central ya desapareció por completo
   useEffect(() => {
     return scrollY.on('change', (latest) => {
-      setIsScrolled(latest > 180);
+      const vh = window.innerHeight || 800;
+      setIsScrolled(latest > vh * 0.4);
     });
   }, [scrollY]);
 
-  // Desplazamiento suave hacia arriba (pantalla de bienvenida / título)
-  const scrollToHero = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  // Desplazamiento suave hacia abajo (sección de portafolios)
-  const scrollToPortfolios = useCallback(() => {
-    const target = document.getElementById('portfolios');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
-  // Transición suave bidireccional mediante rueda del ratón
+  // Transición suave instantánea en un solo gesto de scroll (rueda, teclado y táctil)
   useEffect(() => {
     let isTransitioning = false;
+    let touchStartY = 0;
 
+    const lockTransition = () => {
+      isTransitioning = true;
+      setTimeout(() => {
+        isTransitioning = false;
+      }, 750);
+    };
+
+    // 1. Manejo de rueda del ratón (Mouse wheel)
     const handleWheel = (e: WheelEvent) => {
       if (isTransitioning) return;
 
       const currentScroll = window.scrollY;
       const vh = window.innerHeight;
+      const midPoint = vh * 0.45;
 
-      // 1. Scroll hacia abajo desde el hero de bienvenida
-      if (currentScroll < vh * 0.4 && e.deltaY > 18) {
-        isTransitioning = true;
-        scrollToPortfolios();
-        setTimeout(() => {
-          isTransitioning = false;
-        }, 850);
+      // Scroll hacia abajo desde la pantalla 1 -> ir a pantalla 2
+      if (currentScroll < midPoint && e.deltaY > 10) {
+        lockTransition();
+        goToSection(1);
       }
-      // 2. Scroll hacia arriba regresando desde la sección de portafolios al título
-      else if (currentScroll > 120 && currentScroll <= vh * 1.15 && e.deltaY < -18) {
-        isTransitioning = true;
-        scrollToHero();
-        setTimeout(() => {
-          isTransitioning = false;
-        }, 850);
+      // Scroll hacia arriba desde la pantalla 2 -> regresar a pantalla 1
+      else if (currentScroll >= midPoint && e.deltaY < -10) {
+        lockTransition();
+        goToSection(0);
+      }
+    };
+
+    // 2. Manejo de teclado (Flechas y Espacio)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isTransitioning) return;
+
+      const currentScroll = window.scrollY;
+      const vh = window.innerHeight;
+      const midPoint = vh * 0.45;
+
+      if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentScroll < midPoint) {
+        e.preventDefault();
+        lockTransition();
+        goToSection(1);
+      } else if (['ArrowUp', 'PageUp'].includes(e.key) && currentScroll >= midPoint) {
+        e.preventDefault();
+        lockTransition();
+        goToSection(0);
+      }
+    };
+
+    // 3. Manejo táctil (Swipe)
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isTransitioning) return;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffY = touchStartY - touchEndY;
+      const currentScroll = window.scrollY;
+      const vh = window.innerHeight;
+      const midPoint = vh * 0.45;
+
+      // Deslizar hacia arriba (scroll down)
+      if (diffY > 40 && currentScroll < midPoint) {
+        lockTransition();
+        goToSection(1);
+      }
+      // Deslizar hacia abajo (scroll up)
+      else if (diffY < -40 && currentScroll >= midPoint) {
+        lockTransition();
+        goToSection(0);
       }
     };
 
     window.addEventListener('wheel', handleWheel, { passive: true });
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
     return () => {
       window.removeEventListener('wheel', handleWheel);
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [scrollToHero, scrollToPortfolios]);
+  }, [goToSection]);
 
   const { creators } = data;
 
@@ -108,7 +163,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               {isScrolled && (
                 <motion.button
                   type="button"
-                  onClick={scrollToHero}
+                  onClick={() => goToSection(0)}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
@@ -135,10 +190,10 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </div>
       </header>
 
-      {/* Pantalla 1: Hero de Bienvenida (100vh exclusivo para el título) */}
+      {/* Pantalla 1: Hero de Bienvenida (100vh exacto) */}
       <section
         id="hero"
-        className="h-screen min-h-[600px] flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto relative select-none"
+        className="h-screen min-h-[580px] snap-start snap-always flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto relative select-none"
       >
         <motion.div
           style={{
@@ -160,9 +215,9 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         {/* Indicador interactivo de scroll hacia abajo */}
         <motion.button
           type="button"
-          onClick={scrollToPortfolios}
+          onClick={() => goToSection(1)}
           style={{ opacity: indicatorOpacity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1"
           aria-label="Desplazarse a los portafolios"
         >
           <span className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-brand-accent)] transition-colors">
@@ -178,76 +233,83 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </motion.button>
       </section>
 
-      {/* Pantalla 2: Sección de Portafolios (Aparece fluidamente al scrollear) */}
+      {/* Pantalla 2: Sección de Portafolios (100vh exacto con tarjetas y pie de página integrado) */}
       <section
         id="portfolios"
-        className="min-h-screen flex flex-col justify-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32"
+        className="h-screen min-h-[580px] snap-start snap-always flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-6"
       >
-        <motion.div
-          variants={staggerContainerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-50px' }}
-          className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full"
-        >
-          {creators.map((creator) => {
-            const monogram = getMonogram(creator.name);
+        <div className="flex-1 flex flex-col justify-center">
+          <motion.div
+            variants={staggerContainerVariants}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: '-40px' }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full max-w-4xl mx-auto"
+          >
+            {creators.map((creator) => {
+              const monogram = getMonogram(creator.name);
 
-            return (
-              <motion.a
-                key={creator.id}
-                href={`/${creator.slug}`}
-                variants={fadeSlideUpVariants}
-                onHoverStart={() => setHoveredId(creator.id)}
-                onHoverEnd={() => setHoveredId(null)}
-                whileHover={{ y: -6, scale: 1.015 }}
-                transition={{ duration: 0.25, ease: [0, 0, 0, 1] }}
-                className="group relative flex flex-col justify-between p-8 sm:p-10 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-brand-accent)] transition-all overflow-hidden cursor-pointer block"
-              >
-                {/* Resplandor ambiental suave reactivo al cursor */}
-                <div
-                  className="absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[var(--radius-xl)] bg-radial from-[var(--color-brand-accent)]/15 via-transparent to-transparent"
-                  aria-hidden="true"
-                />
+              return (
+                <motion.a
+                  key={creator.id}
+                  href={`/${creator.slug}`}
+                  variants={fadeSlideUpVariants}
+                  onHoverStart={() => setHoveredId(creator.id)}
+                  onHoverEnd={() => setHoveredId(null)}
+                  whileHover={{ y: -6, scale: 1.015 }}
+                  transition={{ duration: 0.25, ease: [0, 0, 0, 1] }}
+                  className="group relative flex flex-col justify-between p-7 sm:p-9 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-brand-accent)] transition-all overflow-hidden cursor-pointer block"
+                >
+                  {/* Resplandor ambiental suave reactivo al cursor */}
+                  <div
+                    className="absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[var(--radius-xl)] bg-radial from-[var(--color-brand-accent)]/15 via-transparent to-transparent"
+                    aria-hidden="true"
+                  />
 
-                {/* Contenido Principal de la Tarjeta */}
-                <div className="relative z-10 space-y-6">
-                  {/* Monograma / Glifo de Identidad */}
-                  <div className="flex items-center justify-between">
-                    <div className="w-12 h-12 rounded-[var(--radius-lg)] bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] flex items-center justify-center font-mono font-bold text-sm text-[var(--color-brand-accent)] group-hover:border-[var(--color-brand-accent)] group-hover:bg-[var(--color-bg-surface)] transition-colors">
-                      {monogram}
+                  {/* Contenido Principal de la Tarjeta */}
+                  <div className="relative z-10 space-y-5">
+                    {/* Monograma / Glifo de Identidad */}
+                    <div className="flex items-center justify-between">
+                      <div className="w-11 h-11 rounded-[var(--radius-lg)] bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] flex items-center justify-center font-mono font-bold text-sm text-[var(--color-brand-accent)] group-hover:border-[var(--color-brand-accent)] group-hover:bg-[var(--color-bg-surface)] transition-colors">
+                        {monogram}
+                      </div>
+
+                      <span className="text-xs font-mono text-[var(--color-text-muted)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                        /{creator.slug}
+                      </span>
                     </div>
 
-                    <span className="text-xs font-mono text-[var(--color-text-muted)] group-hover:text-[var(--color-brand-accent)] transition-colors">
-                      /{creator.slug}
+                    {/* Nombre y Especialidad */}
+                    <div className="space-y-1 pt-1">
+                      <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                        {creator.name}
+                      </h2>
+                      <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
+                        {creator.role}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Pie con Acción Interactiva */}
+                  <div className="relative z-10 pt-6 mt-6 border-t border-[var(--color-border-subtle)] flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                      {i18n.showcase.explorePortfolio}
                     </span>
-                  </div>
 
-                  {/* Nombre y Especialidad */}
-                  <div className="space-y-1.5 pt-2">
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
-                      {creator.name}
-                    </h2>
-                    <p className="text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
-                      {creator.role}
-                    </p>
+                    <div className="w-7 h-7 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-text-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)] group-hover:translate-x-1 transition-all">
+                      <ArrowRightIcon size={13} />
+                    </div>
                   </div>
-                </div>
+                </motion.a>
+              );
+            })}
+          </motion.div>
+        </div>
 
-                {/* Pie con Acción Interactiva */}
-                <div className="relative z-10 pt-8 mt-8 border-t border-[var(--color-border-subtle)] flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
-                    {i18n.showcase.explorePortfolio}
-                  </span>
-
-                  <div className="w-8 h-8 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] flex items-center justify-center text-[var(--color-text-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)] group-hover:translate-x-1 transition-all">
-                    <ArrowRightIcon size={14} />
-                  </div>
-                </div>
-              </motion.a>
-            );
-          })}
-        </motion.div>
+        {/* Pie de Página Integrado en la 2da Pantalla */}
+        <footer className="pt-4 text-center text-[11px] text-[var(--color-text-muted)] opacity-70">
+          <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
+        </footer>
       </section>
     </div>
   );
