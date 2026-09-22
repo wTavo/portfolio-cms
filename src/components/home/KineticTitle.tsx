@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético con moldes y letras anclados 100% en el mismo nodo de slot (cero desalineación), sintaxis de código < ... /> y física DVD.
+ * @description Título cinético universal (sin etiquetas de código). Escritura tipográfica limpia, pulso de confirmación, corte por destello cósmico SVG y física DVD con acoplamiento sedoso en moldes exactos.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -44,11 +44,10 @@ export default function KineticTitle({
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
   const lockedIndicesCountRef = useRef(0);
 
-  // Estados de código y tipeo
+  // Estados de tipeo tipográfico universal
   const [typedCount, setTypedCount] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);
-  const [enterPressed, setEnterPressed] = useState(false);
-  const [codeTagsVisible, setCodeTagsVisible] = useState(true);
+  const [titleConfirmed, setTitleConfirmed] = useState(false);
 
   // Estado de la estrella SVG
   const [starVisible, setStarVisible] = useState(false);
@@ -80,12 +79,11 @@ export default function KineticTitle({
 
   const totalLetters = allLetters.length;
 
-  // 1. Fase de Escritura en Código `< ... />` y Confirmación con Enter
+  // 1. Fase de Escritura Tipográfica Universal (Sin Tags)
   useEffect(() => {
     if (prefersReducedMotion) {
       setTypedCount(totalLetters);
       setCursorVisible(false);
-      setCodeTagsVisible(false);
       return;
     }
 
@@ -96,23 +94,20 @@ export default function KineticTitle({
       if (current >= totalLetters) {
         clearInterval(typeInterval);
 
-        // Confirmar con Enter al finalizar
+        // Pulso de asentamiento / confirmación del título
         setTimeout(() => {
-          setEnterPressed(true);
-
-          // Compilar y desvanecer etiquetas de código
+          setTitleConfirmed(true);
           setTimeout(() => {
-            setCodeTagsVisible(false);
             setCursorVisible(false);
-          }, 450);
-        }, 350);
+          }, 350);
+        }, 300);
       }
     }, 55);
 
     return () => clearInterval(typeInterval);
   }, [totalLetters, prefersReducedMotion]);
 
-  // 2. Motor de Física y Corte por Estrella
+  // 2. Motor de Física y Corte por Destello Cósmico SVG
   useEffect(() => {
     if (prefersReducedMotion) return;
 
@@ -160,7 +155,7 @@ export default function KineticTitle({
     let starSpeed = 26;
     let starActive = false;
 
-    // Lanzar estrella tras compilar y confirmar el título (~2.1s)
+    // Lanzar destello tras completar y asentar el título (~1.9s)
     const starTimer = setTimeout(() => {
       if (!isRunning) return;
       measureTargets();
@@ -175,7 +170,7 @@ export default function KineticTitle({
       setStarVisible(true);
       lockedIndicesCountRef.current = 0;
       setLockedIndices(new Set());
-    }, 2100);
+    }, 1900);
 
     const loop = (currentTime: number) => {
       if (!isRunning) return;
@@ -189,7 +184,7 @@ export default function KineticTitle({
       const minY = 65;
       const maxY = screenH - letterH - 16;
 
-      // Movimiento de la estrella SVG
+      // Movimiento del destello cósmico
       if (starActive) {
         starX += starSpeed;
 
@@ -354,7 +349,7 @@ export default function KineticTitle({
 
   return (
     <div className="relative w-full flex items-center justify-center">
-      {/* Estrella Fugaz Galáctica SVG */}
+      {/* Destello Cósmico SVG de Alta Definición */}
       <div
         ref={starRef}
         style={{
@@ -410,23 +405,12 @@ export default function KineticTitle({
         </div>
       </div>
 
-      {/* Título Principal: Cada Molde y Letra comparten exactamente el mismo contenedor de Slot */}
+      {/* Título Principal Universal con Moldes Integrados en la Misma Ranura */}
       <h1
         ref={containerRef}
-        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-10 select-none relative ${className}`}
+        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-10 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
       >
-        {/* Etiqueta de Apertura de Código `<` (Flotante a la izquierda sin desplazar los moldes) */}
-        {codeTagsVisible && (
-          <span
-            className="font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none -mr-2 sm:-mr-4"
-            aria-hidden="true"
-          >
-            &lt;
-          </span>
-        )}
-
-        {/* Palabras y Ranuras de Letras */}
         {words.map((word, wordIdx) => {
           return (
             <span key={`word-${wordIdx}`} className="inline-flex gap-x-1.5 sm:gap-x-2.5">
@@ -447,7 +431,7 @@ export default function KineticTitle({
                     className="inline-flex items-center justify-center relative"
                     style={{ minWidth: '0.68em', height: '1.2em' }}
                   >
-                    {/* Molde: Silueta Pura Tallada (Exactamente debajo de su letra) */}
+                    {/* Molde: Silueta Pura Tallada en Bajo Relieve */}
                     <span
                       className="absolute inset-0 flex items-center justify-center font-black select-none pointer-events-none z-0"
                       aria-hidden="true"
@@ -457,7 +441,7 @@ export default function KineticTitle({
                       </span>
                     </span>
 
-                    {/* Letra Activa (Sobre su propio molde) */}
+                    {/* Letra Activa */}
                     <span
                       ref={(el) => {
                         if (el) letterRefs.current.set(globalIdx, el);
@@ -477,11 +461,11 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* Cursor de Escritura de Terminal */}
+                    {/* Cursor de Escritura Tipográfica */}
                     {isCurrentCursor && (
                       <span
                         className={`absolute -right-1 sm:-right-2 top-1 bottom-1 w-[3px] bg-[var(--color-brand-accent)] rounded-full ${
-                          enterPressed
+                          titleConfirmed
                             ? 'scale-y-125 shadow-[0_0_16px_var(--color-brand-accent)] bg-white'
                             : 'animate-pulse shadow-[0_0_8px_var(--color-brand-accent)]'
                         } transition-all duration-200 pointer-events-none z-50`}
@@ -493,23 +477,6 @@ export default function KineticTitle({
             </span>
           );
         })}
-
-        {/* Etiqueta de Cierre de Código `/>` (Flotante a la derecha con badge Enter) */}
-        {codeTagsVisible && (
-          <span
-            className="font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none relative -ml-2 sm:-ml-4"
-            aria-hidden="true"
-          >
-            /&gt;
-
-            {/* Badge Flotante [Enter ↵] */}
-            {enterPressed && (
-              <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-[var(--radius-sm)] bg-cyan-500/20 border border-cyan-400/50 text-[10px] font-mono text-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.5)] animate-bounce">
-                Enter ↵
-              </span>
-            )}
-          </span>
-        )}
       </h1>
     </div>
   );
