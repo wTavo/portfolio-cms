@@ -1,6 +1,6 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo profesional para el dúo de creadores con navegación fija unificada, animación suave de título por scroll y tarjetas minimalistas.
+ * @description Portal interactivo del dúo de creadores. Pantalla de bienvenida a pantalla completa (`100vh`) y revelación fluida de portafolios al scrollear.
  */
 
 import React, { useState, useEffect } from 'react';
@@ -29,14 +29,15 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   const { scrollY } = useScroll();
 
-  // Animaciones de escala, opacidad y elevación del Hero basadas en el scroll
-  const heroScale = useTransform(scrollY, [0, 180], [1, 0.9]);
-  const heroOpacity = useTransform(scrollY, [0, 220], [1, 0]);
-  const heroTranslateY = useTransform(scrollY, [0, 220], [0, -30]);
+  // Animaciones continuas de transformación basadas en el desplazamiento vertical
+  const heroScale = useTransform(scrollY, [0, 300], [1, 0.88]);
+  const heroOpacity = useTransform(scrollY, [0, 320], [1, 0]);
+  const heroTranslateY = useTransform(scrollY, [0, 320], [0, -50]);
+  const indicatorOpacity = useTransform(scrollY, [0, 100], [1, 0]);
 
   useEffect(() => {
     return scrollY.on('change', (latest) => {
-      setIsScrolled(latest > 50);
+      setIsScrolled(latest > 100);
     });
   }, [scrollY]);
 
@@ -44,25 +45,25 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   return (
     <div className="w-full relative selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
-      {/* Barra de Navegación Superior Única (Sticky / Fixed) */}
+      {/* Barra de Navegación Superior Fija */}
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
           isScrolled
             ? 'bg-[var(--color-bg-base)]/85 backdrop-blur-md border-b border-[var(--color-border-subtle)] py-3 shadow-[var(--shadow-card)]'
-            : 'bg-transparent border-b border-transparent py-4'
+            : 'bg-transparent border-b border-transparent py-5'
         }`}
       >
         <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Título en la barra superior que entra con animación al scrollear */}
+          {/* Título en la barra superior animado que entra suavemente al scrollear */}
           <div className="min-w-[180px] flex items-center">
             <AnimatePresence>
               {isScrolled && (
                 <motion.a
                   href="/"
-                  initial={{ opacity: 0, y: -8 }}
+                  initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.2, ease: [0.2, 0, 0, 1] }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
                   className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity"
                 >
                   <div className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
@@ -84,31 +85,50 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </div>
       </header>
 
-      {/* Hero Central (Limpio, sin badges ni elementos encima del título) */}
+      {/* Pantalla 1: Hero Inicial a Pantalla Completa (100vh) */}
       <motion.section
         style={{
           scale: heroScale,
           opacity: heroOpacity,
           y: heroTranslateY,
         }}
-        className="min-h-[42vh] sm:min-h-[48vh] flex flex-col items-center justify-center text-center px-4 pt-20 pb-6 max-w-3xl mx-auto space-y-3"
+        className="h-screen min-h-[600px] flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto relative select-none"
       >
-        <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-[1.1]">
-          {i18n.showcase.title}
-        </h1>
+        <div className="space-y-4">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-[1.08]">
+            {i18n.showcase.title}
+          </h1>
 
-        <p className="text-base sm:text-lg text-[var(--color-text-secondary)] max-w-lg mx-auto leading-relaxed pt-1">
-          {i18n.showcase.subtitle}
-        </p>
+          <p className="text-base sm:text-xl text-[var(--color-text-secondary)] max-w-xl mx-auto leading-relaxed">
+            {i18n.showcase.subtitle}
+          </p>
+        </div>
+
+        {/* Indicador minimalista sutil de scroll en la parte inferior */}
+        <motion.div
+          style={{ opacity: indicatorOpacity }}
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none"
+        >
+          <span className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)] opacity-70">
+            Scroll
+          </span>
+          <div className="w-5 h-8 rounded-full border border-[var(--color-border-default)] flex items-start justify-center p-1">
+            <motion.div
+              animate={{ y: [0, 10, 0] }}
+              transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+              className="w-1 h-2 rounded-full bg-[var(--color-brand-accent)]"
+            />
+          </div>
+        </motion.div>
       </motion.section>
 
-      {/* Sección de Tarjetas Duales Minimalistas (Gateways) */}
+      {/* Pantalla 2: Portafolios (Aparecen al scrollear hacia abajo) */}
       <motion.section
         variants={staggerContainerVariants}
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, margin: '-40px' }}
-        className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pb-24"
+        viewport={{ once: true, margin: '-60px' }}
+        className="min-h-screen flex flex-col justify-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32"
       >
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
           {creators.map((creator) => {
@@ -121,7 +141,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                 variants={fadeSlideUpVariants}
                 onHoverStart={() => setHoveredId(creator.id)}
                 onHoverEnd={() => setHoveredId(null)}
-                whileHover={{ y: -4, scale: 1.01 }}
+                whileHover={{ y: -6, scale: 1.015 }}
                 transition={{ duration: 0.25, ease: [0, 0, 0, 1] }}
                 className="group relative flex flex-col justify-between p-8 sm:p-10 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-brand-accent)] transition-all overflow-hidden cursor-pointer block"
               >
