@@ -1,0 +1,42 @@
+---
+/**
+ * @file PublicFooter.astro
+ * @description Pie de página accesible para el portfolio con enlaces sociales y derechos.
+ */
+
+interface Props {
+  name: string;
+  profession?: string;
+  socialLinks?: Record<string, string>;
+}
+
+const { name, socialLinks = {} } = Astro.props;
+const currentYear = new Date().getFullYear();
+---
+
+<footer class="w-full border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] py-12">
+  <div class="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+    <div class="text-center sm:text-left">
+      <p class="text-sm font-semibold text-[var(--color-text-primary)]">{name}</p>
+      <p class="text-xs text-[var(--color-text-muted)] mt-1">
+        © {currentYear} • Desarrollado con Portfolio Builder CMS
+      </p>
+    </div>
+
+    {Object.keys(socialLinks).length > 0 && (
+      <div class="flex items-center gap-4">
+        {Object.entries(socialLinks).map(([network, url]) => (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="min-h-(--size-touch-target) min-w-(--size-touch-target) inline-flex items-center justify-center text-xs font-medium uppercase tracking-wider text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+            aria-label={`Visitar perfil de ${network}`}
+          >
+            {network}
+          </a>
+        ))}
+      </div>
+    )}
+  </div>
+</footer>

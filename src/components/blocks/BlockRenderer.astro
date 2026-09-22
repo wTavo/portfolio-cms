@@ -1,0 +1,49 @@
+---
+/**
+ * @file BlockRenderer.astro
+ * @description Despachador central de bloques visuales. Mapea dinámicamente el type y variant al componente correspondiente.
+ */
+
+import type { SectionBlock } from '../../lib/types/portfolio';
+import HeroMinimal from './Hero/HeroMinimal.astro';
+import AboutDefault from './About/AboutDefault.astro';
+import ExperienceTimeline from './Experience/ExperienceTimeline.astro';
+import ProjectsCards from './Projects/ProjectsCards.astro';
+import SkillsBadges from './Skills/SkillsBadges.astro';
+import ContactSimple from './Contact/ContactSimple.astro';
+
+interface Props {
+  block: SectionBlock;
+}
+
+const { block } = Astro.props;
+
+if (!block.visible) {
+  return null;
+}
+---
+
+{/* Mapeo dinámico y desacoplado por tipo y variante */}
+{block.type === 'hero' && block.variant === 'minimal' && (
+  <HeroMinimal data={block.data as any} />
+)}
+
+{block.type === 'about' && (
+  <AboutDefault title={block.title} data={block.data as any} />
+)}
+
+{block.type === 'experience' && block.variant === 'timeline' && (
+  <ExperienceTimeline title={block.title} data={block.data as any} />
+)}
+
+{block.type === 'projects' && block.variant === 'cards' && (
+  <ProjectsCards title={block.title} data={block.data as any} />
+)}
+
+{block.type === 'skills' && block.variant === 'badges' && (
+  <SkillsBadges title={block.title} data={block.data as any} />
+)}
+
+{block.type === 'contact' && block.variant === 'simple' && (
+  <ContactSimple title={block.title} data={block.data as any} />
+)}

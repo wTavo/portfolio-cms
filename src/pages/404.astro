@@ -1,0 +1,36 @@
+---
+/**
+ * @file 404.astro
+ * @description Página de error 404 accesible y con diseño amigable.
+ */
+
+import SEOHead from '../components/ui/SEOHead.astro';
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <SEOHead
+      title="Página no encontrada — Portfolio Builder"
+      description="El portfolio o recurso que buscas no existe o ha sido movido."
+    />
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-[var(--color-bg-base)] text-[var(--color-text-primary)] px-4">
+    <div class="text-center max-w-md p-8 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-modal)]">
+      <span class="text-5xl font-extrabold text-[var(--color-brand-accent)] block mb-4">404</span>
+      <h1 class="text-2xl font-bold tracking-tight mb-2">Página no encontrada</h1>
+      <p class="text-sm text-[var(--color-text-secondary)] mb-6 leading-relaxed">
+        El enlace que intentas abrir no existe, está despublicado o fue escrito incorrectamente.
+      </p>
+      <a
+        href="/"
+        class="min-h-(--size-touch-target) inline-flex items-center justify-center px-6 py-3 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm font-semibold hover:opacity-90 transition-opacity"
+      >
+        Volver al inicio
+      </a>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,53 @@
+---
+/**
+ * @file PublicLayout.astro
+ * @description Layout base público para renderizar cualquier portfolio publicado.
+ */
+
+import SEOHead from '../components/ui/SEOHead.astro';
+import PublicNavbar from '../components/layout/PublicNavbar.astro';
+import PublicFooter from '../components/layout/PublicFooter.astro';
+import type { ProfileData } from '../lib/types/portfolio';
+import '../styles/global.css';
+
+interface Props {
+  profile: ProfileData;
+}
+
+const { profile } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <SEOHead
+      title={profile.metaTitle || `${profile.name} — ${profile.profession}`}
+      description={profile.metaDescription || profile.bio}
+      ogImage={profile.ogImageUrl || profile.photoUrl}
+      author={profile.name}
+    />
+  </head>
+  <body class="min-h-screen flex flex-col bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased">
+    <!-- Skip to Content accesible -->
+    <a
+      href="#main-content"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[var(--color-brand-primary)] focus:text-[var(--color-brand-on-primary)] focus:rounded-[var(--radius-md)]"
+    >
+      Ir al contenido principal
+    </a>
+
+    <PublicNavbar brandName={profile.name} />
+
+    <main id="main-content" class="flex-1 flex flex-col">
+      <slot />
+    </main>
+
+    <PublicFooter
+      name={profile.name}
+      profession={profile.profession}
+      socialLinks={profile.socialLinks}
+    />
+  </body>
+</html>

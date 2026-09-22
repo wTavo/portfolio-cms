@@ -1,0 +1,76 @@
+---
+/**
+ * @file ProjectsCards.astro
+ * @description Bloque Proyectos variante 'cards': cuadrícula de tarjetas interactivas con enlaces y etiquetas.
+ */
+
+import SectionContainer from '../../ui/SectionContainer.astro';
+import type { ProjectsBlockData } from '../../../lib/types/portfolio';
+
+interface Props {
+  title?: string;
+  data: ProjectsBlockData;
+}
+
+const { title = 'Proyectos destacados', data } = Astro.props;
+---
+
+<SectionContainer id="proyectos" title={title}>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+    {data.items.map((project) => (
+      <article class="flex flex-col justify-between p-6 sm:p-8 rounded-[var(--radius-lg)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)] transition-colors">
+        <div>
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h3 class="text-xl font-bold text-[var(--color-text-primary)]">
+              {project.title}
+            </h3>
+            {project.featured && (
+              <span class="px-2 py-0.5 text-xs font-semibold rounded-[var(--radius-sm)] bg-[var(--color-brand-accent)] text-white">
+                Destacado
+              </span>
+            )}
+          </div>
+
+          <p class="text-sm sm:text-base text-[var(--color-text-secondary)] leading-relaxed mb-6">
+            {project.description}
+          </p>
+        </div>
+
+        <div>
+          <div class="flex flex-wrap gap-2 mb-6">
+            {project.technologies.map((tech) => (
+              <span class="px-2.5 py-1 text-xs font-medium rounded-[var(--radius-sm)] bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]">
+                {tech}
+              </span>
+            ))}
+          </div>
+
+          <div class="flex items-center gap-4 pt-4 border-t border-[var(--color-border-subtle)]">
+            {project.githubUrl && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="min-h-(--size-touch-target) inline-flex items-center text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-[var(--color-brand-accent)] transition-colors"
+                aria-label={`Ver código fuente de ${project.title}`}
+              >
+                Código en GitHub ↗
+              </a>
+            )}
+            {project.projectUrl && (
+              <a
+                href={project.projectUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                class="min-h-(--size-touch-target) inline-flex items-center text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-accent)] hover:underline"
+                aria-label={`Visitar demo en vivo de ${project.title}`}
+              >
+                Ver demo en vivo ↗
+              </a>
+            )}
+          </div>
+        </div>
+      </article>
+    ))}
+  </div>
+</SectionContainer>

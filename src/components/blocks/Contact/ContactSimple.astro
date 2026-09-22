@@ -1,0 +1,47 @@
+---
+/**
+ * @file ContactSimple.astro
+ * @description Bloque Contacto simple con llamada directa a correo electrónico y estado de disponibilidad.
+ */
+
+import SectionContainer from '../../ui/SectionContainer.astro';
+import type { ContactBlockData } from '../../../lib/types/portfolio';
+
+interface Props {
+  title?: string;
+  data: ContactBlockData;
+}
+
+const { title = 'Contacto', data } = Astro.props;
+---
+
+<SectionContainer id="contacto" title={title}>
+  <div class="p-8 sm:p-12 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] max-w-(--container-narrow-w)">
+    {data.availableForHire && (
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-status-success-bg)] text-[var(--color-status-success)] text-xs font-semibold mb-4">
+        <span class="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse" aria-hidden="true"></span>
+        Disponible para contratación
+      </div>
+    )}
+
+    {data.message && (
+      <p class="text-base sm:text-lg text-[var(--color-text-secondary)] leading-relaxed mb-8">
+        {data.message}
+      </p>
+    )}
+
+    {data.email && (
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        <a
+          href={`mailto:${data.email}`}
+          class="min-h-(--size-touch-target) px-6 py-3 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm sm:text-base font-semibold hover:opacity-90 transition-opacity inline-flex items-center justify-center"
+        >
+          Enviar correo electrónico
+        </a>
+        <span class="text-xs sm:text-sm text-[var(--color-text-muted)]">
+          {data.email}
+        </span>
+      </div>
+    )}
+  </div>
+</SectionContainer>

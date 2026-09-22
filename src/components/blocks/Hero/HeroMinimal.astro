@@ -1,0 +1,62 @@
+---
+/**
+ * @file HeroMinimal.astro
+ * @description Bloque Hero variante 'minimal': tipografía limpia, mensaje directo y llamadas a la acción.
+ */
+
+import SectionContainer from '../../ui/SectionContainer.astro';
+import type { HeroBlockData } from '../../../lib/types/portfolio';
+
+interface Props {
+  data: HeroBlockData;
+}
+
+const { data } = Astro.props;
+---
+
+<SectionContainer isHero={true}>
+  <div class="max-w-(--container-narrow-w)">
+    {data.statusBadge && (
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-xs font-medium text-[var(--color-text-secondary)] mb-6">
+        <span class="w-2 h-2 rounded-full bg-[var(--color-status-success)] animate-pulse" aria-hidden="true"></span>
+        {data.statusBadge}
+      </div>
+    )}
+
+    {data.greeting && (
+      <p class="text-base sm:text-lg font-medium text-[var(--color-text-secondary)] mb-2">
+        {data.greeting}
+      </p>
+    )}
+
+    <h1 class="text-3xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-[var(--color-text-primary)] leading-tight mb-6">
+      {data.headline}
+    </h1>
+
+    {data.subheadline && (
+      <p class="text-lg sm:text-xl text-[var(--color-text-secondary)] leading-relaxed mb-8">
+        {data.subheadline}
+      </p>
+    )}
+
+    <div class="flex flex-wrap items-center gap-4">
+      {data.ctaText && data.ctaLink && (
+        <a
+          href={data.ctaLink}
+          class="min-h-(--size-touch-target) px-6 py-3 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] font-medium text-sm sm:text-base hover:opacity-90 transition-opacity inline-flex items-center justify-center shadow-[var(--shadow-card)]"
+        >
+          {data.ctaText}
+        </a>
+      )}
+
+      {data.secondaryCtaText && data.secondaryCtaLink && (
+        <a
+          href={data.secondaryCtaLink}
+          class="min-h-(--size-touch-target) px-6 py-3 rounded-[var(--radius-md)] bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)] text-[var(--color-text-primary)] font-medium text-sm sm:text-base hover:bg-[var(--color-bg-muted)] transition-colors inline-flex items-center justify-center"
+        >
+          {data.secondaryCtaText}
+        </a>
+      )}
+    </div>
+  </div>
+</SectionContainer>

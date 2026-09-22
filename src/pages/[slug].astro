@@ -1,0 +1,37 @@
+---
+/**
+ * @file [slug].astro
+ * @description Ruta dinámica SSR para renderizar cualquier portfolio público según su slug.
+ */
+
+import PublicLayout from '../layouts/PublicLayout.astro';
+import BlockRenderer from '../components/blocks/BlockRenderer.astro';
+import { RESERVED_SLUGS } from '../lib/constants';
+import { mockPortfolioData } from '../lib/mocks/portfolio.mock';
+
+const { slug } = Astro.params;
+
+// 1. Protección contra colisión con rutas reservadas del sistema
+if (!slug || RESERVED_SLUGS.includes(slug.toLowerCase() as any)) {
+  return Astro.redirect('/404');
+}
+
+// 2. Por ahora consumimos datos mock enriquecidos (Fase 2)
+// En la Fase 5 esto se reemplazará por llamada al servicio Supabase
+const portfolio = mockPortfolioData;
+
+if (!portfolio.profile.isPublished) {
+  return Astro.redirect('/404');
+}
+
+// 3. Ordenar las secciones por su campo de posición
+const sortedSections = [...portfolio.sections].sort(
+  (a, b) => a.position - b.position
+);
+---
+
+<PublicLayout profile={portfolio.profile}>
+  {sortedSections.map((section) => (
+    <BlockRenderer block={section} />
+  ))}
+</PublicLayout>

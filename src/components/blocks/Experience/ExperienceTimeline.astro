@@ -1,0 +1,64 @@
+---
+/**
+ * @file ExperienceTimeline.astro
+ * @description Bloque Experiencia variante 'timeline': línea de tiempo vertical accesible y responsive.
+ */
+
+import SectionContainer from '../../ui/SectionContainer.astro';
+import type { ExperienceBlockData } from '../../../lib/types/portfolio';
+
+interface Props {
+  title?: string;
+  data: ExperienceBlockData;
+}
+
+const { title = 'Experiencia laboral', data } = Astro.props;
+---
+
+<SectionContainer id="experiencia" title={title}>
+  <div class="relative border-l-2 border-[var(--color-border-default)] ml-4 sm:ml-6 pl-6 sm:pl-8 space-y-12">
+    {data.items.map((item) => (
+      <div class="relative group">
+        <!-- Punto indicador en la línea de tiempo -->
+        <div
+          class="absolute -left-[31px] sm:-left-[39px] top-1.5 w-4 h-4 rounded-full border-2 border-[var(--color-bg-base)] bg-[var(--color-brand-primary)]"
+          aria-hidden="true"
+        ></div>
+
+        <!-- Encabezado del puesto -->
+        <div class="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 mb-2">
+          <h3 class="text-lg sm:text-xl font-bold text-[var(--color-text-primary)]">
+            {item.position}
+            <span class="text-sm font-normal text-[var(--color-text-muted)] block sm:inline sm:ml-2">
+              • {item.company}
+            </span>
+          </h3>
+
+          <time class="text-xs sm:text-sm font-medium text-[var(--color-brand-accent)] whitespace-nowrap">
+            {item.startDate} — {item.isCurrent ? 'Presente' : item.endDate}
+          </time>
+        </div>
+
+        {item.location && (
+          <p class="text-xs text-[var(--color-text-muted)] mb-3">
+            📍 {item.location}
+          </p>
+        )}
+
+        <p class="text-sm sm:text-base text-[var(--color-text-secondary)] leading-relaxed mb-4">
+          {item.description}
+        </p>
+
+        {item.technologies && item.technologies.length > 0 && (
+          <div class="flex flex-wrap gap-2">
+            {item.technologies.map((tech) => (
+              <span class="px-2.5 py-1 text-xs font-medium rounded-[var(--radius-sm)] bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)]">
+                {tech}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+</SectionContainer>

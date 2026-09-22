@@ -1,0 +1,56 @@
+---
+/**
+ * @file PublicNavbar.astro
+ * @description Barra de navegación pública responsive y accesible con target táctil >= 44px.
+ */
+
+interface Props {
+  brandName: string;
+}
+
+const { brandName } = Astro.props;
+---
+
+<header class="sticky top-0 z-40 w-full border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-base)]/80 backdrop-blur-md">
+  <div class="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    <a
+      href="#"
+      class="text-lg font-bold tracking-tight text-[var(--color-text-primary)] hover:opacity-80 transition-opacity focus-visible:ring-2"
+    >
+      {brandName}
+    </a>
+
+    <nav aria-label="Navegación principal" class="hidden md:flex items-center gap-6">
+      <a
+        href="#sobre-mi"
+        class="min-h-(--size-touch-target) flex items-center text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+      >
+        Sobre mí
+      </a>
+      <a
+        href="#experiencia"
+        class="min-h-(--size-touch-target) flex items-center text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+      >
+        Experiencia
+      </a>
+      <a
+        href="#proyectos"
+        class="min-h-(--size-touch-target) flex items-center text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+      >
+        Proyectos
+      </a>
+      <a
+        href="#habilidades"
+        class="min-h-(--size-touch-target) flex items-center text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+      >
+        Habilidades
+      </a>
+      <a
+        href="#contacto"
+        class="min-h-(--size-touch-target) px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm font-medium hover:opacity-90 transition-opacity flex items-center"
+      >
+        Contacto
+      </a>
+    </nav>
+  </div>
+</header>
