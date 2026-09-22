@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético con estrella SVG, dispersión por teoría del caos (ángulos y velocidades únicas), física de rebote DVD real en bordes y encaje natural en el molde.
+ * @description Título cinético con estrella SVG galáctica, física DVD con desaceleración orgánica y acoplamiento suave en el molde (sin imantación brusca).
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -15,7 +15,7 @@ interface LetterParticle {
   index: number;
   wordIdx: number;
   charIdx: number;
-  // Posiciones absolutas de pantalla
+  // Coordenadas absolutas
   targetX: number;
   targetY: number;
   x: number;
@@ -25,6 +25,12 @@ interface LetterParticle {
   rot: number;
   vRot: number;
   isHit: boolean;
+  // Estados de acoplamiento suave
+  isDocking: boolean;
+  dockStartX: number;
+  dockStartY: number;
+  dockStartRot: number;
+  dockProgress: number;
   isLocked: boolean;
   canLockTime: number;
 }
@@ -39,7 +45,7 @@ export default function KineticTitle({
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
 
-  // Estrella SVG
+  // Estado de la estrella SVG
   const [starVisible, setStarVisible] = useState(false);
   const starRef = useRef<HTMLDivElement>(null);
 
@@ -88,11 +94,16 @@ export default function KineticTitle({
       rot: 0,
       vRot: 0,
       isHit: false,
+      isDocking: false,
+      dockStartX: 0,
+      dockStartY: 0,
+      dockStartRot: 0,
+      dockProgress: 0,
       isLocked: true,
       canLockTime: 0,
     }));
 
-    // Medir y fijar coordenadas absolutas de destino una sola vez
+    // Medición exacta de coordenadas iniciales
     const measureTargets = () => {
       particles.forEach((p) => {
         const el = letterRefs.current.get(p.index);
@@ -106,15 +117,14 @@ export default function KineticTitle({
       });
     };
 
-    // Medición tras montaje
     const measureTimer = setTimeout(() => {
       measureTargets();
     }, 150);
 
-    // Variables del cometa / estrella SVG
-    let starX = -180;
+    // Variables de la estrella SVG
+    let starX = -200;
     let starY = window.innerHeight / 2;
-    let starSpeed = 24;
+    let starSpeed = 26;
     let starActive = false;
 
     // Iniciar estrella tras 1.0s
@@ -127,7 +137,7 @@ export default function KineticTitle({
         starY = rect.top + rect.height / 2;
       }
 
-      starX = -180;
+      starX = -200;
       starActive = true;
       setStarVisible(true);
       setLockedIndices(new Set());
@@ -143,10 +153,10 @@ export default function KineticTitle({
       const letterH = 55;
       const minX = 16;
       const maxX = screenW - letterW - 16;
-      const minY = 65; // Margen superior para no solapar el navbar
+      const minY = 65;
       const maxY = screenH - letterH - 16;
 
-      // 1. Desplazar estrella SVG atravesando el centro
+      // 1. Trayectoria de la Estrella SVG
       if (starActive) {
         starX += starSpeed;
 
@@ -154,7 +164,7 @@ export default function KineticTitle({
           starRef.current.style.transform = `translate3d(${starX}px, ${starY}px, 0)`;
         }
 
-        // Impacto caótico en cada letra a medida que la estrella cruza su X
+        // Detección de corte con cada letra
         particles.forEach((p) => {
           if (!p.isHit) {
             const letterCenterX = p.targetX + letterW / 2;
@@ -162,39 +172,35 @@ export default function KineticTitle({
             if (starX >= letterCenterX) {
               p.isHit = true;
               p.isLocked = false;
-              // Permitir encaje natural tras unos segundos de vuelo libre
-              p.canLockTime = currentTime + 3000 + (p.index * 320);
+              // Tiempo antes de permitir acoplamiento
+              p.canLockTime = currentTime + 3200 + (p.index * 280);
 
-              // Teoría del Caos: Dispersión omnidireccional en 360 grados con turbulencia
-              // Generamos un ángulo único aleatorio repartido en todo el círculo
+              // Teoría del Caos: Dispersión angular variada en 360 grados
               const baseAngle = (p.index / totalLetters) * Math.PI * 2;
-              const chaosJitter = (Math.random() - 0.5) * 1.2;
-              const angle = baseAngle + chaosJitter;
+              const jitter = (Math.random() - 0.5) * 1.4;
+              const angle = baseAngle + jitter;
 
-              // Velocidades dispares y variadas (no sincronizadas)
-              const speed = 1.4 + Math.random() * 1.3; // entre 1.4 y 2.7 px/frame
+              const speed = 1.35 + Math.random() * 1.4; // Velocidad pausada y natural
 
               p.vx = Math.cos(angle) * speed;
               p.vy = Math.sin(angle) * speed;
 
-              // Evitar ejes estáticos
-              if (Math.abs(p.vx) < 0.6) p.vx = p.vx >= 0 ? 1.0 : -1.0;
-              if (Math.abs(p.vy) < 0.6) p.vy = p.vy >= 0 ? 1.0 : -1.0;
+              if (Math.abs(p.vx) < 0.6) p.vx = p.vx >= 0 ? 0.9 : -0.9;
+              if (Math.abs(p.vy) < 0.6) p.vy = p.vy >= 0 ? 0.9 : -0.9;
 
-              // Rotación caótica
-              p.vRot = (Math.random() - 0.5) * 2.2;
+              p.vRot = (Math.random() - 0.5) * 2.0;
             }
           }
         });
 
-        // La estrella concluye su vuelo al salir de la pantalla
-        if (starX > screenW + 250) {
+        // La estrella sale del viewport
+        if (starX > screenW + 300) {
           starActive = false;
           setStarVisible(false);
         }
       }
 
-      // 2. Física DVD pura y Rebotes en los 4 bordes de la pantalla
+      // 2. Física de Rebote DVD y Acoplamiento Desacelerado Orgánico
       let activeCount = 0;
       const currentLocked = new Set<number>();
 
@@ -207,6 +213,25 @@ export default function KineticTitle({
           p.x = p.targetX;
           p.y = p.targetY;
           p.rot = 0;
+        } else if (p.isDocking) {
+          activeCount++;
+
+          // Transición suave de acoplamiento orgánico (Deceleración cúbica)
+          p.dockProgress += 0.035; // ~0.5s de deslizamiento suave
+
+          if (p.dockProgress >= 1) {
+            p.isDocking = false;
+            p.isLocked = true;
+            p.x = p.targetX;
+            p.y = p.targetY;
+            p.rot = 0;
+            currentLocked.add(p.index);
+          } else {
+            const ease = 1 - Math.pow(1 - p.dockProgress, 3);
+            p.x = p.dockStartX + (p.targetX - p.dockStartX) * ease;
+            p.y = p.dockStartY + (p.targetY - p.dockStartY) * ease;
+            p.rot = p.dockStartRot * (1 - ease);
+          }
         } else if (p.isHit) {
           activeCount++;
 
@@ -215,46 +240,40 @@ export default function KineticTitle({
           p.y += p.vy;
           p.rot += p.vRot;
 
-          // Rebote horizontal garantizado (DVD puro)
+          // Rebote horizontal elástico garantizado
           if (p.x <= minX) {
             p.x = minX;
-            p.vx = Math.abs(p.vx); // Rebota hacia la derecha
+            p.vx = Math.abs(p.vx);
           } else if (p.x >= maxX) {
             p.x = maxX;
-            p.vx = -Math.abs(p.vx); // Rebota hacia la izquierda
+            p.vx = -Math.abs(p.vx);
           }
 
-          // Rebote vertical garantizado (DVD puro)
+          // Rebote vertical elástico garantizado
           if (p.y <= minY) {
             p.y = minY;
-            p.vy = Math.abs(p.vy); // Rebota hacia abajo
+            p.vy = Math.abs(p.vy);
           } else if (p.y >= maxY) {
             p.y = maxY;
-            p.vy = -Math.abs(p.vy); // Rebota hacia arriba
+            p.vy = -Math.abs(p.vy);
           }
 
-          // Detección de colisión / encaje natural con su propio molde
+          // Detección de cruce natural con su molde
           if (currentTime >= p.canLockTime) {
-            const distX = Math.abs(p.x - p.targetX);
-            const distY = Math.abs(p.y - p.targetY);
-            const distance = Math.hypot(p.x - p.targetX, p.y - p.targetY);
+            const dist = Math.hypot(p.x - p.targetX, p.y - p.targetY);
 
-            // Si pasa directamente por encima de su molde
-            if (distX < 26 && distY < 26) {
-              p.isLocked = true;
-              p.x = p.targetX;
-              p.y = p.targetY;
-              p.rot = 0;
-              currentLocked.add(p.index);
-            } else if (distance < 95) {
-              // Cono de atracción natural suave si está cruzando cerca
-              p.vx += (p.targetX - p.x) * 0.012;
-              p.vy += (p.targetY - p.y) * 0.012;
+            // Si cruza a menos de 45px de su molde, inicia acoplamiento orgánico
+            if (dist < 45) {
+              p.isDocking = true;
+              p.dockStartX = p.x;
+              p.dockStartY = p.y;
+              p.dockStartRot = p.rot;
+              p.dockProgress = 0;
             }
           }
         }
 
-        // Renderizar con GPU Transform relativo a su targetX, targetY
+        // Renderizar con aceleración por GPU
         const renderDx = p.x - p.targetX;
         const renderDy = p.y - p.targetY;
         el.style.transform = `translate3d(${renderDx}px, ${renderDy}px, 0) rotate(${p.rot}deg)`;
@@ -262,13 +281,13 @@ export default function KineticTitle({
 
       setLockedIndices(new Set(currentLocked));
 
-      // Finalizar de forma definitiva cuando todas hayan encajado
+      // Concluir de forma definitiva
       if (particles.every((p) => p.isHit) && activeCount === 0 && currentLocked.size === totalLetters) {
         particles.forEach((p) => {
           const el = letterRefs.current.get(p.index);
           if (el) el.style.transform = `none`;
         });
-        return; // Fin permanente
+        return;
       }
 
       animationFrameId = requestAnimationFrame(loop);
@@ -294,7 +313,7 @@ export default function KineticTitle({
 
   return (
     <div className="relative w-full flex items-center justify-center">
-      {/* Estrella Fugaz SVG Vectorial */}
+      {/* Estrella Fugaz Galáctica SVG de Alto Impacto Visual */}
       <div
         ref={starRef}
         style={{
@@ -309,30 +328,57 @@ export default function KineticTitle({
         className="-translate-x-1/2 -translate-y-1/2"
       >
         <div className="relative flex items-center">
-          {/* Estela de cometa brillante */}
-          <div className="w-56 h-2 bg-gradient-to-l from-[var(--color-brand-accent)] via-sky-300 to-transparent blur-[1px] -mr-3" />
+          {/* Estela de Plasma con Doble Capa y Gradientes */}
+          <div className="w-72 h-3.5 bg-gradient-to-l from-cyan-400 via-[var(--color-brand-primary)] to-transparent blur-[2px] -mr-4 opacity-90" />
+          <div className="absolute right-4 w-44 h-1 bg-gradient-to-l from-white via-cyan-200 to-transparent blur-[0.5px]" />
 
-          {/* Estrella de 4 puntas con vector SVG */}
+          {/* Estrella Cósmica de 8 Puntas Vectorial */}
           <svg
-            viewBox="0 0 48 48"
-            className="w-10 h-10 drop-shadow-[0_0_16px_rgba(255,255,255,1)] drop-shadow-[0_0_24px_var(--color-brand-accent)]"
+            viewBox="0 0 64 64"
+            className="w-14 h-14 drop-shadow-[0_0_20px_rgba(255,255,255,1)] drop-shadow-[0_0_35px_rgba(56,189,248,0.9)] animate-pulse"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
+            {/* Halo de Resplandor Circular */}
+            <circle cx="32" cy="32" r="14" fill="url(#star-glow)" opacity="0.4" />
+
+            {/* Rayos Diagonales Menores */}
             <path
-              d="M24 2 C24 14 14 24 2 24 C14 24 24 34 24 46 C24 34 34 24 46 24 C34 24 24 14 24 2 Z"
-              fill="#FFFFFF"
+              d="M32 16 L35 29 L48 32 L35 35 L32 48 L29 35 L16 32 L29 29 Z"
+              fill="url(#star-diagonal-grad)"
+              opacity="0.9"
             />
+
+            {/* Puntas Principales de la Estrella de 4 Puntas */}
             <path
-              d="M24 10 C24 18 18 24 10 24 C18 24 24 30 24 38 C24 30 30 24 38 24 C30 24 24 18 24 10 Z"
-              fill="var(--color-brand-accent)"
-              opacity="0.85"
+              d="M32 2 C32 18 20 32 2 32 C20 32 32 46 32 62 C32 46 44 32 62 32 C44 32 32 18 32 2 Z"
+              fill="url(#star-core-grad)"
             />
+
+            {/* Núcleo de Cristal Brillante */}
+            <circle cx="32" cy="32" r="4" fill="#FFFFFF" />
+
+            <defs>
+              <radialGradient id="star-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="60%" stopColor="#38BDF8" />
+                <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
+              </radialGradient>
+              <linearGradient id="star-core-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="50%" stopColor="#E0F2FE" />
+                <stop offset="100%" stopColor="#38BDF8" />
+              </linearGradient>
+              <linearGradient id="star-diagonal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#38BDF8" />
+                <stop offset="100%" stopColor="#818CF8" />
+              </linearGradient>
+            </defs>
           </svg>
         </div>
       </div>
 
-      {/* Título Principal con Silueta Pura de Molde y Letras */}
+      {/* Título Principal con Silueta Pura y Letras Cinéticas */}
       <h1
         ref={containerRef}
         className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 select-none relative ${className}`}
@@ -366,7 +412,7 @@ export default function KineticTitle({
                       </span>
                     </span>
 
-                    {/* Letra Activa */}
+                    {/* Letra Cinética Activa */}
                     <span
                       ref={(el) => {
                         if (el) letterRefs.current.set(globalIdx, el);
