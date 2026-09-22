@@ -90,3 +90,14 @@ export const THEMES = {
 } as const;
 
 export type ThemeName = (typeof THEMES)[keyof typeof THEMES];
+
+/** Categorías estándar de la plataforma para filtrado rápido del directorio */
+export const DIRECTORY_CATEGORIES = [
+  'Todos',
+  'Desarrollo web',
+  'Diseño UI/UX',
+  'Móvil',
+  'Backend & Cloud',
+] as const;
+
+export type DirectoryCategory = (typeof DIRECTORY_CATEGORIES)[number];

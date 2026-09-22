@@ -4,16 +4,10 @@
  */
 
 import { getSupabaseAdminClient } from '../supabase/server';
+import { DIRECTORY_CATEGORIES } from '../constants';
 import type { DirectoryProfileItem } from '../types/directory';
 
-/** Categorías estándar de la plataforma para filtrado rápido */
-export const DIRECTORY_CATEGORIES = [
-  'Todos',
-  'Desarrollo web',
-  'Diseño UI/UX',
-  'Móvil',
-  'Backend & Cloud',
-] as const;
+export { DIRECTORY_CATEGORIES };
 
 /** Lista curada de muestra cuando la base de datos se encuentra en inicialización */
 export const SEED_DIRECTORY_PROFILES: DirectoryProfileItem[] = [

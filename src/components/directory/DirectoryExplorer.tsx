@@ -5,7 +5,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import type { DirectoryProfileItem } from '../../lib/types/directory';
-import { DIRECTORY_CATEGORIES } from '../../lib/services/directory.service';
+import { DIRECTORY_CATEGORIES } from '../../lib/constants';
 import { i18n } from '../../lib/i18n/es';
 import {
   SearchIcon,
@@ -27,13 +27,15 @@ export default function DirectoryExplorer({ initialProfiles = [] }: DirectoryExp
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [previewProfile, setPreviewProfile] = useState<DirectoryProfileItem | null>(null);
 
-  // Si no se pasaron perfiles iniciales, cargarlos desde la API pública
+  // Sincronizar perfiles iniciales o consultar la API pública como fallback
   useEffect(() => {
-    if (initialProfiles.length === 0) {
+    if (initialProfiles && initialProfiles.length > 0) {
+      setProfiles(initialProfiles);
+    } else {
       fetch('/api/public/directory')
         .then((res) => res.json())
         .then((json) => {
-          if (json.success && Array.isArray(json.data)) {
+          if (json.success && Array.isArray(json.data) && json.data.length > 0) {
             setProfiles(json.data);
           }
         })
