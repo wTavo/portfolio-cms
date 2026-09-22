@@ -39,7 +39,7 @@ export const i18n = {
     users: 'Gestión de usuarios',
     createUser: 'Nuevo usuario',
     displayName: 'Nombre para mostrar',
-    portfolioSlug: 'Enlace del portfolio',
+    portfolioSlug: 'Enlace del portafolio',
     sendInvitation: 'Enviar invitación',
     userCreated: 'Usuario creado e invitación enviada',
     suspendUser: 'Suspender cuenta',
@@ -47,7 +47,7 @@ export const i18n = {
     deleteUser: 'Eliminar usuario',
   },
   dashboard: {
-    title: 'Mi portfolio',
+    title: 'Mi portafolio',
     profile: 'Perfil personal',
     sections: 'Secciones',
     addSection: 'Agregar sección',

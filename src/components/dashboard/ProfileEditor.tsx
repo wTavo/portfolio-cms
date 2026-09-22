@@ -89,7 +89,7 @@ export default function ProfileEditor() {
         <div>
           <h2 className="text-lg font-bold">Editar información personal</h2>
           <p className="text-xs text-[var(--color-text-secondary)]">
-            Tu portfolio está disponible en:{' '}
+            Tu portafolio está disponible en:{' '}
             <a
               href={`/${slug}`}
               target="_blank"
@@ -208,7 +208,7 @@ export default function ProfileEditor() {
               className="w-4 h-4 rounded text-[var(--color-brand-accent)]"
             />
             <span className="text-xs font-semibold text-[var(--color-text-primary)]">
-              Publicar portfolio en la web
+              Publicar portafolio en la web
             </span>
           </label>
 

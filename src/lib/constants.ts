@@ -11,7 +11,7 @@ export const ROLES = {
 
 export type UserRole = (typeof ROLES)[keyof typeof ROLES];
 
-/** Slugs reservados que no pueden ser asignados a ningún portfolio de usuario */
+/** Slugs reservados que no pueden ser asignados a ningún portafolio de usuario */
 export const RESERVED_SLUGS = [
   'admin',
   'dashboard',

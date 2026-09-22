@@ -86,7 +86,7 @@ export function requireOwner(user?: GuardUser | null): GuardResult {
   if (!authResult.ok) return authResult;
 
   if (authResult.user.role !== ROLES.OWNER) {
-    return createErrorResponse(403, 'FORBIDDEN', 'Requiere permisos de propietario de portfolio.');
+    return createErrorResponse(403, 'FORBIDDEN', 'Requiere permisos de propietario de portafolio.');
   }
 
   return authResult;

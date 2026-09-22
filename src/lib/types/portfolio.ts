@@ -1,6 +1,6 @@
 /**
  * @file portfolio.ts
- * @description Tipos e interfaces de dominio para los bloques de contenido del portfolio.
+ * @description Tipos e interfaces de dominio para los bloques de contenido del portafolio.
  */
 
 import type { SectionType } from '../constants';
@@ -119,7 +119,7 @@ export interface ContactBlockData {
   availableForHire?: boolean;
 }
 
-/** Estructura completa de un Portfolio mock o real */
+/** Estructura completa de un Portafolio mock o real */
 export interface PortfolioPayload {
   profile: ProfileData;
   sections: SectionBlock[];

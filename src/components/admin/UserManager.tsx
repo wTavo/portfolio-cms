@@ -104,7 +104,7 @@ export default function UserManager() {
       <div className="p-6 sm:p-8 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)]">
         <h2 className="text-lg font-bold mb-1">Dar de alta a nuevo usuario (Owner)</h2>
         <p className="text-xs text-[var(--color-text-secondary)] mb-6">
-          Ingresa los datos y contraseña inicial para el nuevo propietario de portfolio.
+          Ingresa los datos y contraseña inicial para el nuevo propietario de portafolio.
         </p>
 
         {error && (
@@ -164,7 +164,7 @@ export default function UserManager() {
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] mb-1">
-              Enlace / Slug del portfolio
+              Enlace / Slug del portafolio
             </label>
             <div className="flex items-center">
               <span className="text-xs text-[var(--color-text-muted)] mr-1">/</span>
@@ -185,7 +185,7 @@ export default function UserManager() {
               disabled={submitting}
               className="min-h-(--size-button-height) px-6 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
             >
-              {submitting ? 'Creando usuario...' : 'Crear usuario y habilitar portfolio'}
+              {submitting ? 'Creando usuario...' : 'Crear usuario y habilitar portafolio'}
             </button>
           </div>
         </form>
@@ -206,7 +206,7 @@ export default function UserManager() {
                 <tr className="border-b border-[var(--color-border-subtle)] text-xs uppercase tracking-wider text-[var(--color-text-muted)]">
                   <th className="py-3 px-2">Usuario</th>
                   <th className="py-3 px-2">Rol</th>
-                  <th className="py-3 px-2">Portfolio</th>
+                  <th className="py-3 px-2">Portafolio</th>
                   <th className="py-3 px-2">Estado</th>
                   <th className="py-3 px-2 text-right">Acciones</th>
                 </tr>

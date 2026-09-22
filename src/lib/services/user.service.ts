@@ -19,7 +19,7 @@ export interface UserSummary {
 }
 
 /**
- * Obtiene la lista completa de usuarios registrados y su slug de portfolio.
+ * Obtiene la lista completa de usuarios registrados y su slug de portafolio.
  */
 export async function listUsers(): Promise<UserSummary[]> {
   const adminClient = getSupabaseAdminClient();

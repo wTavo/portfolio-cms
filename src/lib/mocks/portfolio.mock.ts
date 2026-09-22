@@ -1,6 +1,6 @@
 /**
  * @file portfolio.mock.ts
- * @description Datos mock enriquecidos para visualizar y probar bloques y variantes de portfolio.
+ * @description Datos mock enriquecidos para visualizar y probar bloques y variantes de portafolio.
  */
 
 import type { PortfolioPayload } from '../types/portfolio';
@@ -21,7 +21,7 @@ export const mockPortfolioData: PortfolioPayload = {
       twitter: 'https://twitter.com',
     },
     metaTitle: 'Gustavo Morales | Ingeniero de software',
-    metaDescription: 'Portfolio profesional con proyectos destacados, experiencia y habilidades técnicas.',
+    metaDescription: 'Portafolio profesional con proyectos destacados, experiencia y habilidades técnicas.',
     theme: 'minimal',
     isPublished: true,
   },
@@ -105,8 +105,8 @@ export const mockPortfolioData: PortfolioPayload = {
         items: [
           {
             id: 'proj-1',
-            title: 'Portfolio Builder CMS',
-            description: 'Plataforma dinámica multi-tenant para crear y personalizar portfolios profesionales con Astro, Supabase y Cloudflare.',
+            title: 'Portafolio Builder CMS',
+            description: 'Plataforma dinámica multi-tenant para crear y personalizar portafolios profesionales con Astro, Supabase y Cloudflare.',
             technologies: ['Astro', 'React', 'Supabase', 'Tailwind CSS', 'TypeScript'],
             githubUrl: 'https://github.com/wTavo/portfolio-cms',
             featured: true,

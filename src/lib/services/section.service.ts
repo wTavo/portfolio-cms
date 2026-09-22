@@ -1,6 +1,6 @@
 /**
  * @file section.service.ts
- * @description Servicio de negocio para la gestión de secciones dinámicas del portfolio.
+ * @description Servicio de negocio para la gestión de secciones dinámicas del portafolio.
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
