@@ -1,6 +1,6 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo con animación cinemática fluida basada en estados (Apple/Linear style). Cero rebotes de scroll.
+ * @description Portal interactivo con animación cinemática fluida basada en estados y título con física cinética.
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
 import { ArrowRightIcon, RocketIcon } from '../icons/Icons';
+import KineticTitle from './KineticTitle';
 import {
   MOTION_DURATIONS,
   MOTION_EASINGS,
@@ -147,7 +148,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       <div className="flex-1 w-full h-full relative flex items-center justify-center">
         <AnimatePresence mode="wait">
           {currentView === 'hero' ? (
-            /* Vista 1: Pantalla de Bienvenida (Hero Central) */
+            /* Vista 1: Pantalla de Bienvenida (Título Cinético) */
             <motion.section
               key="hero-view"
               initial={{ opacity: 0, y: 30, scale: 0.98 }}
@@ -156,15 +157,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               transition={{ duration: MOTION_DURATIONS.deliberate, ease: MOTION_EASINGS.decelerate }}
               className="w-full h-full flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto relative select-none"
             >
-              <div className="space-y-4">
-                <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-[1.08]">
-                  {i18n.showcase.title}
-                </h1>
-
-                <p className="text-base sm:text-xl text-[var(--color-text-secondary)] max-w-xl mx-auto leading-relaxed">
-                  {i18n.showcase.subtitle}
-                </p>
-              </div>
+              <KineticTitle text={i18n.showcase.title} />
 
               {/* Indicador interactivo de scroll */}
               <button
