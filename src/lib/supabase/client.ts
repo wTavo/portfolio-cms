@@ -27,7 +27,23 @@ export function createSupabaseServerClient(cookies: AstroCookies) {
   return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
-        return parseCookieHeader(cookies.get('sb-access-token')?.value || '');
+        // En Astro, cookies.get() devuelve cada cookie registrada
+        const allCookies = [];
+        for (const [name, cookie] of Object.entries(cookies as any)) {
+          if (cookie && typeof cookie === 'object' && 'value' in cookie) {
+            allCookies.push({ name, value: (cookie as any).value });
+          }
+        }
+        // Fallback directo a los nombres estándar de sesión de Supabase
+        const sbAccess = cookies.get('sb-access-token')?.value;
+        const sbRefresh = cookies.get('sb-refresh-token')?.value;
+        const authCookie = cookies.get(`sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`)?.value;
+
+        if (sbAccess) allCookies.push({ name: 'sb-access-token', value: sbAccess });
+        if (sbRefresh) allCookies.push({ name: 'sb-refresh-token', value: sbRefresh });
+        if (authCookie) allCookies.push({ name: `sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`, value: authCookie });
+
+        return allCookies;
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
@@ -36,7 +52,7 @@ export function createSupabaseServerClient(cookies: AstroCookies) {
             path: '/',
             httpOnly: true,
             secure: true,
-            sameSite: 'strict',
+            sameSite: 'lax',
           });
         });
       },
