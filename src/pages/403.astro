@@ -1,0 +1,44 @@
+---
+/**
+ * @file 403.astro
+ * @description Página de error 403 Forbidden (Acceso denegado).
+ */
+
+import SEOHead from '../components/ui/SEOHead.astro';
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <SEOHead
+      title="Acceso no autorizado — 403"
+      description="No tienes los permisos necesarios para acceder a este panel."
+    />
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-[var(--color-bg-base)] text-[var(--color-text-primary)] px-4">
+    <div class="text-center max-w-md p-8 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-modal)]">
+      <span class="text-5xl font-extrabold text-[var(--color-status-error)] block mb-4">403</span>
+      <h1 class="text-2xl font-bold tracking-tight mb-2">Acceso denegado</h1>
+      <p class="text-sm text-[var(--color-text-secondary)] mb-6 leading-relaxed">
+        No tienes los privilegios o el rol necesario para acceder a este panel.
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a
+          href="/login"
+          class="w-full sm:w-auto min-h-(--size-touch-target) inline-flex items-center justify-center px-6 py-2.5 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          Cambiar de cuenta
+        </a>
+        <a
+          href="/"
+          class="w-full sm:w-auto min-h-(--size-touch-target) inline-flex items-center justify-center px-6 py-2.5 rounded-[var(--radius-md)] bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)] text-[var(--color-text-primary)] text-sm font-medium hover:bg-[var(--color-bg-muted)] transition-colors"
+        >
+          Volver al inicio
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

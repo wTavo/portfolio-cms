@@ -1,0 +1,87 @@
+---
+/**
+ * @file index.astro
+ * @description Dashboard principal del Owner para administrar su portfolio.
+ */
+
+import SEOHead from '../../components/ui/SEOHead.astro';
+import { i18n } from '../../lib/i18n/es';
+import '../../styles/global.css';
+
+const currentUser = Astro.locals.user;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <SEOHead
+      title="Mi Portfolio — Panel de Control"
+      description="Administra el contenido y diseño de tu portfolio profesional."
+    />
+  </head>
+  <body class="min-h-screen flex flex-col bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased">
+    <header class="border-b border-[var(--color-border-subtle)] bg-[var(--color-bg-surface)] py-4 px-6">
+      <div class="max-w-(--container-max-w) mx-auto flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-accent)]">
+            Panel de Usuario
+          </span>
+          <h1 class="text-lg font-bold">Mi Portfolio</h1>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <span class="text-xs font-medium text-[var(--color-text-secondary)] hidden sm:inline">
+            {currentUser?.email}
+          </span>
+          <button
+            id="logout-btn"
+            class="min-h-(--size-touch-target) px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)] text-xs font-semibold hover:bg-[var(--color-bg-muted)] transition-colors cursor-pointer"
+          >
+            {i18n.common.logout}
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-(--container-max-w) mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a
+          href="#perfil"
+          class="p-6 rounded-[var(--radius-lg)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)] transition-colors block"
+        >
+          <span class="text-2xl mb-2 block">👤</span>
+          <h2 class="text-base font-bold mb-1">{i18n.dashboard.profile}</h2>
+          <p class="text-xs text-[var(--color-text-secondary)]">Edita tu nombre, biografía, foto y redes sociales.</p>
+        </a>
+
+        <a
+          href="#secciones"
+          class="p-6 rounded-[var(--radius-lg)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)] transition-colors block"
+        >
+          <span class="text-2xl mb-2 block">🧩</span>
+          <h2 class="text-base font-bold mb-1">{i18n.dashboard.sections}</h2>
+          <p class="text-xs text-[var(--color-text-secondary)]">Organiza, reordena y edita los bloques de tu página.</p>
+        </a>
+
+        <a
+          href="#multimedia"
+          class="p-6 rounded-[var(--radius-lg)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] hover:border-[var(--color-border-strong)] transition-colors block"
+        >
+          <span class="text-2xl mb-2 block">🖼️</span>
+          <h2 class="text-base font-bold mb-1">{i18n.dashboard.media}</h2>
+          <p class="text-xs text-[var(--color-text-secondary)]">Sube y gestiona imágenes para tus proyectos y perfil.</p>
+        </a>
+      </div>
+    </main>
+
+    <script>
+      const logoutBtn = document.getElementById('logout-btn');
+      logoutBtn?.addEventListener('click', async () => {
+        await fetch('/api/auth/logout', { method: 'POST' });
+        window.location.href = '/login';
+      });
+    </script>
+  </body>
+</html>
