@@ -1,6 +1,6 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo con transición fluida por scroll entre la pantalla de bienvenida y los portafolios.
+ * @description Portal interactivo con transición fluida bidireccional por scroll entre la pantalla de bienvenida y los portafolios.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -29,7 +29,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   const { scrollY } = useScroll();
 
-  // El título central se desvanece por completo antes de los 150px
+  // El título central se desvanece por completo antes de los 140px
   const heroScale = useTransform(scrollY, [0, 140], [1, 0.92]);
   const heroOpacity = useTransform(scrollY, [0, 120], [1, 0]);
   const heroTranslateY = useTransform(scrollY, [0, 140], [0, -30]);
@@ -38,11 +38,16 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   // La barra de navegación y su título solo aparecen cuando el central ya desapareció por completo
   useEffect(() => {
     return scrollY.on('change', (latest) => {
-      setIsScrolled(latest > 200);
+      setIsScrolled(latest > 180);
     });
   }, [scrollY]);
 
-  // Desplazamiento suave hacia la sección de portafolios
+  // Desplazamiento suave hacia arriba (pantalla de bienvenida / título)
+  const scrollToHero = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  // Desplazamiento suave hacia abajo (sección de portafolios)
   const scrollToPortfolios = useCallback(() => {
     const target = document.getElementById('portfolios');
     if (target) {
@@ -50,17 +55,31 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     }
   }, []);
 
-  // Detección de rueda de ratón en el inicio para guiar suavemente a la siguiente sección
+  // Transición suave bidireccional mediante rueda del ratón
   useEffect(() => {
-    let isScrolling = false;
+    let isTransitioning = false;
 
     const handleWheel = (e: WheelEvent) => {
-      if (window.scrollY < 80 && e.deltaY > 15 && !isScrolling) {
-        isScrolling = true;
+      if (isTransitioning) return;
+
+      const currentScroll = window.scrollY;
+      const vh = window.innerHeight;
+
+      // 1. Scroll hacia abajo desde el hero de bienvenida
+      if (currentScroll < vh * 0.4 && e.deltaY > 18) {
+        isTransitioning = true;
         scrollToPortfolios();
         setTimeout(() => {
-          isScrolling = false;
-        }, 900);
+          isTransitioning = false;
+        }, 850);
+      }
+      // 2. Scroll hacia arriba regresando desde la sección de portafolios al título
+      else if (currentScroll > 120 && currentScroll <= vh * 1.15 && e.deltaY < -18) {
+        isTransitioning = true;
+        scrollToHero();
+        setTimeout(() => {
+          isTransitioning = false;
+        }, 850);
       }
     };
 
@@ -68,7 +87,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     return () => {
       window.removeEventListener('wheel', handleWheel);
     };
-  }, [scrollToPortfolios]);
+  }, [scrollToHero, scrollToPortfolios]);
 
   const { creators } = data;
 
@@ -83,23 +102,25 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         }`}
       >
         <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Título en la barra superior: Solo se monta y anima cuando el título central ya no es visible */}
+          {/* Título en la barra superior: Permite volver suavemente a la pantalla de bienvenida */}
           <div className="min-w-[180px] flex items-center">
             <AnimatePresence>
               {isScrolled && (
-                <motion.a
-                  href="/"
+                <motion.button
+                  type="button"
+                  onClick={scrollToHero}
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-                  className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity"
+                  className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity cursor-pointer text-left"
+                  aria-label="Volver al inicio"
                 >
                   <div className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
                     <RocketIcon size={14} className="text-[var(--color-brand-accent)]" />
                   </div>
                   <span>{i18n.showcase.title}</span>
-                </motion.a>
+                </motion.button>
               )}
             </AnimatePresence>
           </div>
