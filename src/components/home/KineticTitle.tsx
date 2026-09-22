@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético universal (sin etiquetas de código). Escritura tipográfica limpia, pulso de confirmación, corte por destello cósmico SVG y física DVD con acoplamiento sedoso en moldes exactos.
+ * @description Título cinético universal: "La Chispa de la Idea / Destello de Talento". Al finalizar la escritura, una chispa creativa de inspiración se enciende e ilumina el título, dispersando las letras con física DVD y acoplamiento sedoso.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -44,14 +44,11 @@ export default function KineticTitle({
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
   const lockedIndicesCountRef = useRef(0);
 
-  // Estados de tipeo tipográfico universal
+  // Estados de tipeo y chispa de inspiración
   const [typedCount, setTypedCount] = useState(0);
-  const [cursorVisible, setCursorVisible] = useState(true);
-  const [titleConfirmed, setTitleConfirmed] = useState(false);
-
-  // Estado de la estrella SVG
-  const [starVisible, setStarVisible] = useState(false);
-  const starRef = useRef<HTMLDivElement>(null);
+  const [sparkIgnited, setSparkIgnited] = useState(false);
+  const [sparkVisible, setSparkVisible] = useState(false);
+  const sparkRef = useRef<HTMLDivElement>(null);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
 
@@ -79,11 +76,10 @@ export default function KineticTitle({
 
   const totalLetters = allLetters.length;
 
-  // 1. Fase de Escritura Tipográfica Universal (Sin Tags)
+  // 1. Fase de Escritura Limpia y Encendido de la Chispa de la Idea
   useEffect(() => {
     if (prefersReducedMotion) {
       setTypedCount(totalLetters);
-      setCursorVisible(false);
       return;
     }
 
@@ -94,20 +90,17 @@ export default function KineticTitle({
       if (current >= totalLetters) {
         clearInterval(typeInterval);
 
-        // Pulso de asentamiento / confirmación del título
+        // Encendido de la chispa creativa de inspiración en el último carácter
         setTimeout(() => {
-          setTitleConfirmed(true);
-          setTimeout(() => {
-            setCursorVisible(false);
-          }, 350);
-        }, 300);
+          setSparkIgnited(true);
+        }, 200);
       }
-    }, 55);
+    }, 50);
 
     return () => clearInterval(typeInterval);
   }, [totalLetters, prefersReducedMotion]);
 
-  // 2. Motor de Física y Corte por Destello Cósmico SVG
+  // 2. Motor de Física: La Chispa de Inspiración barre el título y activa las piezas
   useEffect(() => {
     if (prefersReducedMotion) return;
 
@@ -150,27 +143,31 @@ export default function KineticTitle({
       });
     };
 
-    let starX = -220;
-    let starY = window.innerHeight / 2;
-    let starSpeed = 26;
-    let starActive = false;
+    let sparkX = 0;
+    let sparkY = 0;
+    let sparkSpeed = 28;
+    let sparkActive = false;
 
-    // Lanzar destello tras completar y asentar el título (~1.9s)
-    const starTimer = setTimeout(() => {
+    // Disparar el destello de la chispa creativa tras encenderse (~1.6s)
+    const sweepTimer = setTimeout(() => {
       if (!isRunning) return;
       measureTargets();
 
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
-        starY = rect.top + rect.height / 2;
+        // La chispa viaja de izquierda a derecha iluminando cada letra
+        sparkX = -180;
+        sparkY = rect.top + rect.height / 2;
+      } else {
+        sparkX = -180;
+        sparkY = window.innerHeight / 2;
       }
 
-      starX = -220;
-      starActive = true;
-      setStarVisible(true);
+      sparkActive = true;
+      setSparkVisible(true);
       lockedIndicesCountRef.current = 0;
       setLockedIndices(new Set());
-    }, 1900);
+    }, 1600);
 
     const loop = (currentTime: number) => {
       if (!isRunning) return;
@@ -184,19 +181,20 @@ export default function KineticTitle({
       const minY = 65;
       const maxY = screenH - letterH - 16;
 
-      // Movimiento del destello cósmico
-      if (starActive) {
-        starX += starSpeed;
+      // Movimiento de la Chispa Creativa
+      if (sparkActive) {
+        sparkX += sparkSpeed;
 
-        if (starRef.current) {
-          starRef.current.style.transform = `translate3d(${starX}px, ${starY}px, 0)`;
+        if (sparkRef.current) {
+          sparkRef.current.style.transform = `translate3d(${sparkX}px, ${sparkY}px, 0)`;
         }
 
         particles.forEach((p) => {
           if (!p.isHit) {
             const letterCenterX = p.targetX + letterW / 2;
 
-            if (starX >= letterCenterX) {
+            // Al cruzar la chispa, despierta la letra con energía cinética
+            if (sparkX >= letterCenterX) {
               p.isHit = true;
               p.isLocked = false;
               p.canLockTime = currentTime + 3200 + (p.index * 280);
@@ -217,13 +215,13 @@ export default function KineticTitle({
           }
         });
 
-        if (starX > screenW + 300) {
-          starActive = false;
-          setStarVisible(false);
+        if (sparkX > screenW + 300) {
+          sparkActive = false;
+          setSparkVisible(false);
         }
       }
 
-      // Física DVD y Acoplamiento Sedoso
+      // Física DVD y Asentamiento Sedoso
       let activeCount = 0;
       let newlyLockedCount = 0;
       const currentLocked = new Set<number>();
@@ -334,7 +332,7 @@ export default function KineticTitle({
 
     return () => {
       isRunning = false;
-      clearTimeout(starTimer);
+      clearTimeout(sweepTimer);
       cancelAnimationFrame(animationFrameId);
     };
   }, [allLetters, totalLetters, prefersReducedMotion]);
@@ -349,14 +347,14 @@ export default function KineticTitle({
 
   return (
     <div className="relative w-full flex items-center justify-center">
-      {/* Destello Cósmico SVG de Alta Definición */}
+      {/* La Chispa Creativa / Destello de Talento SVG */}
       <div
-        ref={starRef}
+        ref={sparkRef}
         style={{
           position: 'fixed',
           left: 0,
           top: 0,
-          display: starVisible ? 'block' : 'none',
+          display: sparkVisible ? 'block' : 'none',
           pointerEvents: 'none',
           zIndex: 60,
           willChange: 'transform',
@@ -364,48 +362,58 @@ export default function KineticTitle({
         className="-translate-x-1/2 -translate-y-1/2"
       >
         <div className="relative flex items-center">
-          <div className="w-72 h-3.5 bg-gradient-to-l from-cyan-400 via-[var(--color-brand-primary)] to-transparent blur-[2px] -mr-4 opacity-90" />
-          <div className="absolute right-4 w-44 h-1 bg-gradient-to-l from-white via-cyan-200 to-transparent blur-[0.5px]" />
+          {/* Estela de luz dorada/ámbar y cian de inspiración */}
+          <div className="w-80 h-3 bg-gradient-to-l from-amber-300 via-cyan-400 to-transparent blur-[2px] -mr-4 opacity-90" />
+          <div className="absolute right-4 w-52 h-1 bg-gradient-to-l from-white via-amber-200 to-transparent blur-[0.5px]" />
 
+          {/* Chispa Estelar Radiante de Inspiración */}
           <svg
             viewBox="0 0 64 64"
-            className="w-14 h-14 drop-shadow-[0_0_20px_rgba(255,255,255,1)] drop-shadow-[0_0_35px_rgba(56,189,248,0.9)] animate-pulse"
+            className="w-16 h-16 drop-shadow-[0_0_24px_rgba(251,191,36,1)] drop-shadow-[0_0_40px_rgba(56,189,248,0.9)] animate-pulse"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
           >
-            <circle cx="32" cy="32" r="14" fill="url(#star-glow)" opacity="0.4" />
+            {/* Halo de luz cálida de inspiración */}
+            <circle cx="32" cy="32" r="15" fill="url(#spark-halo)" opacity="0.5" />
+
+            {/* Rayos Diagonales de Destello */}
             <path
-              d="M32 16 L35 29 L48 32 L35 35 L32 48 L29 35 L16 32 L29 29 Z"
-              fill="url(#star-diagonal-grad)"
+              d="M32 14 L36 28 L50 32 L36 36 L32 50 L28 36 L14 32 L28 28 Z"
+              fill="url(#spark-gold-grad)"
               opacity="0.9"
             />
+
+            {/* Puntas Principales de la Chispa de Talento */}
             <path
-              d="M32 2 C32 18 20 32 2 32 C20 32 32 46 32 62 C32 46 44 32 62 32 C44 32 32 18 32 2 Z"
-              fill="url(#star-core-grad)"
+              d="M32 0 C32 18 18 32 0 32 C18 32 32 46 32 64 C32 46 46 32 64 32 C46 32 32 18 32 0 Z"
+              fill="url(#spark-core-grad)"
             />
-            <circle cx="32" cy="32" r="4" fill="#FFFFFF" />
+
+            {/* Núcleo Incandescente */}
+            <circle cx="32" cy="32" r="4.5" fill="#FFFFFF" />
 
             <defs>
-              <radialGradient id="star-glow" cx="50%" cy="50%" r="50%">
+              <radialGradient id="spark-halo" cx="50%" cy="50%" r="50%">
                 <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="60%" stopColor="#38BDF8" />
+                <stop offset="50%" stopColor="#FBBF24" />
                 <stop offset="100%" stopColor="#38BDF8" stopOpacity="0" />
               </radialGradient>
-              <linearGradient id="star-core-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="spark-core-grad" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#FFFFFF" />
-                <stop offset="50%" stopColor="#E0F2FE" />
-                <stop offset="100%" stopColor="#38BDF8" />
+                <stop offset="40%" stopColor="#FEF08A" />
+                <stop offset="100%" stopColor="#F59E0B" />
               </linearGradient>
-              <linearGradient id="star-diagonal-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#38BDF8" />
-                <stop offset="100%" stopColor="#818CF8" />
+              <linearGradient id="spark-gold-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#FFFFFF" />
+                <stop offset="50%" stopColor="#38BDF8" />
+                <stop offset="100%" stopColor="#FBBF24" />
               </linearGradient>
             </defs>
           </svg>
         </div>
       </div>
 
-      {/* Título Principal Universal con Moldes Integrados en la Misma Ranura */}
+      {/* Título Principal Universal con Ranuras Compartidas */}
       <h1
         ref={containerRef}
         className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-10 select-none relative z-10 ${className}`}
@@ -422,7 +430,7 @@ export default function KineticTitle({
                 globalIdx += charIdx;
 
                 const isVisible = globalIdx < typedCount;
-                const isCurrentCursor = globalIdx === typedCount - 1 && cursorVisible;
+                const isCurrentCursor = globalIdx === typedCount - 1 && !sparkIgnited;
                 const isLocked = lockedIndices.has(globalIdx);
 
                 return (
@@ -461,14 +469,10 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* Cursor de Escritura Tipográfica */}
+                    {/* Cursor Sutil durante el tipeo */}
                     {isCurrentCursor && (
                       <span
-                        className={`absolute -right-1 sm:-right-2 top-1 bottom-1 w-[3px] bg-[var(--color-brand-accent)] rounded-full ${
-                          titleConfirmed
-                            ? 'scale-y-125 shadow-[0_0_16px_var(--color-brand-accent)] bg-white'
-                            : 'animate-pulse shadow-[0_0_8px_var(--color-brand-accent)]'
-                        } transition-all duration-200 pointer-events-none z-50`}
+                        className="absolute -right-1 sm:-right-2 top-1 bottom-1 w-[3px] bg-amber-400 rounded-full shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse pointer-events-none z-50"
                       />
                     )}
                   </span>
