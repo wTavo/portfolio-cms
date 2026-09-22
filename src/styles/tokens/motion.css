@@ -1,0 +1,27 @@
+/* ==========================================================================
+   Design Tokens: Motion, Transitions & Curves
+   ========================================================================== */
+
+:root {
+  /* Motion Durations */
+  --motion-duration-fast: 150ms;
+  --motion-duration-normal: 250ms;
+  --motion-duration-slow: 400ms;
+  --motion-duration-deliberate: 600ms;
+
+  /* Easing Curves */
+  --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --motion-easing-decelerate: cubic-bezier(0, 0, 0, 1);
+  --motion-easing-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --motion-easing-spring: cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Reduced Motion Override */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-duration-fast: 0.01ms;
+    --motion-duration-normal: 0.01ms;
+    --motion-duration-slow: 0.01ms;
+    --motion-duration-deliberate: 0.01ms;
+  }
+}

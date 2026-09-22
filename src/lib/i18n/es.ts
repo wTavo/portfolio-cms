@@ -1,0 +1,68 @@
+/**
+ * @file es.ts
+ * @description Centralización de textos e internacionalización de la interfaz en español (Sentence case).
+ */
+
+export const i18n = {
+  common: {
+    close: 'Cerrar',
+    back: 'Volver',
+    save: 'Guardar',
+    saveChanges: 'Guardar cambios',
+    savedSuccessfully: 'Cambios guardados con éxito',
+    delete: 'Eliminar',
+    edit: 'Editar',
+    create: 'Crear',
+    loading: 'Cargando...',
+    publish: 'Publicar',
+    unpublish: 'Despublicar',
+    published: 'Publicado',
+    draft: 'Borrador',
+    exportData: 'Exportar datos',
+    logout: 'Cerrar sesión',
+    search: 'Buscar',
+    active: 'Activo',
+    suspended: 'Suspendido',
+  },
+  auth: {
+    loginTitle: 'Iniciar sesión',
+    loginSubtitle: 'Ingresa tus credenciales para acceder a tu panel',
+    emailLabel: 'Correo electrónico',
+    passwordLabel: 'Contraseña',
+    loginButton: 'Entrar',
+    invalidCredentials: 'Las credenciales ingresadas son incorrectas',
+    accountSuspended: 'Tu cuenta ha sido suspendida. Contacta al administrador',
+    sessionExpired: 'Tu sesión ha expirado. Por favor inicia sesión nuevamente',
+  },
+  admin: {
+    title: 'Panel de administración',
+    users: 'Gestión de usuarios',
+    createUser: 'Nuevo usuario',
+    displayName: 'Nombre para mostrar',
+    portfolioSlug: 'Enlace del portfolio',
+    sendInvitation: 'Enviar invitación',
+    userCreated: 'Usuario creado e invitación enviada',
+    suspendUser: 'Suspender cuenta',
+    activateUser: 'Activar cuenta',
+    deleteUser: 'Eliminar usuario',
+  },
+  dashboard: {
+    title: 'Mi portfolio',
+    profile: 'Perfil personal',
+    sections: 'Secciones',
+    addSection: 'Agregar sección',
+    reorderSections: 'Reordenar secciones',
+    media: 'Multimedia',
+    settings: 'Configuración',
+    preview: 'Vista previa',
+  },
+  errors: {
+    generic: 'Ocurrió un error inesperado. Intenta de nuevo',
+    unauthorized: 'No tienes autorización para realizar esta acción',
+    forbidden: 'No tienes permisos suficientes',
+    notFound: 'El recurso solicitado no existe',
+    payloadTooLarge: 'El archivo o solicitud excede el tamaño máximo permitido',
+    rateLimited: 'Demasiadas solicitudes. Por favor espera un momento',
+    validationFailed: 'Por favor verifica los datos ingresados',
+  },
+} as const;
