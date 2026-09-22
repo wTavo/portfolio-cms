@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título con escritura en formato de código sintáctico `<PORTAFOLIO BUILDER />`, confirmación visual por tecla Enter (↵) y posterior corte de estrella SVG con física DVD.
+ * @description Título cinético con moldes y letras anclados 100% en el mismo nodo de slot (cero desalineación), sintaxis de código < ... /> y física DVD.
  */
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
@@ -44,7 +44,7 @@ export default function KineticTitle({
   const [lockedIndices, setLockedIndices] = useState<Set<number>>(new Set());
   const lockedIndicesCountRef = useRef(0);
 
-  // Estados de la fase de código y tipeo
+  // Estados de código y tipeo
   const [typedCount, setTypedCount] = useState(0);
   const [cursorVisible, setCursorVisible] = useState(true);
   const [enterPressed, setEnterPressed] = useState(false);
@@ -96,11 +96,11 @@ export default function KineticTitle({
       if (current >= totalLetters) {
         clearInterval(typeInterval);
 
-        // Disparar confirmación de tecla Enter tras completar la escritura
+        // Confirmar con Enter al finalizar
         setTimeout(() => {
           setEnterPressed(true);
 
-          // Compilar y desvanecer las etiquetas de código </ >
+          // Compilar y desvanecer etiquetas de código
           setTimeout(() => {
             setCodeTagsVisible(false);
             setCursorVisible(false);
@@ -112,7 +112,7 @@ export default function KineticTitle({
     return () => clearInterval(typeInterval);
   }, [totalLetters, prefersReducedMotion]);
 
-  // 2. Motor de Física y Corte por Estrella tras la Confirmación
+  // 2. Motor de Física y Corte por Estrella
   useEffect(() => {
     if (prefersReducedMotion) return;
 
@@ -410,47 +410,23 @@ export default function KineticTitle({
         </div>
       </div>
 
-      {/* Capa 1 (Fondo): Moldes de Silueta Pura */}
-      <div
-        className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 select-none"
-        aria-hidden="true"
-      >
-        <div className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap justify-center gap-x-6 sm:gap-x-10 ${className}`}>
-          {words.map((word, wordIdx) => (
-            <span key={`mold-word-${wordIdx}`} className="inline-flex gap-x-1.5 sm:gap-x-2.5">
-              {word.split('').map((char, charIdx) => (
-                <span
-                  key={`mold-slot-${wordIdx}-${charIdx}`}
-                  className="inline-flex items-center justify-center"
-                  style={{ minWidth: '0.68em', height: '1.2em' }}
-                >
-                  <span className="text-[#141824] select-none [text-shadow:_0_3px_6px_rgba(0,0,0,0.95),_0_1px_2px_rgba(0,0,0,1),_0_-1px_1px_rgba(255,255,255,0.08)]">
-                    {char}
-                  </span>
-                </span>
-              ))}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {/* Capa 2 (Frente): Letras con Sintaxis de Código `</>` y Confirmación Enter */}
+      {/* Título Principal: Cada Molde y Letra comparten exactamente el mismo contenedor de Slot */}
       <h1
         ref={containerRef}
-        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-8 select-none relative z-10 ${className}`}
+        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-wider leading-[1.1] flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-10 select-none relative ${className}`}
         aria-label={uppercaseText}
       >
-        {/* Etiqueta de Apertura de Código `<` */}
-        <span
-          className={`font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none ${
-            codeTagsVisible ? 'opacity-90 scale-100' : 'opacity-0 scale-90 pointer-events-none'
-          }`}
-          aria-hidden="true"
-        >
-          &lt;
-        </span>
+        {/* Etiqueta de Apertura de Código `<` (Flotante a la izquierda sin desplazar los moldes) */}
+        {codeTagsVisible && (
+          <span
+            className="font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none -mr-2 sm:-mr-4"
+            aria-hidden="true"
+          >
+            &lt;
+          </span>
+        )}
 
-        {/* Palabras y Caracteres */}
+        {/* Palabras y Ranuras de Letras */}
         {words.map((word, wordIdx) => {
           return (
             <span key={`word-${wordIdx}`} className="inline-flex gap-x-1.5 sm:gap-x-2.5">
@@ -471,7 +447,17 @@ export default function KineticTitle({
                     className="inline-flex items-center justify-center relative"
                     style={{ minWidth: '0.68em', height: '1.2em' }}
                   >
-                    {/* Letra Activa */}
+                    {/* Molde: Silueta Pura Tallada (Exactamente debajo de su letra) */}
+                    <span
+                      className="absolute inset-0 flex items-center justify-center font-black select-none pointer-events-none z-0"
+                      aria-hidden="true"
+                    >
+                      <span className="text-[#141824] select-none [text-shadow:_0_3px_6px_rgba(0,0,0,0.95),_0_1px_2px_rgba(0,0,0,1),_0_-1px_1px_rgba(255,255,255,0.08)]">
+                        {char}
+                      </span>
+                    </span>
+
+                    {/* Letra Activa (Sobre su propio molde) */}
                     <span
                       ref={(el) => {
                         if (el) letterRefs.current.set(globalIdx, el);
@@ -508,22 +494,22 @@ export default function KineticTitle({
           );
         })}
 
-        {/* Etiqueta de Cierre de Código `/>` */}
-        <span
-          className={`font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none relative ${
-            codeTagsVisible ? 'opacity-90 scale-100' : 'opacity-0 scale-90 pointer-events-none'
-          }`}
-          aria-hidden="true"
-        >
-          /&gt;
+        {/* Etiqueta de Cierre de Código `/>` (Flotante a la derecha con badge Enter) */}
+        {codeTagsVisible && (
+          <span
+            className="font-mono text-cyan-400/90 font-bold transition-all duration-500 select-none relative -ml-2 sm:-ml-4"
+            aria-hidden="true"
+          >
+            /&gt;
 
-          {/* Indicador Flotante de Tecla [Enter ↵] al confirmar */}
-          {enterPressed && codeTagsVisible && (
-            <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-[var(--radius-sm)] bg-cyan-500/20 border border-cyan-400/50 text-[10px] font-mono text-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.5)] animate-bounce">
-              Enter ↵
-            </span>
-          )}
-        </span>
+            {/* Badge Flotante [Enter ↵] */}
+            {enterPressed && (
+              <span className="absolute -top-7 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-[var(--radius-sm)] bg-cyan-500/20 border border-cyan-400/50 text-[10px] font-mono text-cyan-200 shadow-[0_0_12px_rgba(56,189,248,0.5)] animate-bounce">
+                Enter ↵
+              </span>
+            )}
+          </span>
+        )}
       </h1>
     </div>
   );
