@@ -5,6 +5,7 @@
  */
 
 import SEOHead from '../components/ui/SEOHead.astro';
+import Icon from '../components/icons/Icon.astro';
 import '../styles/global.css';
 ---
 
@@ -30,8 +31,9 @@ import '../styles/global.css';
     </header>
 
     <main class="max-w-(--container-narrow-w) mx-auto px-4 py-20 text-center flex-1 flex flex-col items-center justify-center">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-xs font-semibold text-[var(--color-text-secondary)] mb-6">
-        🚀 Nueva plataforma
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-subtle)] text-xs font-semibold text-[var(--color-text-secondary)] mb-6">
+        <Icon name="rocket" class="w-3.5 h-3.5 text-[var(--color-brand-accent)]" />
+        <span>Nueva plataforma</span>
       </div>
       <h1 class="text-4xl sm:text-6xl font-extrabold tracking-tight mb-6 leading-tight">
         Tu portafolio profesional, moderno y dinámico

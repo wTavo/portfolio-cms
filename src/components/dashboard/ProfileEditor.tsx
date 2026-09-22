@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ExternalLinkIcon, CircleDotIcon, CircleIcon } from '../icons/Icons';
 
 export default function ProfileEditor() {
   const [loading, setLoading] = useState(true);
@@ -94,22 +95,33 @@ export default function ProfileEditor() {
               href={`/${slug}`}
               target="_blank"
               rel="noreferrer"
-              className="text-[var(--color-brand-accent)] font-semibold hover:underline"
+              className="inline-flex items-center gap-1 text-[var(--color-brand-accent)] font-semibold hover:underline"
             >
-              /{slug} ↗
+              <span>/{slug}</span>
+              <ExternalLinkIcon size={12} className="w-3 h-3" />
             </a>
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <span
-            className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
               isPublished
                 ? 'bg-[var(--color-status-success-bg)] text-[var(--color-status-success)]'
                 : 'bg-[var(--color-bg-subtle)] text-[var(--color-text-muted)]'
             }`}
           >
-            {isPublished ? '● Publicado' : '○ Borrador'}
+            {isPublished ? (
+              <>
+                <CircleDotIcon size={10} className="w-2.5 h-2.5" />
+                <span>Publicado</span>
+              </>
+            ) : (
+              <>
+                <CircleIcon size={10} className="w-2.5 h-2.5" />
+                <span>Borrador</span>
+              </>
+            )}
           </span>
         </div>
       </div>

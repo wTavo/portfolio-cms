@@ -1,7 +1,7 @@
 /**
  * @file server.ts
  * @description Cliente Supabase con Service Role Key exclusivo para tareas privilegiadas del servidor.
- * ⚠️ PROHIBIDO importar este cliente en código que se ejecute en el cliente (navegador).
+ * IMPORTANTE: PROHIBIDO importar este cliente en código que se ejecute en el cliente (navegador).
  */
 
 import { createClient } from '@supabase/supabase-js';

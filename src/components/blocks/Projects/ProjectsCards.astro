@@ -5,6 +5,7 @@
  */
 
 import SectionContainer from '../../ui/SectionContainer.astro';
+import Icon from '../../icons/Icon.astro';
 import type { ProjectsBlockData } from '../../../lib/types/portfolio';
 
 interface Props {
@@ -51,10 +52,11 @@ const { title = 'Proyectos destacados', data } = Astro.props;
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="min-h-(--size-touch-target) inline-flex items-center text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-[var(--color-brand-accent)] transition-colors"
+                class="min-h-(--size-touch-target) inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] hover:text-[var(--color-brand-accent)] transition-colors"
                 aria-label={`Ver código fuente de ${project.title}`}
               >
-                Código en GitHub ↗
+                <span>Código en GitHub</span>
+                <Icon name="external-link" class="w-3.5 h-3.5" />
               </a>
             )}
             {project.projectUrl && (
@@ -62,10 +64,11 @@ const { title = 'Proyectos destacados', data } = Astro.props;
                 href={project.projectUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="min-h-(--size-touch-target) inline-flex items-center text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-accent)] hover:underline"
+                class="min-h-(--size-touch-target) inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[var(--color-brand-accent)] hover:underline"
                 aria-label={`Visitar demo en vivo de ${project.title}`}
               >
-                Ver demo en vivo ↗
+                <span>Ver demo en vivo</span>
+                <Icon name="external-link" class="w-3.5 h-3.5" />
               </a>
             )}
           </div>

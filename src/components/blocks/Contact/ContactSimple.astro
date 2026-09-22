@@ -5,6 +5,7 @@
  */
 
 import SectionContainer from '../../ui/SectionContainer.astro';
+import Icon from '../../icons/Icon.astro';
 import type { ContactBlockData } from '../../../lib/types/portfolio';
 
 interface Props {
@@ -34,9 +35,10 @@ const { title = 'Contacto', data } = Astro.props;
       <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
         <a
           href={`mailto:${data.email}`}
-          class="min-h-(--size-touch-target) px-6 py-3 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm sm:text-base font-semibold hover:opacity-90 transition-opacity inline-flex items-center justify-center"
+          class="min-h-(--size-touch-target) px-6 py-3 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm sm:text-base font-semibold hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
         >
-          Enviar correo electrónico
+          <Icon name="mail" class="w-4 h-4" />
+          <span>Enviar correo electrónico</span>
         </a>
         <span class="text-xs sm:text-sm text-[var(--color-text-muted)]">
           {data.email}

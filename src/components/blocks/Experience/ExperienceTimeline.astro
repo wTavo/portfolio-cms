@@ -5,6 +5,7 @@
  */
 
 import SectionContainer from '../../ui/SectionContainer.astro';
+import Icon from '../../icons/Icon.astro';
 import type { ExperienceBlockData } from '../../../lib/types/portfolio';
 
 interface Props {
@@ -40,8 +41,9 @@ const { title = 'Experiencia laboral', data } = Astro.props;
         </div>
 
         {item.location && (
-          <p class="text-xs text-[var(--color-text-muted)] mb-3">
-            📍 {item.location}
+          <p class="text-xs text-[var(--color-text-muted)] mb-3 flex items-center gap-1.5">
+            <Icon name="map-pin" class="w-3.5 h-3.5 text-[var(--color-brand-accent)]" />
+            <span>{item.location}</span>
           </p>
         )}
 

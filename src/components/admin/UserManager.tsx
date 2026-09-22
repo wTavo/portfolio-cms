@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ExternalLinkIcon } from '../icons/Icons';
 
 interface UserItem {
   id: string;
@@ -229,9 +230,10 @@ export default function UserManager() {
                           href={`/${u.slug}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-xs text-[var(--color-brand-accent)] hover:underline"
+                          className="inline-flex items-center gap-1 text-xs text-[var(--color-brand-accent)] hover:underline"
                         >
-                          /{u.slug} ↗
+                          <span>/{u.slug}</span>
+                          <ExternalLinkIcon size={12} className="w-3 h-3" />
                         </a>
                       ) : (
                         <span className="text-xs text-[var(--color-text-muted)]">—</span>

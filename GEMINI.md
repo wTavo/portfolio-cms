@@ -233,3 +233,10 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 
 ## 30. Privacidad y Cumplimiento
 - **OBLIGATORIO** avisos de privacidad claros en formularios de contacto y gestión de consentimiento de analítica opcional.
+
+---
+
+## 31. Iconografía y Elementos Visuales: Cero Emojis y Diseños SVG Reutilizables
+- **PROHIBIDO el uso de emojis** en toda la interfaz de usuario, paneles administrativos, dashboards, páginas públicas, badges, botones, formularios y textos del sistema.
+- **OBLIGATORIO** utilizar exclusivamente iconos y elementos gráficos vectoriales en formato **SVG**, optimizados, accesibles (`aria-hidden="true"` en iconos decorativos o con etiquetas accesibles en controles interactivos) y estilizables con `currentColor` y clases del tema.
+- **OBLIGATORIO** declarar y centralizar todos los diseños SVG reutilizables en `src/components/icons/` (`Icon.astro` para componentes Astro e `Icons.tsx` para componentes React), prohibiendo duplicación de vectores inline y garantizando coherencia visual en toda la plataforma.
