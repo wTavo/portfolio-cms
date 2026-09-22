@@ -13,8 +13,16 @@ import type { Database } from './types';
  * @returns Cliente de Supabase configurado con persistencia de sesión por cookies
  */
 export function createSupabaseServerClient(cookies: AstroCookies) {
-  const supabaseUrl = import.meta.env.SUPABASE_URL || '';
-  const supabaseAnonKey = import.meta.env.SUPABASE_ANON_KEY || '';
+  const supabaseUrl =
+    (typeof process !== 'undefined' ? process.env?.SUPABASE_URL : undefined) ||
+    import.meta.env.SUPABASE_URL ||
+    '';
+
+  const supabaseAnonKey =
+    (typeof process !== 'undefined' ? (process.env?.SUPABASE_ANON_KEY || process.env?.SUPABASE_PUBLISHABLE_KEY) : undefined) ||
+    import.meta.env.SUPABASE_ANON_KEY ||
+    import.meta.env.SUPABASE_PUBLISHABLE_KEY ||
+    '';
 
   return createServerClient<Database>(supabaseUrl, supabaseAnonKey, {
     cookies: {

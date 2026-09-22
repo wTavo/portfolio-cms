@@ -10,5 +10,10 @@
 	},
 	"observability": {
 		"enabled": true
-	}
+	},
+	"vars": {
+    "SUPABASE_JWKS_URL": "https://aivdgvlnwcteylnjvtwe.supabase.co/auth/v1/.well-known/jwks.json",
+    "SUPABASE_PUBLISHABLE_KEY": "sb_publishable_1HoLhrT4VwRj4odQVMIcGQ_S-Ckh3Vr",
+    "SUPABASE_URL": "https://aivdgvlnwcteylnjvtwe.supabase.co"
+  },
 }
