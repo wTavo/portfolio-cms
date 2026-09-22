@@ -9,6 +9,7 @@ import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
 import { ArrowRightIcon, RocketIcon } from '../icons/Icons';
 import KineticTitle from './KineticTitle';
+import CosmicBackground from './CosmicBackground';
 import {
   MOTION_DURATIONS,
   MOTION_EASINGS,
@@ -101,6 +102,9 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   return (
     <div className="w-full h-full relative overflow-hidden flex flex-col justify-between selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+      {/* Fondo Cósmico Infinito con Cometas Distantes Continuos */}
+      <CosmicBackground />
+
       {/* Barra de Navegación Superior Fija */}
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-all duration-300 ${
