@@ -3,7 +3,7 @@
  * @description Servicio de negocio para la consulta y catalogación de portafolios públicos publicados.
  */
 
-import { getSupabaseAdminClient } from '../supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { DIRECTORY_CATEGORIES } from '../constants';
 import type { DirectoryProfileItem } from '../types/directory';
 
@@ -135,10 +135,26 @@ export function inferCategory(profession: string = ''): string {
  */
 export async function getPublishedDirectoryProfiles(): Promise<DirectoryProfileItem[]> {
   try {
-    const adminClient = getSupabaseAdminClient();
+    const supabaseUrl =
+      (typeof process !== 'undefined' ? process.env?.SUPABASE_URL : undefined) ||
+      import.meta.env.SUPABASE_URL ||
+      '';
+
+    const supabaseKey =
+      (typeof process !== 'undefined' ? (process.env?.SUPABASE_ANON_KEY || process.env?.SUPABASE_PUBLISHABLE_KEY || process.env?.SUPABASE_SERVICE_ROLE_KEY) : undefined) ||
+      import.meta.env.SUPABASE_ANON_KEY ||
+      import.meta.env.SUPABASE_PUBLISHABLE_KEY ||
+      import.meta.env.SUPABASE_SERVICE_ROLE_KEY ||
+      '';
+
+    if (!supabaseUrl || !supabaseKey) {
+      return SEED_DIRECTORY_PROFILES;
+    }
+
+    const client = createClient(supabaseUrl, supabaseKey);
 
     // Consultar perfiles publicados
-    const { data: profiles, error: profilesError } = await (adminClient as any)
+    const { data: profiles, error: profilesError } = await (client as any)
       .from('profiles')
       .select('id, user_id, name, slug, profession, bio, photo_url, location, theme, is_published')
       .eq('is_published', true);
@@ -149,7 +165,7 @@ export async function getPublishedDirectoryProfiles(): Promise<DirectoryProfileI
 
     // Filtrar solo usuarios activos
     const userIds = profiles.map((p: any) => p.user_id);
-    const { data: activeUsers } = await (adminClient as any)
+    const { data: activeUsers } = await (client as any)
       .from('users')
       .select('id, is_active')
       .in('id', userIds)
@@ -164,7 +180,7 @@ export async function getPublishedDirectoryProfiles(): Promise<DirectoryProfileI
 
     // Consultar secciones de habilidades y proyectos para enriquecer tarjetas
     const profileIds = validProfiles.map((p: any) => p.id);
-    const { data: sections } = await (adminClient as any)
+    const { data: sections } = await (client as any)
       .from('sections')
       .select('profile_id, type, data')
       .in('profile_id', profileIds)
