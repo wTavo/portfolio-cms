@@ -73,11 +73,18 @@ export async function createUserWithInvitation(input: CreateUserInput, invitedBy
     throw new Error('El enlace (slug) ya está en uso por otro usuario.');
   }
 
-  // 2. Invitar al usuario en Supabase Auth
-  const { data: authData, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(input.email);
+  // 2. Crear el usuario directamente en Supabase Auth (confirmado, sin enviar emails)
+  const { data: authData, error: createAuthError } = await adminClient.auth.admin.createUser({
+    email: input.email,
+    password: input.password,
+    email_confirm: true,
+    user_metadata: {
+      display_name: input.displayName,
+    },
+  });
 
-  if (inviteError || !authData.user) {
-    throw new Error(inviteError?.message || 'Error al enviar invitación al usuario.');
+  if (createAuthError || !authData.user) {
+    throw new Error(createAuthError?.message || 'Error al registrar usuario en autenticación.');
   }
 
   const userId = authData.user.id;

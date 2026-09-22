@@ -19,6 +19,7 @@ export default function UserManager() {
 
   // Form state
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [slug, setSlug] = useState('');
 
@@ -53,6 +54,7 @@ export default function UserManager() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
+          password,
           displayName,
           slug: slug.toLowerCase().trim(),
         }),
@@ -65,8 +67,9 @@ export default function UserManager() {
         return;
       }
 
-      setSuccessMsg('Usuario creado exitosamente. Se ha enviado la invitación por correo.');
+      setSuccessMsg('Usuario creado exitosamente.');
       setEmail('');
+      setPassword('');
       setDisplayName('');
       setSlug('');
       fetchUsers();
@@ -101,7 +104,7 @@ export default function UserManager() {
       <div className="p-6 sm:p-8 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-card)]">
         <h2 className="text-lg font-bold mb-1">Dar de alta a nuevo usuario (Owner)</h2>
         <p className="text-xs text-[var(--color-text-secondary)] mb-6">
-          Ingresa los datos del propietario del portfolio. Se enviará una invitación a su correo electrónico.
+          Ingresa los datos y contraseña inicial para el nuevo propietario de portfolio.
         </p>
 
         {error && (
@@ -116,7 +119,7 @@ export default function UserManager() {
           </div>
         )}
 
-        <form onSubmit={handleCreateUser} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <form onSubmit={handleCreateUser} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] mb-1">
               Nombre para mostrar
@@ -147,6 +150,20 @@ export default function UserManager() {
 
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] mb-1">
+              Contraseña inicial
+            </label>
+            <input
+              type="password"
+              required
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full min-h-(--size-input-height) px-3 rounded-[var(--radius-md)] bg-[var(--color-bg-base)] border border-[var(--color-border-default)] text-sm focus:outline-none focus:border-[var(--color-brand-accent)]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-text-secondary)] mb-1">
               Enlace / Slug del portfolio
             </label>
             <div className="flex items-center">
@@ -162,13 +179,13 @@ export default function UserManager() {
             </div>
           </div>
 
-          <div className="sm:col-span-3 pt-2">
+          <div className="sm:col-span-2 lg:col-span-4 pt-2">
             <button
               type="submit"
               disabled={submitting}
               className="min-h-(--size-button-height) px-6 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
             >
-              {submitting ? 'Enviando invitación...' : 'Crear usuario y enviar invitación'}
+              {submitting ? 'Creando usuario...' : 'Crear usuario y habilitar portfolio'}
             </button>
           </div>
         </form>
