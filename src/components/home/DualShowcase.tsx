@@ -1,9 +1,9 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo del dúo de creadores. Pantalla de bienvenida a pantalla completa (`100vh`) y revelación fluida de portafolios al scrollear.
+ * @description Portal interactivo con transición fluida por scroll entre la pantalla de bienvenida y los portafolios.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'motion/react';
 import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
@@ -29,17 +29,46 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   const { scrollY } = useScroll();
 
-  // Animaciones continuas de transformación basadas en el desplazamiento vertical
-  const heroScale = useTransform(scrollY, [0, 300], [1, 0.88]);
-  const heroOpacity = useTransform(scrollY, [0, 320], [1, 0]);
-  const heroTranslateY = useTransform(scrollY, [0, 320], [0, -50]);
-  const indicatorOpacity = useTransform(scrollY, [0, 100], [1, 0]);
+  // El título central se desvanece por completo antes de los 150px
+  const heroScale = useTransform(scrollY, [0, 140], [1, 0.92]);
+  const heroOpacity = useTransform(scrollY, [0, 120], [1, 0]);
+  const heroTranslateY = useTransform(scrollY, [0, 140], [0, -30]);
+  const indicatorOpacity = useTransform(scrollY, [0, 60], [1, 0]);
 
+  // La barra de navegación y su título solo aparecen cuando el central ya desapareció por completo
   useEffect(() => {
     return scrollY.on('change', (latest) => {
-      setIsScrolled(latest > 100);
+      setIsScrolled(latest > 200);
     });
   }, [scrollY]);
+
+  // Desplazamiento suave hacia la sección de portafolios
+  const scrollToPortfolios = useCallback(() => {
+    const target = document.getElementById('portfolios');
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  // Detección de rueda de ratón en el inicio para guiar suavemente a la siguiente sección
+  useEffect(() => {
+    let isScrolling = false;
+
+    const handleWheel = (e: WheelEvent) => {
+      if (window.scrollY < 80 && e.deltaY > 15 && !isScrolling) {
+        isScrolling = true;
+        scrollToPortfolios();
+        setTimeout(() => {
+          isScrolling = false;
+        }, 900);
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, [scrollToPortfolios]);
 
   const { creators } = data;
 
@@ -54,15 +83,15 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         }`}
       >
         <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Título en la barra superior animado que entra suavemente al scrollear */}
+          {/* Título en la barra superior: Solo se monta y anima cuando el título central ya no es visible */}
           <div className="min-w-[180px] flex items-center">
             <AnimatePresence>
               {isScrolled && (
                 <motion.a
                   href="/"
-                  initial={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
                   className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity"
                 >
@@ -85,16 +114,19 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </div>
       </header>
 
-      {/* Pantalla 1: Hero Inicial a Pantalla Completa (100vh) */}
-      <motion.section
-        style={{
-          scale: heroScale,
-          opacity: heroOpacity,
-          y: heroTranslateY,
-        }}
+      {/* Pantalla 1: Hero de Bienvenida (100vh exclusivo para el título) */}
+      <section
+        id="hero"
         className="h-screen min-h-[600px] flex flex-col items-center justify-center text-center px-4 max-w-4xl mx-auto relative select-none"
       >
-        <div className="space-y-4">
+        <motion.div
+          style={{
+            scale: heroScale,
+            opacity: heroOpacity,
+            y: heroTranslateY,
+          }}
+          className="space-y-4"
+        >
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-[1.08]">
             {i18n.showcase.title}
           </h1>
@@ -102,35 +134,41 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           <p className="text-base sm:text-xl text-[var(--color-text-secondary)] max-w-xl mx-auto leading-relaxed">
             {i18n.showcase.subtitle}
           </p>
-        </div>
+        </motion.div>
 
-        {/* Indicador minimalista sutil de scroll en la parte inferior */}
-        <motion.div
+        {/* Indicador interactivo de scroll hacia abajo */}
+        <motion.button
+          type="button"
+          onClick={scrollToPortfolios}
           style={{ opacity: indicatorOpacity }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 pointer-events-none"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1"
+          aria-label="Desplazarse a los portafolios"
         >
-          <span className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)] opacity-70">
+          <span className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-brand-accent)] transition-colors">
             Scroll
           </span>
-          <div className="w-5 h-8 rounded-full border border-[var(--color-border-default)] flex items-start justify-center p-1">
+          <div className="w-5 h-8 rounded-full border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)] flex items-start justify-center p-1 transition-colors">
             <motion.div
               animate={{ y: [0, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+              transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
               className="w-1 h-2 rounded-full bg-[var(--color-brand-accent)]"
             />
           </div>
-        </motion.div>
-      </motion.section>
+        </motion.button>
+      </section>
 
-      {/* Pantalla 2: Portafolios (Aparecen al scrollear hacia abajo) */}
-      <motion.section
-        variants={staggerContainerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: '-60px' }}
+      {/* Pantalla 2: Sección de Portafolios (Aparece fluidamente al scrollear) */}
+      <section
+        id="portfolios"
         className="min-h-screen flex flex-col justify-center max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-24 sm:py-32"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <motion.div
+          variants={staggerContainerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-50px' }}
+          className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full"
+        >
           {creators.map((creator) => {
             const monogram = getMonogram(creator.name);
 
@@ -188,8 +226,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               </motion.a>
             );
           })}
-        </div>
-      </motion.section>
+        </motion.div>
+      </section>
     </div>
   );
 }

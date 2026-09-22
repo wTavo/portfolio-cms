@@ -1,7 +1,7 @@
 ---
 /**
  * @file index.astro
- * @description Showcase principal del dúo de creadores e ingenieros de software.
+ * @description Showcase principal del dúo de creadores e ingenieros de software con navegación fluida y snap scroll.
  */
 
 import SEOHead from '../components/ui/SEOHead.astro';
@@ -14,7 +14,7 @@ const showcaseData = await getShowcaseData();
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang="es" class="scroll-smooth">
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -23,15 +23,15 @@ const showcaseData = await getShowcaseData();
       description={i18n.showcase.subtitle}
     />
   </head>
-  <body class="min-h-screen flex flex-col bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased relative overflow-x-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+  <body class="min-h-screen bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased relative overflow-x-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
     <!-- Gradiente ambiental sutil de iluminación de fondo -->
     <div
-      class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-radial from-[var(--color-brand-accent)]/10 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none -z-10"
+      class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-radial from-[var(--color-brand-accent)]/10 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none -z-10"
       aria-hidden="true"
     ></div>
 
     <!-- Showcase Dual Interactivo y Barra de Navegación Única -->
-    <main class="flex-1">
+    <main>
       <DualShowcase client:load data={showcaseData} />
     </main>
 
