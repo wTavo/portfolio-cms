@@ -1,56 +1,44 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Cometa Cósmico Astronómico con Estela Etérea e Iluminación de Moldes".
- * Un cometa astronómico fotorrealista (con doble cola de iones y polvo curvado) cruza la pantalla completa
- * en ciclos continuos. Al pasar, ilumina los moldes de "PORTAFOLIO" y "PROFESIONAL",
- * apagándose suavemente con fosforescencia natural.
+ * @description Título Cinético: "Dibujo de Contorno de Moldes Vectoriales y Relleno de Color Progresivo".
+ * Los moldes de las letras se trazan primero de forma vectorial mediante dibujo de contorno luminoso
+ * y posteriormente se van rellenando con color blanco incandescente y resplandor celestial.
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import {
-  createCelestialTrajectory,
-  initCometState,
-  updateCometPhysics,
-  renderAstronomicalComet,
-  calculateLetterIllumination,
-  type CometState,
-} from '../../lib/canvas/cometRenderer';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { motion } from 'motion/react';
+import { GLYPH_PATHS } from '../../lib/typography/glyphPaths';
 
 interface KineticTitleProps {
   text?: string;
   className?: string;
 }
 
+interface LetterLayout {
+  char: string;
+  x: number;
+  d: string;
+  advanceWidth: number;
+  globalIndex: number;
+  wordIndex: number;
+  charIndex: number;
+}
+
+interface WordLayout {
+  word: string;
+  letters: LetterLayout[];
+  totalWidth: number;
+}
+
 export default function KineticTitle({
   text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [letterBrightness, setLetterBrightness] = useState<{ [key: string]: number }>({});
+  const [animationKey, setAnimationKey] = useState(0);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
-
-  // Metadatos y claves únicas para cada carácter del título
-  const letterItems = useMemo(() => {
-    const list: { wordIdx: number; charIdx: number; char: string; key: string; globalIdx: number }[] = [];
-    let count = 0;
-    words.forEach((word, wordIdx) => {
-      word.split('').forEach((char, charIdx) => {
-        list.push({
-          wordIdx,
-          charIdx,
-          char,
-          key: `${wordIdx}-${charIdx}-${char}`,
-          globalIdx: count++,
-        });
-      });
-    });
-    return list;
-  }, [words]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -60,257 +48,189 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  useEffect(() => {
-    if (prefersReducedMotion) {
-      const allBright: { [key: string]: number } = {};
-      letterItems.forEach((item) => {
-        allBright[item.key] = 1;
-      });
-      setLetterBrightness(allBright);
-      return;
-    }
+  // Calcular la disposición geométrica de cada palabra y letra
+  const wordsLayout = useMemo<WordLayout[]>(() => {
+    let globalCounter = 0;
+    return words.map((word, wordIndex) => {
+      // Espaciado entre letras optimizado para cada línea
+      const letterSpacing = wordIndex === 0 ? 32 : 55;
+      let currentX = 0;
+      const letters: LetterLayout[] = [];
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+      for (let charIndex = 0; charIndex < word.length; charIndex++) {
+        const char = word[charIndex];
+        const glyph = GLYPH_PATHS[char] || { d: '', advanceWidth: 400 };
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let animId: number;
-    let isRunning = true;
-    let trajectoryCounter = 0;
-
-    let winW = window.innerWidth;
-    let winH = window.innerHeight;
-
-    let activeComet: CometState | null = null;
-    let cometCooldownTimer: NodeJS.Timeout | null = null;
-
-    const currentBrightness: { [key: string]: number } = {};
-    letterItems.forEach((item) => {
-      currentBrightness[item.key] = 0;
-    });
-
-    const letterPositions: { [key: string]: { x: number; y: number } } = {};
-
-    const resize = () => {
-      winW = window.innerWidth;
-      winH = window.innerHeight;
-
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.round(winW * dpr);
-      canvas.height = Math.round(winH * dpr);
-      ctx.scale(dpr, dpr);
-
-      // Calcular posiciones de cada carácter en pantalla
-      letterItems.forEach((item) => {
-        const el = document.getElementById(`kinetic-char-${item.key}`);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          letterPositions[item.key] = {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-          };
-        }
-      });
-    };
-
-    resize();
-    window.addEventListener('resize', resize);
-    window.addEventListener('scroll', resize);
-
-    // Lanzador de cometa con trayectoria orbital celestial
-    const launchComet = () => {
-      if (!isRunning) return;
-
-      resize();
-
-      let minY = winH;
-      let maxY = 0;
-      letterItems.forEach((item) => {
-        const pos = letterPositions[item.key];
-        if (pos) {
-          minY = Math.min(minY, pos.y);
-          maxY = Math.max(maxY, pos.y);
-        }
-      });
-
-      const titleCenterY = (minY + maxY) / 2 || winH / 2;
-      const titleHeight = maxY - minY || 180;
-
-      const trajectory = createCelestialTrajectory(
-        trajectoryCounter,
-        winW,
-        winH,
-        titleCenterY,
-        titleHeight
-      );
-      trajectoryCounter++;
-
-      activeComet = initCometState(trajectory);
-    };
-
-    cometCooldownTimer = setTimeout(launchComet, 350);
-
-    // Bucle de animación cinemática
-    const renderLoop = (timestamp: number) => {
-      if (!isRunning) return;
-
-      ctx.clearRect(0, 0, winW, winH);
-
-      // Decaimiento fosforescente gradual
-      letterItems.forEach((item) => {
-        currentBrightness[item.key] = Math.max(0, (currentBrightness[item.key] ?? 0) * 0.94);
-      });
-
-      if (activeComet) {
-        updateCometPhysics(activeComet, timestamp);
-        renderAstronomicalComet(ctx, activeComet);
-
-        // Calcular iluminación en cada letra
-        letterItems.forEach((item) => {
-          const pos = letterPositions[item.key];
-          if (!pos || !activeComet) return;
-
-          const illumination = calculateLetterIllumination(
-            activeComet.headX,
-            activeComet.headY,
-            activeComet.spine,
-            pos.x,
-            pos.y,
-            240
-          );
-
-          if (illumination > (currentBrightness[item.key] ?? 0)) {
-            currentBrightness[item.key] = illumination;
-          }
+        letters.push({
+          char,
+          x: currentX,
+          d: glyph.d,
+          advanceWidth: glyph.advanceWidth,
+          globalIndex: globalCounter++,
+          wordIndex,
+          charIndex,
         });
 
-        // Al finalizar el vuelo fuera del viewport, programar el siguiente paso
-        if (activeComet.progress >= 1.25) {
-          activeComet = null;
-          if (cometCooldownTimer) clearTimeout(cometCooldownTimer);
-          cometCooldownTimer = setTimeout(() => {
-            cometCooldownTimer = null;
-            launchComet();
-          }, 2400);
-        }
+        currentX += glyph.advanceWidth + letterSpacing;
       }
 
-      setLetterBrightness({ ...currentBrightness });
+      return {
+        word,
+        letters,
+        totalWidth: Math.max(currentX - letterSpacing, 100),
+      };
+    });
+  }, [words]);
 
-      animId = requestAnimationFrame(renderLoop);
-    };
-
-    animId = requestAnimationFrame(renderLoop);
-
-    return () => {
-      isRunning = false;
-      window.removeEventListener('resize', resize);
-      window.removeEventListener('scroll', resize);
-      if (cometCooldownTimer) clearTimeout(cometCooldownTimer);
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, [letterItems, prefersReducedMotion]);
+  // Permite reiniciar la animación al hacer clic en el título
+  const handleReplay = useCallback(() => {
+    setAnimationKey((prev) => prev + 1);
+  }, []);
 
   if (prefersReducedMotion) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none ${className}`}>
-        <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider text-white leading-[1.08] uppercase">
-          {words[0]}
-        </span>
-        <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.25em] sm:tracking-[0.32em] text-white/90 leading-[1.08] uppercase">
-          {words[1]}
-        </span>
+      <div className={`flex flex-col items-center justify-center gap-y-3 sm:gap-y-4 md:gap-y-6 text-center select-none ${className}`}>
+        {words.map((word, idx) => (
+          <span
+            key={`reduced-word-${idx}`}
+            className={`font-black tracking-wider text-white uppercase leading-none ${
+              idx === 0
+                ? 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem]'
+                : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl tracking-[0.25em]'
+            }`}
+          >
+            {word}
+          </span>
+        ))}
       </div>
     );
   }
 
   return (
     <div
-      ref={containerRef}
-      className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[540px] md:min-h-[620px] py-16 sm:py-20 select-none overflow-visible cursor-default"
+      key={`kinetic-anim-${animationKey}`}
+      onClick={handleReplay}
+      className={`relative w-full flex flex-col items-center justify-center min-h-[440px] sm:min-h-[500px] md:min-h-[580px] py-12 sm:py-16 select-none overflow-visible cursor-pointer ${className}`}
+      title="Clic para reproducir animación"
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          handleReplay();
+        }
+      }}
     >
       {/* Resplandor ambiental de estudio ultra suave */}
       <div
-        className="absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none opacity-25"
+        className="absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none opacity-20"
         aria-hidden="true"
       />
 
-      {/* Canvas fijado a pantalla completa para el vuelo libre y cósmico del cometa */}
-      <canvas
-        ref={canvasRef}
-        className="fixed inset-0 w-full h-full pointer-events-none z-20 overflow-visible"
-      />
+      <div className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible">
+        {wordsLayout.map((wordLayout, wordIdx) => {
+          const isFirstLine = wordIdx === 0;
+          const containerClasses = isFirstLine
+            ? 'w-full max-w-5xl h-auto drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]'
+            : 'w-[90%] max-w-4xl h-auto drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]';
 
-      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4 gap-y-2 sm:gap-y-3.5 md:gap-y-4 z-10 overflow-visible">
-        {words.map((word, wordIdx) => {
-          const isFirstWord = wordIdx === 0;
-
-          // Jerarquía tipográfica monumental
-          const fontClasses = isFirstWord
-            ? 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider'
-            : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.28em] md:tracking-[0.32em]';
-
-          const slotMinWidth = isFirstWord ? '0.74em' : '0.82em';
+          // Base temporal para secuenciar el dibujo y posterior llenado
+          const baseDelay = isFirstLine ? 0.15 : 0.75;
+          const strokeStagger = 0.08;
+          const strokeDuration = 0.85;
 
           return (
-            <div
-              key={`word-row-${wordIdx}`}
-              className={`inline-flex items-center justify-center relative leading-[1.08] overflow-visible ${fontClasses} ${
-                isFirstWord ? 'gap-x-1 sm:gap-x-2 md:gap-x-3' : 'gap-x-1 sm:gap-x-1.5 md:gap-x-2.5'
-              }`}
+            <svg
+              key={`word-svg-${wordLayout.word}-${wordIdx}`}
+              viewBox={`0 75 ${wordLayout.totalWidth} 750`}
+              className={`overflow-visible select-none ${containerClasses}`}
+              aria-label={wordLayout.word}
             >
-              {word.split('').map((char, charIdx) => {
-                const key = `${wordIdx}-${charIdx}-${char}`;
-                const brightness = letterBrightness[key] ?? 0;
+              {wordLayout.letters.map((letter) => {
+                const charDelay = baseDelay + letter.charIndex * strokeStagger;
+                // El llenado se inicia progresivamente cuando el contorno del molde está trazado
+                const fillDelay = charDelay + strokeDuration * 0.7;
 
                 return (
-                  <div
-                    id={`kinetic-char-${key}`}
-                    key={`slot-${key}`}
-                    className="relative inline-flex items-center justify-center overflow-visible"
-                    style={{ minWidth: slotMinWidth }}
+                  <g
+                    key={`letter-group-${wordIdx}-${letter.charIndex}-${letter.char}`}
+                    transform={`translate(${letter.x}, 0)`}
+                    className="overflow-visible"
                   >
-                    {/* Silueta y contorno del molde en bajorrelieve */}
-                    <span
-                      className="select-none pointer-events-none uppercase leading-[1.08] transition-colors duration-200"
-                      style={{
-                        WebkitTextStroke: brightness > 0.05
-                          ? `1.5px rgba(255, 255, 255, ${0.28 + brightness * 0.72})`
-                          : '1.2px rgba(255, 255, 255, 0.24)',
-                        color: 'transparent',
-                        textShadow: brightness > 0.1
-                          ? `0 0 16px rgba(255, 255, 255, ${brightness * 0.8})`
-                          : 'none',
+                    {/* 1. SILUETA BASE DEL MOLDE (BAJORRELIEVE QUE SE DIBUJA PRIMERO) */}
+                    <motion.path
+                      d={letter.d}
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{ pathLength: 1, opacity: 1 }}
+                      transition={{
+                        pathLength: {
+                          duration: strokeDuration,
+                          delay: charDelay,
+                          ease: [0.16, 1, 0.3, 1],
+                        },
+                        opacity: {
+                          duration: 0.15,
+                          delay: charDelay,
+                        },
                       }}
-                      aria-hidden="true"
-                    >
-                      {char}
-                    </span>
+                      stroke="rgba(255, 255, 255, 0.32)"
+                      strokeWidth={3.5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="transparent"
+                    />
 
-                    {/* Luz blanca que enciende la letra al paso del cometa y se apaga suavemente */}
-                    <div
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-visible transition-none"
-                      style={{
-                        opacity: brightness,
+                    {/* 2. TRAZO LUMINOSO INCANDESCENTE (EFECTO LÁSER DE DIBUJADO DE CONTORNO) */}
+                    <motion.path
+                      d={letter.d}
+                      initial={{ pathLength: 0, opacity: 0 }}
+                      animate={{
+                        pathLength: [0, 1],
+                        opacity: [0, 1, 0.8, 0],
                       }}
-                    >
-                      <span
-                        className="inline-block uppercase leading-[1.08] text-white transition-all"
-                        style={{
-                          textShadow: brightness > 0.25
-                            ? `0 0 24px rgba(255, 255, 255, ${brightness * 0.95}), 0 0 45px rgba(186, 230, 253, ${brightness * 0.6})`
-                            : 'none',
-                        }}
-                      >
-                        {char}
-                      </span>
-                    </div>
-                  </div>
+                      transition={{
+                        pathLength: {
+                          duration: strokeDuration,
+                          delay: charDelay,
+                          ease: [0.16, 1, 0.3, 1],
+                        },
+                        opacity: {
+                          duration: strokeDuration + 0.35,
+                          delay: charDelay,
+                          times: [0, 0.15, 0.8, 1],
+                        },
+                      }}
+                      stroke="#ffffff"
+                      strokeWidth={5}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      fill="transparent"
+                      style={{
+                        filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.6))',
+                      }}
+                    />
+
+                    {/* 3. RELLENO DE COLOR POSTERIOR (COLOR BLANCO INCANDESCENTE Y RESPLANDOR CELESTIAL) */}
+                    <motion.path
+                      d={letter.d}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{
+                        duration: 0.65,
+                        delay: fillDelay,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      fill="#ffffff"
+                      stroke="#ffffff"
+                      strokeWidth={1}
+                      style={{
+                        filter: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                      }}
+                    />
+                  </g>
                 );
               })}
-            </div>
+            </svg>
           );
         })}
       </div>
