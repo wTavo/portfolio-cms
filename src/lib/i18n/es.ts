@@ -57,7 +57,7 @@ export const i18n = {
     preview: 'Vista previa',
   },
   showcase: {
-    title: 'Portafolio Builder',
+    title: 'Portafolio Profesional',
     subtitle: 'Selecciona un portafolio para explorar proyectos y experiencia',
     explorePortfolio: 'Explorar portafolio',
     login: 'Acceso',
