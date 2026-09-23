@@ -13,16 +13,32 @@ export default defineConfig({
   vite: {
     plugins: [tailwindcss()],
     optimizeDeps: {
-      exclude: ['@astrojs/cloudflare']
+      exclude: [
+        '@astrojs/cloudflare',
+        '@astrojs/cloudflare/entrypoints/server',
+        '@astrojs/cloudflare/entrypoints/server.advanced',
+        '@astrojs/cloudflare/entrypoints/server.directory',
+        '@astrojs/cloudflare/image-service-workerd',
+      ]
     },
     ssr: {
       optimizeDeps: {
-        exclude: ['@astrojs/cloudflare']
+        exclude: [
+          '@astrojs/cloudflare',
+          '@astrojs/cloudflare/entrypoints/server',
+          '@astrojs/cloudflare/entrypoints/server.advanced',
+          '@astrojs/cloudflare/entrypoints/server.directory',
+          '@astrojs/cloudflare/image-service-workerd',
+        ]
       },
       noExternal: ['@astrojs/cloudflare']
     }
   },
   adapter: cloudflare({
-    imageService: 'passthrough'
+    imageService: 'passthrough',
+    platformProxy: {
+      enabled: true,
+      configPath: 'wrangler.jsonc'
+    }
   })
 });
