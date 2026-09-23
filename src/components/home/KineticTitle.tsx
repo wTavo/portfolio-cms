@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético interactivo: La experiencia nace con un icono de Portafolio/Maletín Tech en solitario. Al abrirse, despliega en cascada las letras hacia ambos lados como documentos de luz en un abanico cinemático (/\) que luego se posa en la línea horizontal definitiva, integrando el maletín como la 'A' icónica.
+ * @description Título cinético interactivo: Un Portafolio Tech en el centro se abre y libera el título completo ('PORTAFOLIO PROFESIONAL' con todas sus letras normales). Las letras se despliegan en abanico (/\) y luego se posan y nivelan sobre la línea horizontal definitiva.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -13,131 +13,89 @@ interface KineticTitleProps {
 type AnimationPhase = 'briefcase_solo' | 'briefcase_opening' | 'fanning_out' | 'leveling' | 'settled';
 
 /**
- * Icono de Portafolio / Maletín Ejecutivo Tech con diseño estilizado en 'A'.
+ * Gráfico vectorial de Portafolio Tech independiente con tapa que se abre en 3D.
  */
-function PortfolioBriefcaseIcon({
-  phase,
-  isFinalGlow,
-  onClick,
-}: {
-  phase: AnimationPhase;
-  isFinalGlow: boolean;
-  onClick?: () => void;
-}) {
-  const isSolo = phase === 'briefcase_solo';
-  const isOpening = phase === 'briefcase_opening' || phase === 'fanning_out';
-
+function PortfolioBriefcaseGraphic({ isOpen }: { isOpen: boolean }) {
   return (
-    <div
-      onClick={onClick}
-      className={`inline-flex items-center justify-center relative cursor-pointer select-none transition-all duration-700 ${
-        isSolo
-          ? 'scale-140 drop-shadow-[0_0_35px_rgba(56,189,248,1)] drop-shadow-[0_0_60px_rgba(255,255,255,0.95)] animate-pulse'
-          : isOpening
-          ? 'scale-120 drop-shadow-[0_0_28px_rgba(56,189,248,0.95)]'
-          : isFinalGlow
-          ? 'scale-105 drop-shadow-[0_0_24px_rgba(255,255,255,0.95)] drop-shadow-[0_0_35px_rgba(56,189,248,0.8)]'
-          : 'scale-100 drop-shadow-[0_0_14px_rgba(56,189,248,0.6)]'
-      }`}
-      style={{ width: '0.92em', height: '1.15em' }}
-    >
+    <div className="relative w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center [perspective:800px] select-none">
+      {/* Halo de luz que emana del interior del portafolio cuando se abre */}
+      <div
+        className={`absolute inset-0 bg-radial from-cyan-400/40 via-cyan-500/15 to-transparent blur-2xl transition-all duration-700 ${
+          isOpen ? 'opacity-100 scale-130' : 'opacity-40 scale-90'
+        }`}
+      />
+
       <svg
-        viewBox="0 0 54 54"
+        viewBox="0 0 64 64"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full"
-        aria-label="A"
+        className="w-full h-full relative z-10 drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]"
       >
         <defs>
-          <linearGradient id="briefcase-body-grad" x1="27" y1="6" x2="27" y2="48" gradientUnits="userSpaceOnUse">
+          <linearGradient id="case-body-grad" x1="32" y1="16" x2="32" y2="56" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="45%" stopColor="#F0F9FF" />
+            <stop offset="40%" stopColor="#E0F2FE" />
             <stop offset="100%" stopColor="#38BDF8" />
           </linearGradient>
-          <linearGradient id="briefcase-flap-grad" x1="27" y1="16" x2="27" y2="34" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#E0F2FE" />
-            <stop offset="100%" stopColor="#0284C7" />
+          <linearGradient id="case-interior-grad" x1="32" y1="20" x2="32" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#38BDF8" />
+            <stop offset="100%" stopColor="#0369A1" />
           </linearGradient>
         </defs>
 
-        {/* Asa Superior Metálica del Portafolio (Cúspide de la 'A') */}
+        {/* Asa Superior Metálica */}
         <path
-          d="M21 16 V9 C21 6.5 33 6.5 33 9 V16"
+          d="M24 18 V10 C24 7.5 40 7.5 40 10 V18"
           stroke="#FFFFFF"
-          strokeWidth="2.5"
+          strokeWidth="3"
           strokeLinecap="round"
           fill="none"
         />
 
-        {/* Cuerpo Principal del Portafolio (Trapezoidal / Silueta de 'A') */}
+        {/* Interior Iluminado (Visible cuando la tapa se abre) */}
         <path
-          d="M16 16 H38 L46 46 H8 L16 16 Z"
-          fill="url(#briefcase-body-grad)"
+          d="M14 18 H50 L54 52 H10 L14 18 Z"
+          fill="url(#case-interior-grad)"
+          stroke="#38BDF8"
+          strokeWidth="1.2"
+        />
+
+        {/* Cuerpo Principal del Portafolio */}
+        <path
+          d="M12 28 H52 L54 52 H10 L12 28 Z"
+          fill="url(#case-body-grad)"
           stroke="#FFFFFF"
           strokeWidth="1.2"
         />
 
-        {/* Solapa Superior Plegable del Portafolio */}
-        <path
-          d="M16 16 H38 L41 28 L27 34 L13 28 L16 16 Z"
-          fill="url(#briefcase-flap-grad)"
-          opacity="0.9"
-          stroke="#38BDF8"
-          strokeWidth="1"
-        />
-
-        {/* Barra Transversal y Broche Central de Titanio (Travesaño de la 'A') */}
-        <line x1="14" y1="34" x2="40" y2="34" stroke="#FFFFFF" strokeWidth="1.8" opacity="0.9" />
-        
-        {/* Broche / Cerradura de Seguridad Iluminada */}
-        <rect
-          x="24"
-          y="30"
-          width="6"
-          height="7"
-          rx="1.5"
-          fill="#0c1222"
-          stroke="#38BDF8"
-          strokeWidth="1.2"
-        />
-        <circle cx="27" cy="33.5" r="1.2" fill="#FFFFFF" />
-
-        {/* Costuras y Biseles Reforzados en Esquinas */}
-        <line x1="10" y1="44" x2="16" y2="18" stroke="#FFFFFF" strokeWidth="0.8" opacity="0.6" />
-        <line x1="44" y1="44" x2="38" y2="18" stroke="#FFFFFF" strokeWidth="0.8" opacity="0.6" />
+        {/* Tapa / Solapa que se abre hacia arriba */}
+        <g
+          style={{
+            transformOrigin: '32px 18px',
+            transform: isOpen ? 'rotateX(-75deg) translateY(-3px)' : 'rotateX(0deg)',
+            transition: 'transform 600ms cubic-bezier(0.2, 0.8, 0.2, 1)',
+          }}
+        >
+          <path
+            d="M14 18 H50 L52 34 L32 40 L12 34 L14 18 Z"
+            fill="#0f172a"
+            stroke="#38BDF8"
+            strokeWidth="1.5"
+          />
+          {/* Broche de Seguridad Central */}
+          <rect
+            x="28"
+            y="35"
+            width="8"
+            height="9"
+            rx="2"
+            fill="#FFFFFF"
+            className={isOpen ? 'drop-shadow-[0_0_12px_rgba(255,255,255,1)]' : ''}
+          />
+          <circle cx="32" cy="39.5" r="1.5" fill="#0284C7" />
+        </g>
       </svg>
     </div>
-  );
-}
-
-/**
- * Molde en bajo relieve para el Portafolio.
- */
-function PortfolioBriefcaseMold() {
-  return (
-    <span className="inline-flex items-center justify-center relative w-[0.92em] h-[1.15em] select-none pointer-events-none opacity-40">
-      <svg
-        viewBox="0 0 54 54"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
-        aria-hidden="true"
-      >
-        <path
-          d="M21 16 V9 C21 6.5 33 6.5 33 9 V16"
-          stroke="rgba(255,255,255,0.1)"
-          strokeWidth="2"
-          fill="none"
-        />
-        <path
-          d="M16 16 H38 L46 46 H8 L16 16 Z"
-          fill="#141824"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth="1"
-        />
-        <line x1="14" y1="34" x2="40" y2="34" stroke="#080c18" strokeWidth="1.5" />
-      </svg>
-    </span>
   );
 }
 
@@ -170,13 +128,13 @@ export default function KineticTitle({
     setFannedStep(0);
     setIsFinalGlow(false);
 
-    // 1. El Portafolio nace en solitario en el centro con pulso de luz
+    // 1. El Portafolio aparece solitario en el centro con pulso de luz
     const t1 = setTimeout(() => {
-      // 2. El portafolio se abre y proyecta los rayos de luz
+      // 2. El portafolio se abre
       setPhase('briefcase_opening');
 
       const t2 = setTimeout(() => {
-        // 3. Despliegue en abanico (Fan-Out) expulsando las letras en cascada
+        // 3. Despliegue en abanico (Fan-Out): el título completo brota del portafolio
         setPhase('fanning_out');
 
         let step = 0;
@@ -210,7 +168,7 @@ export default function KineticTitle({
         }, 110);
 
         return () => clearInterval(interval);
-      }, 350);
+      }, 400);
 
       return () => clearTimeout(t2);
     }, 700);
@@ -235,14 +193,8 @@ export default function KineticTitle({
   if (prefersReducedMotion) {
     return (
       <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none ${className}`}>
-        <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase inline-flex items-center justify-center">
-          {words[0].split('').map((char, i) =>
-            i === 4 ? (
-              <PortfolioBriefcaseIcon key="briefcase-red" phase="settled" isFinalGlow={false} />
-            ) : (
-              <span key={`char-red-0-${i}`}>{char}</span>
-            )
-          )}
+        <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase">
+          {words[0]}
         </span>
         <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[var(--color-text-primary)] leading-[1.0] uppercase">
           {words[1]}
@@ -261,7 +213,23 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      {/* BRAZOS DEL COMPÁS / HACES DE LUZ QUE ABREN EL PORTAFOLIO */}
+      {/* PORTAFOLIO CENTRAL INDEPENDIENTE QUE SE ABRE Y EXPULSA EL TÍTULO */}
+      <div
+        onClick={() => runAnimationSequence()}
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center cursor-pointer transition-all duration-1000 ${
+          phase === 'briefcase_solo'
+            ? 'opacity-100 scale-125 drop-shadow-[0_0_40px_rgba(56,189,248,1)]'
+            : phase === 'briefcase_opening' || phase === 'fanning_out'
+            ? 'opacity-85 scale-105 drop-shadow-[0_0_30px_rgba(56,189,248,0.8)]'
+            : 'opacity-0 scale-75 pointer-events-none'
+        }`}
+        title="Haz clic para volver a abrir el portafolio"
+        aria-hidden={phase === 'settled'}
+      >
+        <PortfolioBriefcaseGraphic isOpen={phase !== 'briefcase_solo'} />
+      </div>
+
+      {/* BRAZOS DEL COMPÁS / HACES DE LUZ QUE SE ABREN DESDE EL PORTAFOLIO */}
       <div
         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl h-1 pointer-events-none transition-all duration-700 ${
           phase === 'briefcase_opening' || phase === 'fanning_out'
@@ -274,7 +242,7 @@ export default function KineticTitle({
         <div
           className="absolute right-1/2 top-0 h-0.5 bg-gradient-to-l from-cyan-400 via-cyan-300 to-transparent shadow-[0_0_12px_rgba(56,189,248,0.8)] origin-right transition-transform duration-700"
           style={{
-            width: '280px',
+            width: '300px',
             transform: phase === 'briefcase_solo' ? 'rotate(0deg)' : 'rotate(24deg)',
           }}
         />
@@ -282,13 +250,13 @@ export default function KineticTitle({
         <div
           className="absolute left-1/2 top-0 h-0.5 bg-gradient-to-r from-cyan-400 via-cyan-300 to-transparent shadow-[0_0_12px_rgba(56,189,248,0.8)] origin-left transition-transform duration-700"
           style={{
-            width: '280px',
+            width: '300px',
             transform: phase === 'briefcase_solo' ? 'rotate(0deg)' : 'rotate(-24deg)',
           }}
         />
       </div>
 
-      {/* Título Principal en 2 Líneas Jerarquizadas */}
+      {/* Título Principal Completo (Todas las Letras Normales, Incluyendo la 'A') */}
       <h1
         className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 lg:gap-y-5 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
@@ -298,7 +266,7 @@ export default function KineticTitle({
           const wordCenter = (wordLen - 1) / 2;
           const isFirstWord = wordIdx === 0;
 
-          // Jerarquía visual: PORTAFOLIO grande, PROFESIONAL más pequeña con tracking
+          // Jerarquía visual: PORTAFOLIO grande, PROFESIONAL compacto con tracking
           const fontClasses = isFirstWord
             ? 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider'
             : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em]';
@@ -315,21 +283,19 @@ export default function KineticTitle({
               }`}
             >
               {word.split('').map((char, charIdx) => {
-                const isBriefcaseLetter = isFirstWord && charIdx === 4; // Letra 'A' en PORTAFOLIO
-
                 // Distancia desde el vértice central
                 const distFromCenter = Math.abs(charIdx - wordCenter);
                 const fanOutStep = Math.floor(distFromCenter);
 
                 // Estado de visibilidad y despliegue
-                const isPlaced = isBriefcaseLetter ? true : isSettled || (phase === 'fanning_out' && fanOutStep < fannedStep);
+                const isPlaced = isSettled || (phase === 'fanning_out' && fanOutStep < fannedStep);
                 const isCurrentlyEmerging = phase === 'fanning_out' && fanOutStep === fannedStep - 1;
 
                 // Desplazamiento en V invertida (/\) o nivelado en 0
                 const peakOffset = isFirstWord ? 0.5 : 0;
                 const targetStepY = isStaircase ? (distFromCenter - peakOffset) * stepHeight : 0;
 
-                // Vector de nacimiento desde el vértice (X relativo hacia el centro)
+                // Vector de nacimiento desde el centro del portafolio
                 const relativeSpawnX = `calc(${(- (charIdx - wordCenter) * 0.88).toFixed(2)}em)`;
                 const relativeSpawnY = `calc(-${targetStepY}px)`;
 
@@ -338,7 +304,7 @@ export default function KineticTitle({
                     key={`slot-${wordIdx}-${charIdx}-${char}`}
                     className="inline-flex items-center justify-center relative leading-[1.0]"
                     style={{
-                      minWidth: isBriefcaseLetter ? '0.92em' : slotMinWidth,
+                      minWidth: slotMinWidth,
                       height: slotHeight,
                       transform: `translate3d(0, ${targetStepY.toFixed(1)}px, 0)`,
                       transition: isStaircase
@@ -347,44 +313,35 @@ export default function KineticTitle({
                       willChange: 'transform',
                     }}
                   >
-                    {isBriefcaseLetter ? (
-                      /* EL PORTAFOLIO / MALETÍN CENTRAL */
-                      <PortfolioBriefcaseIcon
-                        phase={phase}
-                        isFinalGlow={isFinalGlow}
-                        onClick={() => runAnimationSequence()}
-                      />
-                    ) : (
-                      /* LETRAS QUE BROTAN DESDE EL PORTAFOLIO */
+                    {/* LETRA NORMAL: Nace desde el portafolio y se despliega en abanico */}
+                    <span
+                      className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white ${
+                        isPlaced ? 'opacity-100 scale-100' : 'opacity-0 scale-40'
+                      }`}
+                      style={{
+                        transform: isPlaced
+                          ? 'translate3d(0, 0, 0) scale(1)'
+                          : `translate3d(${relativeSpawnX}, ${relativeSpawnY}, 0) scale(0.15)`,
+                        transition: isPlaced
+                          ? 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease'
+                          : 'none',
+                        willChange: 'transform, opacity',
+                      }}
+                    >
                       <span
-                        className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white ${
-                          isPlaced ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
+                        className={`transition-all duration-1000 ease-in-out ${
+                          isSettled
+                            ? isFinalGlow
+                              ? 'drop-shadow-[0_0_24px_rgba(255,255,255,0.85)] drop-shadow-[0_2px_16px_rgba(255,255,255,0.6)]'
+                              : 'drop-shadow-[0_2px_14px_rgba(255,255,255,0.35)]'
+                            : isCurrentlyEmerging
+                            ? 'drop-shadow-[0_0_28px_rgba(56,189,248,0.95)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.85)]'
+                            : 'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
                         }`}
-                        style={{
-                          transform: isPlaced
-                            ? 'translate3d(0, 0, 0) scale(1)'
-                            : `translate3d(${relativeSpawnX}, ${relativeSpawnY}, 0) scale(0.2)`,
-                          transition: isPlaced
-                            ? 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease'
-                            : 'none',
-                          willChange: 'transform, opacity',
-                        }}
                       >
-                        <span
-                          className={`transition-all duration-1000 ease-in-out ${
-                            isSettled
-                              ? isFinalGlow
-                                ? 'drop-shadow-[0_0_24px_rgba(255,255,255,0.85)] drop-shadow-[0_2px_16px_rgba(255,255,255,0.6)]'
-                                : 'drop-shadow-[0_2px_14px_rgba(255,255,255,0.35)]'
-                              : isCurrentlyEmerging
-                              ? 'drop-shadow-[0_0_28px_rgba(56,189,248,0.95)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.85)]'
-                              : 'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
-                          }`}
-                        >
-                          {char}
-                        </span>
+                        {char}
                       </span>
-                    )}
+                    </span>
                   </span>
                 );
               })}
