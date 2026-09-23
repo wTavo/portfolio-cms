@@ -133,7 +133,7 @@ export default function CosmicBackground() {
         x: startX,
         y: startY,
         length: Math.random() * 80 + 130, // 130px a 210px de cola estilizada
-        speed: Math.random() * 0.7 + 1.1, // Velocidad pausada y majestuosa (1.1 a 1.8 px/frame)
+        speed: Math.random() * 0.8 + 2.1, // Velocidad dinámica equilibrada (2.1 a 2.9 px/frame)
         angle,
         thickness: Math.random() * 1.2 + 1.6,
         opacity: Math.random() * 0.25 + 0.7, // Alta nitidez sobre fondo oscuro
