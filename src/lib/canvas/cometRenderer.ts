@@ -1,8 +1,9 @@
 /**
  * @file cometRenderer.ts
  * @description Motor de renderizado astronómico para cometas cósmicos realistas en Canvas 2D.
- * Implementa física de doble cola (cola de iones de plasma y velo de polvo curvado con estrías),
- * coma parabólica con frente de choque aerodinámico/solar y núcleo incandescente óptico tipo Airy-disc.
+ * Implementa una estela vaporosa volumétrica multi-capa suave (sin líneas de alambre,
+ * sin bordes poligonales cortantes y sin cortes abruptos), combinada con un núcleo
+ * incandescente óptico de alta fidelidad.
  */
 
 /**
@@ -178,22 +179,22 @@ export function updateCometPhysics(state: CometState, timestamp: number): void {
     state.spine.pop();
   }
 
-  // Generar desprendimiento sutil de polvo en la estela
-  if (state.progress < 1.15 && Math.random() < 0.6) {
+  // Generar desprendimiento sutil de micro-polvo etéreo en la estela
+  if (state.progress < 1.15 && Math.random() < 0.25) {
     const normal = pos.angle + Math.PI / 2;
-    const spread = (Math.random() - 0.5) * 22;
-    const trailAngle = pos.angle + Math.PI + (Math.random() - 0.5) * 0.25;
-    const pSpeed = 0.4 + Math.random() * 1.8;
+    const spread = (Math.random() - 0.5) * 14;
+    const trailAngle = pos.angle + Math.PI + (Math.random() - 0.5) * 0.15;
+    const pSpeed = 0.2 + Math.random() * 1.2;
 
     state.particles.push({
       x: pos.x + Math.cos(normal) * spread,
       y: pos.y + Math.sin(normal) * spread,
       vx: Math.cos(trailAngle) * pSpeed,
       vy: Math.sin(trailAngle) * pSpeed,
-      alpha: 0.85 + Math.random() * 0.15,
-      size: 1.2 + Math.random() * 2.4,
+      alpha: 0.6 + Math.random() * 0.2,
+      size: 0.8 + Math.random() * 1.5,
       life: 0,
-      maxLife: 40 + Math.random() * 45,
+      maxLife: 35 + Math.random() * 35,
       hue: Math.random() > 0.4 ? '240, 249, 255' : '186, 230, 253',
     });
   }
@@ -212,7 +213,7 @@ export function updateCometPhysics(state: CometState, timestamp: number): void {
 }
 
 /**
- * Renderiza el cometa cósmico con técnicas astrofotográficas realistas en Canvas 2D.
+ * Renderiza el cometa cósmico con estela volumétrica suave y núcleo óptico estelar.
  *
  * @param ctx Contexto de renderizado 2D de Canvas.
  * @param state Estado actual del cometa.
@@ -228,102 +229,110 @@ export function renderAstronomicalComet(
   ctx.globalCompositeOperation = 'screen';
 
   const spineLen = spine.length;
-
-  // 1. VELO DE POLVO CÓSMICO (DUST TAIL): Curva amplia y vaporosa con caída de opacidad
-  ctx.beginPath();
-  // Lado izquierdo del velo
-  for (let i = 0; i < spineLen; i++) {
-    const pt = spine[i];
-    const t = i / spineLen;
-    const width = 8 + Math.pow(t, 0.7) * 75;
-    const normal = pt.angle + Math.PI / 2;
-    const px = pt.x + Math.cos(normal) * width;
-    const py = pt.y + Math.sin(normal) * width;
-    if (i === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  // Lado derecho del velo en reversa
-  for (let i = spineLen - 1; i >= 0; i--) {
-    const pt = spine[i];
-    const t = i / spineLen;
-    const width = 8 + Math.pow(t, 0.7) * 75;
-    const normal = pt.angle - Math.PI / 2;
-    const px = pt.x + Math.cos(normal) * width;
-    const py = pt.y + Math.sin(normal) * width;
-    ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-
   const head = spine[0];
   const tailEnd = spine[spineLen - 1];
-  const dustGrad = ctx.createLinearGradient(head.x, head.y, tailEnd.x, tailEnd.y);
-  dustGrad.addColorStop(0, 'rgba(255, 255, 255, 0.38)');
-  dustGrad.addColorStop(0.18, 'rgba(224, 242, 254, 0.28)');
-  dustGrad.addColorStop(0.5, 'rgba(186, 230, 253, 0.12)');
-  dustGrad.addColorStop(0.85, 'rgba(125, 211, 252, 0.03)');
-  dustGrad.addColorStop(1, 'rgba(30, 58, 138, 0)');
-  ctx.fillStyle = dustGrad;
-  ctx.fill();
 
-  // 2. ESTRÍAS Y FILAMENTOS SEDOSOS DEL POLVO (SYNCHRONIC STREAMERS)
-  const streamerOffsets = [-0.75, -0.4, -0.15, 0.15, 0.45, 0.75];
-  streamerOffsets.forEach((offsetFactor) => {
+  // 1. ESTELA VOLUMÉTRICA MULTI-CAPA SUAVE (SIN LÍNEAS RÍGIDAS, SIN BORDES CORTANTES)
+  // Se renderizan múltiples envolventes concéntricas translúcidas que decrecen gradualmente,
+  // produciendo una caída gaussiana natural de luz sin aristas duras.
+  const numLayers = 10;
+
+  for (let layer = 1; layer <= numLayers; layer++) {
+    const layerFrac = layer / numLayers; // 0.1 a 1.0
+    const maxLayerWidth = 14 + Math.pow(layerFrac, 0.85) * 82;
+    const layerAlpha = (0.042 / Math.pow(layerFrac, 0.42)) * 0.9;
+
     ctx.beginPath();
+
+    // Lado izquierdo del velo con expansión y atenuación natural
     for (let i = 0; i < spineLen; i++) {
       const pt = spine[i];
-      const t = i / spineLen;
+      const t = i / (spineLen - 1); // 0 a 1
+
+      // Perfil aerodinámico y cósmico: suave en el cuello, ancho en el cuerpo y estrecho al final
+      const profile = (1 - t * 0.9) * (Math.pow(t, 0.45) * 2.2 + 0.12);
+      const wave = Math.sin(t * 4.8 - state.progress * 6.5 + layerFrac * 2.0) * (t * 7);
+      const width = Math.max(0, (maxLayerWidth * profile + wave) * layerFrac);
+
       const normal = pt.angle + Math.PI / 2;
-      const wave = Math.sin(i * 0.09 + offsetFactor * 4) * (t * 8);
-      const dist = offsetFactor * (12 + Math.pow(t, 0.75) * 62) + wave;
-      const px = pt.x + Math.cos(normal) * dist;
-      const py = pt.y + Math.sin(normal) * dist;
+      const px = pt.x + Math.cos(normal) * width;
+      const py = pt.y + Math.sin(normal) * width;
+
       if (i === 0) ctx.moveTo(px, py);
       else ctx.lineTo(px, py);
     }
-    const streamerAlpha = 0.22 * (1 - Math.abs(offsetFactor) * 0.4);
-    ctx.lineWidth = 1.5 + Math.abs(offsetFactor) * 1.5;
-    ctx.strokeStyle = `rgba(240, 249, 255, ${streamerAlpha})`;
-    ctx.stroke();
-  });
 
-  // 3. COLA DE IONES / RAYO DE PLASMA (ION TAIL): Columna fina, intensa y azulada
-  ctx.beginPath();
-  for (let i = 0; i < spineLen; i++) {
-    const pt = spine[i];
-    if (i === 0) ctx.moveTo(pt.x, pt.y);
-    else ctx.lineTo(pt.x, pt.y);
+    // Lado derecho del velo en reversa para cerrar la cinta suavemente
+    for (let i = spineLen - 1; i >= 0; i--) {
+      const pt = spine[i];
+      const t = i / (spineLen - 1);
+
+      const profile = (1 - t * 0.9) * (Math.pow(t, 0.45) * 2.2 + 0.12);
+      const wave = Math.sin(t * 4.8 - state.progress * 6.5 + layerFrac * 2.0) * (t * 7);
+      const width = Math.max(0, (maxLayerWidth * profile - wave) * layerFrac);
+
+      const normal = pt.angle - Math.PI / 2;
+      const px = pt.x + Math.cos(normal) * width;
+      const py = pt.y + Math.sin(normal) * width;
+
+      ctx.lineTo(px, py);
+    }
+
+    ctx.closePath();
+
+    const layerGrad = ctx.createLinearGradient(head.x, head.y, tailEnd.x, tailEnd.y);
+    layerGrad.addColorStop(0, `rgba(255, 255, 255, ${layerAlpha * 2.4})`);
+    layerGrad.addColorStop(0.12, `rgba(224, 242, 254, ${layerAlpha * 1.9})`);
+    layerGrad.addColorStop(0.38, `rgba(186, 230, 253, ${layerAlpha * 1.1})`);
+    layerGrad.addColorStop(0.70, `rgba(147, 197, 253, ${layerAlpha * 0.35})`);
+    layerGrad.addColorStop(0.92, 'rgba(56, 189, 248, 0)');
+    layerGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+
+    ctx.fillStyle = layerGrad;
+    ctx.fill();
   }
-  const ionGrad = ctx.createLinearGradient(head.x, head.y, tailEnd.x, tailEnd.y);
-  ionGrad.addColorStop(0, 'rgba(255, 255, 255, 0.95)');
-  ionGrad.addColorStop(0.2, 'rgba(224, 242, 254, 0.8)');
-  ionGrad.addColorStop(0.55, 'rgba(147, 197, 253, 0.4)');
-  ionGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
 
-  // Capa 1: Núcleo filamental blanco
-  ctx.lineWidth = 3.5;
-  ctx.strokeStyle = ionGrad;
-  ctx.stroke();
+  // 2. CHORRO DE PLASMA INCANDESCENTE CENTRAL (SUAVE Y DIFUSO, CONECTADO AL NÚCLEO)
+  // Solo se proyecta en el primer 38% de la estela para fundirse de forma orgánica en la niebla
+  const jetSteps = Math.min(spineLen, Math.floor(spineLen * 0.38));
+  if (jetSteps > 2) {
+    ctx.beginPath();
+    for (let i = 0; i < jetSteps; i++) {
+      const pt = spine[i];
+      if (i === 0) ctx.moveTo(pt.x, pt.y);
+      else ctx.lineTo(pt.x, pt.y);
+    }
 
-  // Capa 2: Aura de ionización cian
-  ctx.lineWidth = 12.0;
-  ctx.strokeStyle = 'rgba(186, 230, 253, 0.25)';
-  ctx.stroke();
+    const jetGrad = ctx.createLinearGradient(head.x, head.y, spine[jetSteps - 1].x, spine[jetSteps - 1].y);
+    jetGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
+    jetGrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.55)');
+    jetGrad.addColorStop(0.75, 'rgba(186, 230, 253, 0.2)');
+    jetGrad.addColorStop(1, 'rgba(147, 197, 253, 0)');
 
-  // Capa 3: Envolvente difusa externa
-  ctx.lineWidth = 26.0;
-  ctx.strokeStyle = 'rgba(56, 189, 248, 0.08)';
-  ctx.stroke();
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
 
-  // 4. POLVO ESTELAR VIVO EN DISPERSIÓN
+    // Halo difuso exterior
+    ctx.lineWidth = 18;
+    ctx.strokeStyle = jetGrad;
+    ctx.stroke();
+
+    // Espina blanca interior sutil
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.stroke();
+  }
+
+  // 3. POLVO ESTELAR DISPERSO (MICRO-CHISPAS SUAVES Y DIFUSAS)
   for (let i = 0; i < state.particles.length; i++) {
     const p = state.particles[i];
     ctx.beginPath();
     ctx.arc(p.x, p.y, p.size * p.alpha, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${p.hue}, ${p.alpha * 0.85})`;
+    ctx.fillStyle = `rgba(${p.hue}, ${p.alpha * 0.45})`;
     ctx.fill();
   }
 
-  // 5. COMA PARABÓLICA (ATMÓSFERA ASIMÉTRICA COMPRIMIDA AL FRENTE Y ARRASTRADA HACIA ATRÁS)
+  // 4. COMA PARABÓLICA (ATMÓSFERA ASIMÉTRICA COMPRIMIDA AL FRENTE Y ARRASTRADA HACIA ATRÁS)
   const hx = state.headX;
   const hy = state.headY;
   const comaRadius = 55;
@@ -340,7 +349,7 @@ export function renderAstronomicalComet(
   ctx.fillStyle = comaGrad;
   ctx.fill();
 
-  // 6. NÚCLEO INCANDESCENTE ÓPTICO NATURAL (AIRY DISC NATURAL, SIN CRUCES ARTIFICIALES)
+  // 5. NÚCLEO INCANDESCENTE ÓPTICO NATURAL (AIRY DISC NATURAL, EXACTO AL VALIDADO)
   const nucleusRadius = 22;
   const nucleusGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, nucleusRadius);
   nucleusGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
