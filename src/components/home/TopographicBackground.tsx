@@ -92,26 +92,6 @@ export default function TopographicBackground() {
         ctx.lineWidth = i % 4 === 0 ? 1.4 : 0.85;
         ctx.lineCap = 'round';
         ctx.stroke();
-
-        // Nodos de altitud / puntos de relieve en curvas destacadas
-        if (i % 4 === 0 && !prefersReduced) {
-          const sampleIdx = Math.floor(
-            ((Math.sin(t * 0.5 + i) + 1) / 2) * (points.length - 2) + 1
-          );
-          const pt = points[sampleIdx];
-          if (pt) {
-            ctx.beginPath();
-            ctx.arc(pt.x, pt.y, 2, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(56, 189, 248, ${alpha * 1.5})`;
-            ctx.fill();
-
-            // Halo suave del punto
-            ctx.beginPath();
-            ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(56, 189, 248, ${alpha * 0.3})`;
-            ctx.fill();
-          }
-        }
       }
 
       if (!prefersReduced) {
