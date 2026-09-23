@@ -133,11 +133,11 @@ export default function KineticTitle({
 
   if (prefersReducedMotion) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-y-4 sm:gap-y-6 md:gap-y-8 text-center select-none ${className}`}>
+      <div className={`flex flex-col items-center justify-center gap-y-1 sm:gap-y-2 md:gap-y-3 text-center select-none ${className}`}>
         {words.map((word, wIdx) => (
           <span
             key={`word-reduced-${wIdx}`}
-            className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.05] uppercase"
+            className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[0.95] uppercase"
           >
             {word}
           </span>
@@ -147,7 +147,7 @@ export default function KineticTitle({
   }
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center min-h-[520px] sm:min-h-[600px] py-12 sm:py-16 overflow-visible [perspective:1000px] [transform-style:preserve-3d]">
+    <div className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[540px] py-10 sm:py-14 overflow-visible [perspective:1000px] [transform-style:preserve-3d]">
       {/* Resplandor ambiental que alterna suavemente */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-[var(--color-brand-accent)]/20 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-in-out ${
@@ -158,15 +158,15 @@ export default function KineticTitle({
 
       {/* Sombra de la Pila Inferior */}
       <div
-        className={`absolute bottom-8 sm:bottom-12 left-1/2 -translate-x-1/2 w-72 sm:w-88 h-10 bg-radial from-cyan-500/15 via-black/40 to-transparent blur-xl pointer-events-none transition-all duration-1000 ${
+        className={`absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 w-72 sm:w-88 h-10 bg-radial from-cyan-500/15 via-black/40 to-transparent blur-xl pointer-events-none transition-all duration-1000 ${
           liftedCount >= totalLetters ? 'opacity-0 scale-75' : 'opacity-100 scale-100'
         }`}
         aria-hidden="true"
       />
 
-      {/* Título Principal en 2 Líneas con Ranuras Unificadas (Molde + Letra en el Mismo Elemento) */}
+      {/* Título Principal en 2 Líneas Compactas */}
       <h1
-        className={`flex flex-col items-center justify-center gap-y-4 sm:gap-y-6 md:gap-y-8 lg:gap-y-10 select-none relative z-20 pointer-events-none [transform-style:preserve-3d] ${className}`}
+        className={`flex flex-col items-center justify-center gap-y-0.5 sm:gap-y-1.5 md:gap-y-2 lg:gap-y-2.5 select-none relative z-20 pointer-events-none [transform-style:preserve-3d] ${className}`}
         aria-label={uppercaseText}
       >
         {words.map((word, wordIdx) => {
@@ -189,10 +189,10 @@ export default function KineticTitle({
                 const isCurrentlyFloating = globalIdx === liftedCount - 1 && isStaircase;
 
                 // 1. Posición en Escalera
-                const stepHeight = 13;
+                const stepHeight = 12;
                 const targetStepY = isStaircase ? (wordCenter - charIdx) * stepHeight : 0;
 
-                // 2. Parámetros de la Pila en la Base Inferior (Visible y Centrada)
+                // 2. Parámetros de la Pila en la Base Inferior
                 const pileConfig = PILE_OFFSETS[globalIdx % PILE_OFFSETS.length];
                 const pileJitterX = pileConfig.jX;
                 const pileJitterY = pileConfig.jY;
@@ -201,16 +201,16 @@ export default function KineticTitle({
 
                 // Desplazamiento desde esta casilla hacia el centro de la pila visible
                 const relativePileXCalc = `calc(${(- (charIdx - wordCenter) * 0.88).toFixed(2)}em + ${pileJitterX}px)`;
-                const verticalFloorBase = wordIdx === 0 ? '2.0em + 65px' : '1.1em + 30px';
+                const verticalFloorBase = wordIdx === 0 ? '1.8em + 55px' : '0.9em + 25px';
                 const relativePileYCalc = `calc(${verticalFloorBase} + ${pileJitterY}px - ${targetStepY.toFixed(1)}px)`;
 
                 return (
                   <span
                     key={`slot-${globalIdx}-${char}`}
-                    className="inline-flex items-center justify-center relative text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider leading-[1.08] [transform-style:preserve-3d]"
+                    className="inline-flex items-center justify-center relative text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider leading-[0.95] [transform-style:preserve-3d]"
                     style={{
                       minWidth: '0.74em',
-                      height: '1.25em',
+                      height: '1.05em',
                       transform: `translate3d(0, ${targetStepY.toFixed(1)}px, 0)`,
                       transition: isStaircase
                         ? 'none'
