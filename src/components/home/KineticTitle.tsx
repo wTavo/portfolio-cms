@@ -362,7 +362,7 @@ export default function KineticTitle({
   return (
     <div
       ref={containerRef}
-      className="relative w-full flex flex-col items-center justify-center min-h-[500px] sm:min-h-[560px] md:min-h-[640px] py-16 sm:py-20 select-none overflow-hidden cursor-default"
+      className="relative w-full flex flex-col items-center justify-center min-h-[500px] sm:min-h-[560px] md:min-h-[640px] py-16 sm:py-20 select-none overflow-visible cursor-default"
     >
       {/* Resplandor ambiental de estudio ultra suave */}
       <div
@@ -373,14 +373,14 @@ export default function KineticTitle({
       {/* Capa de renderizado de los cometas cósmicos, núcleos y partículas */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full pointer-events-none z-20"
+        className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible"
       />
 
-      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4 gap-y-6 sm:gap-y-8 md:gap-y-12 z-10">
+      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4 gap-y-8 sm:gap-y-10 md:gap-y-14 z-10 overflow-visible">
         {words.map((word, wordIdx) => {
           const isFirstWord = wordIdx === 0;
 
-          // Jerarquía tipográfica monumental con espaciado vertical nítido
+          // Jerarquía tipográfica monumental con line-height desahogado para evitar recortes
           const fontClasses = isFirstWord
             ? 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider'
             : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.28em] md:tracking-[0.32em]';
@@ -390,7 +390,7 @@ export default function KineticTitle({
           return (
             <div
               key={`word-row-${wordIdx}`}
-              className={`inline-flex items-center justify-center relative leading-none ${fontClasses} ${
+              className={`inline-flex items-center justify-center relative leading-[1.15] py-2 overflow-visible ${fontClasses} ${
                 isFirstWord ? 'gap-x-1 sm:gap-x-2 md:gap-x-3' : 'gap-x-1 sm:gap-x-1.5 md:gap-x-2.5'
               }`}
             >
@@ -402,16 +402,16 @@ export default function KineticTitle({
                   <div
                     id={`kinetic-char-${key}`}
                     key={`slot-${key}`}
-                    className="relative inline-flex items-center justify-center"
+                    className="relative inline-flex items-center justify-center py-2 overflow-visible"
                     style={{ minWidth: slotMinWidth }}
                   >
                     {/* 🔲 CAPA 1: PAREDES Y SILUETA DEL MOLDE BASE */}
                     <span
-                      className="select-none pointer-events-none uppercase leading-none transition-colors duration-200"
+                      className="select-none pointer-events-none uppercase leading-[1.15] transition-colors duration-200"
                       style={{
                         WebkitTextStroke: brightness > 0.05
                           ? `1.5px rgba(255, 255, 255, ${0.3 + brightness * 0.7})`
-                          : '1.2px rgba(255, 255, 255, 0.22)',
+                          : '1.2px rgba(255, 255, 255, 0.24)',
                         color: 'transparent',
                         textShadow: brightness > 0.1
                           ? `0 0 16px rgba(255, 255, 255, ${brightness * 0.8})`
@@ -424,13 +424,13 @@ export default function KineticTitle({
 
                     {/* ✨ CAPA 2: LUZ BLANCA QUE SE ENCIENDE AL PASO DEL COMETA Y SE APAGA SUAVEMENTE */}
                     <div
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-none"
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-visible transition-none"
                       style={{
                         opacity: brightness,
                       }}
                     >
                       <span
-                        className="inline-block uppercase leading-none text-white transition-all"
+                        className="inline-block uppercase leading-[1.15] text-white transition-all"
                         style={{
                           textShadow: brightness > 0.3
                             ? `0 0 24px rgba(255, 255, 255, ${brightness * 0.95}), 0 0 45px rgba(255, 255, 255, ${brightness * 0.6})`
