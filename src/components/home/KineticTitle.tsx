@@ -1,9 +1,9 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Llenado Líquido Hidrodinámico de Moldes Tipográficos".
- * Cada letra actúa como un molde hermético con límites físicos infranqueables.
- * El metal líquido blanco fluye con física de ondas orgánicas, tensión superficial,
- * menisco brillante y lóbulos fluidos confinados 100% dentro del trazo tipográfico.
+ * @description Título Cinético: "Llenado de Agua Líquida en Moldes Tipográficos".
+ * La silueta de cada letra actúa como un molde contenedor hermético transparente.
+ * El agua blanca entra y sube de nivel con oleaje físico, menisco y tensión superficial,
+ * llenando progresivamente cada cavidad desde la base hasta el tope del molde.
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -14,9 +14,9 @@ interface KineticTitleProps {
 }
 
 /**
- * Renderizador de fluido con física de ondas y menisco para cada letra individual.
+ * Renderizador de agua líquida con física de nivel ascendente, oleaje y menisco.
  */
-function FluidLetterCanvas({
+function WaterLetterCanvas({
   char,
   progress,
 }: {
@@ -45,74 +45,70 @@ function FluidLetterCanvas({
     canvas.height = Math.round(h * dpr);
     ctx.scale(dpr, dpr);
 
-    const cx = w / 2;
-    const cy = h / 2;
-    const maxRadius = Math.hypot(cx, cy) * 1.25;
-    const baseRadius = progress * maxRadius;
-    const time = performance.now() * 0.0035;
+    const time = performance.now() * 0.005;
 
     ctx.clearRect(0, 0, w, h);
 
-    // 1. DIBUJAR LA SILUETA DE LA LETRA COMO MÁSCARA RÍGIDA
+    // 1. MÁSCARA: DIBUJAR LA SILUETA DEL MOLDE DE LA LETRA
     ctx.save();
     const computed = window.getComputedStyle(parent);
     ctx.font = `${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(char, cx, cy);
+    ctx.fillText(char, w / 2, h / 2);
 
-    // 2. CONFINAR EL LÍQUIDO 100% AL INTERIOR DE LA TIPOGRAFÍA (CERO DERRAMES)
+    // 2. CONFINAR EL AGUA ESTRICTAMENTE DENTRO DE LAS PAREDES DEL MOLDE
     ctx.globalCompositeOperation = 'source-in';
 
-    // 3. CUERPO DE FLUIDO CON LÓBULOS ONDULANTES Y DINÁMICA DE TENSIÓN SUPERFICIAL
-    const numPoints = 36;
-    ctx.beginPath();
-    for (let i = 0; i <= numPoints; i++) {
-      const angle = (i / numPoints) * Math.PI * 2;
-      // Ondulación fluida de múltiples armónicos (sensación de masa líquida viscosa)
-      const wobble = 0.14 * Math.sin(angle * 3 + time * 4.2)
-                   + 0.09 * Math.cos(angle * 5 - time * 3.1)
-                   + 0.05 * Math.sin(angle * 7 + time * 5.0);
-      const r = Math.max(0, baseRadius * (1 + wobble));
-      const px = cx + Math.cos(angle) * r;
-      const py = cy + Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
+    // 3. FÍSICA DE NIVEL DE AGUA Y OLEAJE
+    // El nivel sube desde h (fondo) hasta 0 (tope) a medida que progress va de 0 a 1
+    const waterLevelY = h - progress * h;
+    
+    // Amplitud de las olas: activa durante el llenado, se apacigua suavemente al llegar al 100%
+    const waveAmp = Math.sin(Math.min(progress, 1) * Math.PI) * (h * 0.045) * Math.max(0, 1 - Math.pow(progress, 3));
+
+    // A) CAPA DE AGUA DE FONDO (PROFUNDIDAD / TRANSLUCIDEZ DEL OLEAJE)
+    if (progress > 0 && progress < 1) {
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 2) {
+        const waveY = waterLevelY + waveAmp * 0.8 * Math.sin(x * 0.15 + time * 4.5 + Math.PI / 3);
+        ctx.lineTo(x, waveY);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.fill();
     }
+
+    // B) CUERPO PRINCIPAL DE AGUA BLANCA (VOLUMEN SÓLIDO CON ONDULACIÓN PRINCIPAL)
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    const wavePoints: { x: number; y: number }[] = [];
+    for (let x = 0; x <= w; x += 2) {
+      const primaryWave = Math.sin(x * 0.12 + time * 6.0) * 0.7;
+      const secondaryWave = Math.cos(x * 0.22 - time * 3.8) * 0.3;
+      const waveY = waterLevelY + waveAmp * (primaryWave + secondaryWave);
+      wavePoints.push({ x, y: waveY });
+      ctx.lineTo(x, waveY);
+    }
+    ctx.lineTo(w, h);
     ctx.closePath();
 
-    // Gradiente metálico líquido profundo con reflejos
-    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, baseRadius * 1.15));
-    grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.70, '#ffffff');
-    grad.addColorStop(0.88, 'rgba(248, 250, 252, 0.98)');
-    grad.addColorStop(0.96, 'rgba(226, 232, 240, 0.92)');
-    grad.addColorStop(1, 'rgba(203, 213, 225, 0.6)');
-    ctx.fillStyle = grad;
+    // Relleno de agua blanca pura
+    ctx.fillStyle = '#ffffff';
     ctx.fill();
 
-    // 4. CRESTA DE ONDA / MENISCO LÍQUIDO BRILLANTE (SURFACE TENSION WAVE)
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
-    ctx.stroke();
-
-    // 5. ONDA CONCÉNTRICA SECUNDARIA (RIPPLE DE PROPAGACIÓN INTERNA)
-    if (baseRadius > 14) {
-      const rippleRadius = baseRadius * 0.58;
+    // C) CRESTA / MENISCO LÍQUIDO SUPERFICIAL (SURFACE TENSION GLEAM)
+    if (wavePoints.length > 0 && progress < 0.98) {
       ctx.beginPath();
-      for (let i = 0; i <= numPoints; i++) {
-        const angle = (i / numPoints) * Math.PI * 2;
-        const wobble = 0.11 * Math.sin(angle * 4 + time * 4.5);
-        const r = Math.max(0, rippleRadius * (1 + wobble));
-        const px = cx + Math.cos(angle) * r;
-        const py = cy + Math.sin(angle) * r;
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
+      ctx.moveTo(wavePoints[0].x, wavePoints[0].y);
+      for (let i = 1; i < wavePoints.length; i++) {
+        ctx.lineTo(wavePoints[i].x, wavePoints[i].y);
       }
-      ctx.closePath();
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
       ctx.stroke();
     }
 
@@ -172,9 +168,9 @@ export default function KineticTitle({
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
 
-    const initialDelay = 500; // Pausa inicial para contemplar los moldes vacíos
-    const letterFillDuration = 3200; // Llenado pausado, gradual y fluido (3.2s)
-    const staggerDelay = 160; // Desfase rítmico pausado entre letras
+    const initialDelay = 450; // Pausa inicial para contemplar los moldes vacíos
+    const letterFillDuration = 2400; // Duración de subida del agua por molde (2.4s)
+    const staggerDelay = 140; // Desfase rítmico entre letras
 
     let completedCount = 0;
 
@@ -185,19 +181,21 @@ export default function KineticTitle({
       setTimeout(() => {
         const startTime = performance.now();
 
-        const updateFluidBloom = (now: number) => {
+        const updateWaterLevel = (now: number) => {
           const elapsed = now - startTime;
           const rawProgress = Math.min(elapsed / letterFillDuration, 1);
           
-          // Easing viscoso: llenado fluido constante que desacelera al colmar los extremos
-          const easedProgress = 1 - Math.pow(1 - rawProgress, 2.2);
+          // Easing suave y constante de llenado con desaceleración final
+          const easedProgress = rawProgress < 0.8
+            ? (rawProgress / 0.8) * 0.85
+            : 0.85 + (1 - Math.pow(1 - (rawProgress - 0.8) / 0.2, 2)) * 0.15;
           
-          setFillProgress((prev) => ({ ...prev, [item.key]: easedProgress }));
+          setFillProgress((prev) => ({ ...prev, [item.key]: Math.min(easedProgress, 1) }));
 
           if (rawProgress < 1) {
-            requestAnimationFrame(updateFluidBloom);
+            requestAnimationFrame(updateWaterLevel);
           } else {
-            // Molde 100% colmado
+            // Molde 100% lleno hasta el tope
             setFilledLetters((prev) => ({ ...prev, [item.key]: true }));
             completedCount++;
 
@@ -208,7 +206,7 @@ export default function KineticTitle({
           }
         };
 
-        requestAnimationFrame(updateFluidBloom);
+        requestAnimationFrame(updateWaterLevel);
       }, startAt);
     });
   };
@@ -303,14 +301,14 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* 🌊 CAPA 2: SIMULADOR HIDRODINÁMICO DE FLUIDO / LETRA SÓLIDA */}
+                    {/* 🌊 CAPA 2: AGUA LÍQUIDA SUBIENDO CON OLEAJE / LETRA SÓLIDA AL COMPLETAR */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
                       {isComplete ? (
                         <span className="inline-block uppercase leading-[1.0] text-white">
                           {char}
                         </span>
                       ) : isActivelyFilling ? (
-                        <FluidLetterCanvas
+                        <WaterLetterCanvas
                           char={char}
                           progress={currentFill}
                         />
