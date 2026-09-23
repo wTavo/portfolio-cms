@@ -5,7 +5,7 @@
  * la corriente eléctrica fluye y el color interior se enciende con un parpadeo de foco antes de quedar fijo.
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { GLYPH_PATHS } from '../../lib/typography/glyphPaths';
 
@@ -36,7 +36,6 @@ export default function KineticTitle({
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [animationKey, setAnimationKey] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
@@ -87,12 +86,6 @@ export default function KineticTitle({
     return { wordsLayout: layouts, totalLetterCount: globalCounter };
   }, [words]);
 
-  // Reiniciar animación al hacer clic en el título
-  const handleReplay = useCallback(() => {
-    setIsCompleted(false);
-    setAnimationKey((prev) => prev + 1);
-  }, []);
-
   // Constantes de coreografía simultánea:
   // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente como cables/filamentos iluminados
   const initialDelay = 0.25;
@@ -107,12 +100,11 @@ export default function KineticTitle({
   const elevationDelay = fillStartDelay + fillIgnitionDuration + 0.15; // 4.55s
 
   useEffect(() => {
-    setIsCompleted(false);
     const timer = setTimeout(() => {
       setIsCompleted(true);
     }, elevationDelay * 1000);
     return () => clearTimeout(timer);
-  }, [animationKey, elevationDelay]);
+  }, [elevationDelay]);
 
   if (prefersReducedMotion) {
     return (
@@ -135,18 +127,7 @@ export default function KineticTitle({
 
   return (
     <div
-      key={`kinetic-anim-${animationKey}`}
-      onClick={handleReplay}
-      className={`relative w-full flex flex-col items-center justify-center min-h-[440px] sm:min-h-[500px] md:min-h-[580px] py-12 sm:py-16 select-none overflow-visible cursor-pointer ${className}`}
-      title="Clic para reproducir animación"
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          handleReplay();
-        }
-      }}
+      className={`relative w-full flex flex-col items-center justify-center min-h-[440px] sm:min-h-[500px] md:min-h-[580px] py-12 sm:py-16 select-none overflow-visible ${className}`}
     >
       {/* Resplandor ambiental de estudio ultra suave */}
       <div
