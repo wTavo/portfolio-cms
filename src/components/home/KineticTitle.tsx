@@ -230,13 +230,9 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* LETRA: Despega desde la pila y encaja exactamente en el centro de su molde */}
+                    {/* LETRA: 100% Opaca con masa física 3D y sombras oclusivas */}
                     <span
-                      className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none ${
-                        isLifted
-                          ? 'text-white opacity-100'
-                          : 'text-neutral-100 opacity-90'
-                      }`}
+                      className="absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white opacity-100"
                       style={{
                         zIndex: isCurrentlyFloating ? 60 : isLifted ? 30 : totalLetters - globalIdx,
                         transform: isLifted
@@ -246,7 +242,7 @@ export default function KineticTitle({
                           : `translate3d(${relativePileXCalc}, ${relativePileYCalc}, 5px) rotateX(${pileRotX}deg) rotateZ(${pileRotZ}deg) scale(0.8)`,
                         transition: isLifted
                           ? isStaircase
-                            ? 'transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease, color 300ms ease'
+                            ? 'transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease, text-shadow 400ms ease'
                             : 'none'
                           : 'none',
                         willChange: 'transform, opacity',
@@ -262,8 +258,13 @@ export default function KineticTitle({
                             ? 'drop-shadow-[0_0_28px_rgba(56,189,248,0.95)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.85)]'
                             : isLifted
                             ? 'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
-                            : 'drop-shadow-[0_6px_10px_rgba(0,0,0,0.95)] [text-shadow:_0_2px_4px_rgba(0,0,0,0.9)]'
+                            : 'drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)]'
                         }`}
+                        style={{
+                          textShadow: isLifted
+                            ? 'none'
+                            : '0 1px 0 #e2e8f0, 0 2px 0 #cbd5e1, 0 3px 0 #94a3b8, 0 4px 1px #64748b, 0 6px 10px rgba(0,0,0,0.9), 0 10px 20px rgba(0,0,0,0.95)',
+                        }}
                       >
                         {char}
                       </span>
