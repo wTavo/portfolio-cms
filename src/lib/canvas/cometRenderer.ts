@@ -1,9 +1,9 @@
 /**
  * @file cometRenderer.ts
  * @description Motor de renderizado astronómico para cometas cósmicos realistas en Canvas 2D.
- * Implementa una estela vaporosa volumétrica multi-capa suave (sin líneas de alambre,
- * sin bordes poligonales cortantes y sin cortes abruptos), combinada con un núcleo
- * incandescente óptico de alta fidelidad.
+ * Implementa una estela vaporosa y difuminada mediante filtrado de desenfoque gaussiano por GPU
+ * (ctx.filter = 'blur(...)') eliminando escalonamientos, contornos y líneas rígidas, combinado con
+ * un núcleo incandescente óptico de alta fidelidad.
  */
 
 /**
@@ -180,21 +180,21 @@ export function updateCometPhysics(state: CometState, timestamp: number): void {
   }
 
   // Generar desprendimiento sutil de micro-polvo etéreo en la estela
-  if (state.progress < 1.15 && Math.random() < 0.25) {
+  if (state.progress < 1.15 && Math.random() < 0.22) {
     const normal = pos.angle + Math.PI / 2;
-    const spread = (Math.random() - 0.5) * 14;
+    const spread = (Math.random() - 0.5) * 16;
     const trailAngle = pos.angle + Math.PI + (Math.random() - 0.5) * 0.15;
-    const pSpeed = 0.2 + Math.random() * 1.2;
+    const pSpeed = 0.2 + Math.random() * 1.0;
 
     state.particles.push({
       x: pos.x + Math.cos(normal) * spread,
       y: pos.y + Math.sin(normal) * spread,
       vx: Math.cos(trailAngle) * pSpeed,
       vy: Math.sin(trailAngle) * pSpeed,
-      alpha: 0.6 + Math.random() * 0.2,
-      size: 0.8 + Math.random() * 1.5,
+      alpha: 0.5 + Math.random() * 0.25,
+      size: 0.8 + Math.random() * 1.4,
       life: 0,
-      maxLife: 35 + Math.random() * 35,
+      maxLife: 35 + Math.random() * 30,
       hue: Math.random() > 0.4 ? '240, 249, 255' : '186, 230, 253',
     });
   }
@@ -213,7 +213,7 @@ export function updateCometPhysics(state: CometState, timestamp: number): void {
 }
 
 /**
- * Renderiza el cometa cósmico con estela volumétrica suave y núcleo óptico estelar.
+ * Renderiza el cometa cósmico con estela difuminada (blur gaussiano) y núcleo óptico estelar.
  *
  * @param ctx Contexto de renderizado 2D de Canvas.
  * @param state Estado actual del cometa.
@@ -232,28 +232,63 @@ export function renderAstronomicalComet(
   const head = spine[0];
   const tailEnd = spine[spineLen - 1];
 
-  // 1. ESTELA VOLUMÉTRICA MULTI-CAPA SUAVE (SIN LÍNEAS RÍGIDAS, SIN BORDES CORTANTES)
-  // Se renderizan múltiples envolventes concéntricas translúcidas que decrecen gradualmente,
-  // produciendo una caída gaussiana natural de luz sin aristas duras.
-  const numLayers = 10;
+  // =========================================================================
+  // 1. ESTELA PROFUNDAMENTE DIFUMINADA (SIN LÍNEAS, SIN CAPAS RÍGIDAS NI ESCALONES)
+  // Se emplea desenfoque gaussiano por GPU (ctx.filter = 'blur(...)') para
+  // disolver todo contorno en una niebla celestial continua y suave.
+  // =========================================================================
 
-  for (let layer = 1; layer <= numLayers; layer++) {
-    const layerFrac = layer / numLayers; // 0.1 a 1.0
-    const maxLayerWidth = 14 + Math.pow(layerFrac, 0.85) * 82;
-    const layerAlpha = (0.042 / Math.pow(layerFrac, 0.42)) * 0.9;
+  // --- CAPA A: Velo exterior ultra difuso (blur 26px) ---
+  ctx.filter = 'blur(26px)';
+  ctx.beginPath();
 
+  // Lado izquierdo del velo
+  for (let i = 0; i < spineLen; i++) {
+    const pt = spine[i];
+    const t = i / (spineLen - 1);
+    // Expansión suave y ahusamiento al final
+    const profile = (1 - t * 0.85) * (Math.pow(t, 0.4) * 2.0 + 0.15);
+    const width = 14 + profile * 72;
+    const normal = pt.angle + Math.PI / 2;
+    const px = pt.x + Math.cos(normal) * width;
+    const py = pt.y + Math.sin(normal) * width;
+
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+
+  // Lado derecho del velo en reversa
+  for (let i = spineLen - 1; i >= 0; i--) {
+    const pt = spine[i];
+    const t = i / (spineLen - 1);
+    const profile = (1 - t * 0.85) * (Math.pow(t, 0.4) * 2.0 + 0.15);
+    const width = 14 + profile * 72;
+    const normal = pt.angle - Math.PI / 2;
+    const px = pt.x + Math.cos(normal) * width;
+    const py = pt.y + Math.sin(normal) * width;
+
+    ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+
+  const outerGrad = ctx.createLinearGradient(head.x, head.y, tailEnd.x, tailEnd.y);
+  outerGrad.addColorStop(0, 'rgba(255, 255, 255, 0.48)');
+  outerGrad.addColorStop(0.15, 'rgba(224, 242, 254, 0.38)');
+  outerGrad.addColorStop(0.45, 'rgba(186, 230, 253, 0.20)');
+  outerGrad.addColorStop(0.78, 'rgba(147, 197, 253, 0.05)');
+  outerGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
+  ctx.fillStyle = outerGrad;
+  ctx.fill();
+
+  // --- CAPA B: Cuerpo medio sedoso difuminado (blur 14px) ---
+  ctx.filter = 'blur(14px)';
+  const midLen = Math.floor(spineLen * 0.72);
+  if (midLen > 2) {
     ctx.beginPath();
-
-    // Lado izquierdo del velo con expansión y atenuación natural
-    for (let i = 0; i < spineLen; i++) {
+    for (let i = 0; i < midLen; i++) {
       const pt = spine[i];
-      const t = i / (spineLen - 1); // 0 a 1
-
-      // Perfil aerodinámico y cósmico: suave en el cuello, ancho en el cuerpo y estrecho al final
-      const profile = (1 - t * 0.9) * (Math.pow(t, 0.45) * 2.2 + 0.12);
-      const wave = Math.sin(t * 4.8 - state.progress * 6.5 + layerFrac * 2.0) * (t * 7);
-      const width = Math.max(0, (maxLayerWidth * profile + wave) * layerFrac);
-
+      const t = i / (midLen - 1);
+      const width = 10 + Math.sin(t * Math.PI) * 36;
       const normal = pt.angle + Math.PI / 2;
       const px = pt.x + Math.cos(normal) * width;
       const py = pt.y + Math.sin(normal) * width;
@@ -261,69 +296,52 @@ export function renderAstronomicalComet(
       if (i === 0) ctx.moveTo(px, py);
       else ctx.lineTo(px, py);
     }
-
-    // Lado derecho del velo en reversa para cerrar la cinta suavemente
-    for (let i = spineLen - 1; i >= 0; i--) {
+    for (let i = midLen - 1; i >= 0; i--) {
       const pt = spine[i];
-      const t = i / (spineLen - 1);
-
-      const profile = (1 - t * 0.9) * (Math.pow(t, 0.45) * 2.2 + 0.12);
-      const wave = Math.sin(t * 4.8 - state.progress * 6.5 + layerFrac * 2.0) * (t * 7);
-      const width = Math.max(0, (maxLayerWidth * profile - wave) * layerFrac);
-
+      const t = i / (midLen - 1);
+      const width = 10 + Math.sin(t * Math.PI) * 36;
       const normal = pt.angle - Math.PI / 2;
       const px = pt.x + Math.cos(normal) * width;
       const py = pt.y + Math.sin(normal) * width;
 
       ctx.lineTo(px, py);
     }
-
     ctx.closePath();
 
-    const layerGrad = ctx.createLinearGradient(head.x, head.y, tailEnd.x, tailEnd.y);
-    layerGrad.addColorStop(0, `rgba(255, 255, 255, ${layerAlpha * 2.4})`);
-    layerGrad.addColorStop(0.12, `rgba(224, 242, 254, ${layerAlpha * 1.9})`);
-    layerGrad.addColorStop(0.38, `rgba(186, 230, 253, ${layerAlpha * 1.1})`);
-    layerGrad.addColorStop(0.70, `rgba(147, 197, 253, ${layerAlpha * 0.35})`);
-    layerGrad.addColorStop(0.92, 'rgba(56, 189, 248, 0)');
-    layerGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
-
-    ctx.fillStyle = layerGrad;
+    const midGrad = ctx.createLinearGradient(head.x, head.y, spine[midLen - 1].x, spine[midLen - 1].y);
+    midGrad.addColorStop(0, 'rgba(255, 255, 255, 0.65)');
+    midGrad.addColorStop(0.25, 'rgba(224, 242, 254, 0.45)');
+    midGrad.addColorStop(0.65, 'rgba(186, 230, 253, 0.16)');
+    midGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
+    ctx.fillStyle = midGrad;
     ctx.fill();
   }
 
-  // 2. CHORRO DE PLASMA INCANDESCENTE CENTRAL (SUAVE Y DIFUSO, CONECTADO AL NÚCLEO)
-  // Solo se proyecta en el primer 38% de la estela para fundirse de forma orgánica en la niebla
-  const jetSteps = Math.min(spineLen, Math.floor(spineLen * 0.38));
-  if (jetSteps > 2) {
+  // --- CAPA C: Núcleo de gas incandescente difuminado (blur 8px, sin líneas duras ni varas rígidas) ---
+  ctx.filter = 'blur(8px)';
+  const jetLen = Math.floor(spineLen * 0.42);
+  if (jetLen > 2) {
     ctx.beginPath();
-    for (let i = 0; i < jetSteps; i++) {
+    for (let i = 0; i < jetLen; i++) {
       const pt = spine[i];
       if (i === 0) ctx.moveTo(pt.x, pt.y);
       else ctx.lineTo(pt.x, pt.y);
     }
 
-    const jetGrad = ctx.createLinearGradient(head.x, head.y, spine[jetSteps - 1].x, spine[jetSteps - 1].y);
+    const jetGrad = ctx.createLinearGradient(head.x, head.y, spine[jetLen - 1].x, spine[jetLen - 1].y);
     jetGrad.addColorStop(0, 'rgba(255, 255, 255, 0.85)');
     jetGrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.55)');
-    jetGrad.addColorStop(0.75, 'rgba(186, 230, 253, 0.2)');
-    jetGrad.addColorStop(1, 'rgba(147, 197, 253, 0)');
+    jetGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-
-    // Halo difuso exterior
-    ctx.lineWidth = 18;
+    ctx.lineWidth = 14;
     ctx.strokeStyle = jetGrad;
-    ctx.stroke();
-
-    // Espina blanca interior sutil
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
     ctx.stroke();
   }
 
-  // 3. POLVO ESTELAR DISPERSO (MICRO-CHISPAS SUAVES Y DIFUSAS)
+  // --- MICRO-POLVO DIFUSO ---
+  ctx.filter = 'blur(1.5px)';
   for (let i = 0; i < state.particles.length; i++) {
     const p = state.particles[i];
     ctx.beginPath();
@@ -332,7 +350,12 @@ export function renderAstronomicalComet(
     ctx.fill();
   }
 
-  // 4. COMA PARABÓLICA (ATMÓSFERA ASIMÉTRICA COMPRIMIDA AL FRENTE Y ARRASTRADA HACIA ATRÁS)
+  // =========================================================================
+  // 2. RESTABLECER FILTRO PARA EL NÚCLEO NÍTIDO E INCANDESCENTE (VALIDADO)
+  // =========================================================================
+  ctx.filter = 'none';
+
+  // COMA PARABÓLICA (ATMÓSFERA CELESTIAL DE GAS)
   const hx = state.headX;
   const hy = state.headY;
   const comaRadius = 55;
@@ -349,7 +372,7 @@ export function renderAstronomicalComet(
   ctx.fillStyle = comaGrad;
   ctx.fill();
 
-  // 5. NÚCLEO INCANDESCENTE ÓPTICO NATURAL (AIRY DISC NATURAL, EXACTO AL VALIDADO)
+  // NÚCLEO INCANDESCENTE ÓPTICO NATURAL (AIRY DISC NATURAL, EXACTO AL VALIDADO)
   const nucleusRadius = 22;
   const nucleusGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, nucleusRadius);
   nucleusGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
