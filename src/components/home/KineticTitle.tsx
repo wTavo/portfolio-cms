@@ -97,21 +97,19 @@ export default function KineticTitle({
 
   if (prefersReducedMotion) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-y-3 sm:gap-y-5 text-center select-none ${className}`}>
-        {words.map((word, wIdx) => (
-          <span
-            key={`word-reduced-${wIdx}`}
-            className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase"
-          >
-            {word}
-          </span>
-        ))}
+      <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none font-[family-name:var(--font-display)] ${className}`}>
+        <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[var(--color-text-primary)] leading-[1.0] uppercase">
+          {words[0]}
+        </span>
+        <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase">
+          {words[1]}
+        </span>
       </div>
     );
   }
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center min-h-[500px] sm:min-h-[580px] py-12 sm:py-16 overflow-visible">
+    <div className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[560px] py-12 sm:py-16 overflow-visible font-[family-name:var(--font-display)]">
       {/* Resplandor ambiental que alterna suavemente */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-[var(--color-brand-accent)]/20 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-in-out ${
@@ -120,19 +118,31 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      {/* Título Central en 2 Líneas con Moldes en V Invertida (/\) */}
+      {/* Título Central en 2 Líneas Jerarquizadas con Moldes en V Invertida (/\) */}
       <h1
-        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider leading-[1.0] flex flex-col items-center justify-center gap-y-3 sm:gap-y-5 md:gap-y-6 lg:gap-y-7 select-none relative z-10 ${className}`}
+        className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 lg:gap-y-5 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
       >
         {words.map((word, wordIdx) => {
           const wordLen = word.length;
           const wordCenter = (wordLen - 1) / 2;
+          const isFirstWord = wordIdx === 0;
+
+          // Tipografía jerarquizada: PORTAFOLIO más chica con tracking amplio, PROFESIONAL grande e imponente
+          const fontClasses = isFirstWord
+            ? 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em]'
+            : 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider';
+
+          const slotMinWidth = isFirstWord ? '0.85em' : '0.74em';
+          const slotHeight = isFirstWord ? '1.2em' : '1.1em';
+          const stepHeight = isFirstWord ? 11 : 15;
 
           return (
             <div
               key={`word-row-${wordIdx}`}
-              className="inline-flex items-center justify-center gap-x-2 sm:gap-x-3.5 md:gap-x-5 relative"
+              className={`inline-flex items-center justify-center relative ${fontClasses} ${
+                isFirstWord ? 'gap-x-1.5 sm:gap-x-2.5 md:gap-x-3.5' : 'gap-x-2 sm:gap-x-3.5 md:gap-x-5'
+              }`}
             >
               {word.split('').map((char, charIdx) => {
                 // Distancia desde el extremo más cercano (0 = punta exterior, mayor = hacia el centro)
@@ -142,16 +152,15 @@ export default function KineticTitle({
 
                 // Forma de V Invertida (/\): el centro está arriba y las puntas abajo
                 const distFromCenter = Math.abs(charIdx - wordCenter);
-                const stepHeight = 14;
                 const targetStepY = isStaircase ? distFromCenter * stepHeight : 0;
 
                 return (
                   <span
                     key={`slot-${wordIdx}-${charIdx}-${char}`}
-                    className="inline-flex items-center justify-center relative"
+                    className="inline-flex items-center justify-center relative leading-[1.0]"
                     style={{
-                      minWidth: '0.74em',
-                      height: '1.15em',
+                      minWidth: slotMinWidth,
+                      height: slotHeight,
                       transform: `translate3d(0, ${targetStepY.toFixed(1)}px, 0)`,
                       transition: isStaircase
                         ? 'none'
