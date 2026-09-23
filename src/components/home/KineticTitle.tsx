@@ -1,16 +1,125 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Llenado Líquido de Moldes Tipográficos con Límites Físicos Estrictos".
+ * @description Título Cinético: "Llenado Líquido Hidrodinámico de Moldes Tipográficos".
  * Cada letra actúa como un molde hermético con límites físicos infranqueables.
- * El líquido blanco fluye y abarca progresivamente la cavidad interior de cada molde
- * de forma aleatoria, sin derramarse jamás fuera de los límites de la tipografía.
+ * El metal líquido blanco fluye con física de ondas orgánicas, tensión superficial,
+ * menisco brillante y lóbulos fluidos confinados 100% dentro del trazo tipográfico.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 interface KineticTitleProps {
   text?: string;
   className?: string;
+}
+
+/**
+ * Renderizador de fluido con física de ondas y menisco para cada letra individual.
+ */
+function FluidLetterCanvas({
+  char,
+  progress,
+}: {
+  char: string;
+  progress: number;
+}) {
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const parent = canvas.parentElement;
+    if (!parent) return;
+
+    const rect = parent.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    const w = rect.width;
+    const h = rect.height;
+
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.scale(dpr, dpr);
+
+    const cx = w / 2;
+    const cy = h / 2;
+    const maxRadius = Math.hypot(cx, cy) * 1.25;
+    const baseRadius = progress * maxRadius;
+    const time = performance.now() * 0.0035;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. DIBUJAR LA SILUETA DE LA LETRA COMO MÁSCARA RÍGIDA
+    ctx.save();
+    const computed = window.getComputedStyle(parent);
+    ctx.font = `${computed.fontWeight} ${computed.fontSize} ${computed.fontFamily}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(char, cx, cy);
+
+    // 2. CONFINAR EL LÍQUIDO 100% AL INTERIOR DE LA TIPOGRAFÍA (CERO DERRAMES)
+    ctx.globalCompositeOperation = 'source-in';
+
+    // 3. CUERPO DE FLUIDO CON LÓBULOS ONDULANTES Y DINÁMICA DE TENSIÓN SUPERFICIAL
+    const numPoints = 36;
+    ctx.beginPath();
+    for (let i = 0; i <= numPoints; i++) {
+      const angle = (i / numPoints) * Math.PI * 2;
+      // Ondulación fluida de múltiples armónicos (sensación de masa líquida viscosa)
+      const wobble = 0.14 * Math.sin(angle * 3 + time * 4.2)
+                   + 0.09 * Math.cos(angle * 5 - time * 3.1)
+                   + 0.05 * Math.sin(angle * 7 + time * 5.0);
+      const r = Math.max(0, baseRadius * (1 + wobble));
+      const px = cx + Math.cos(angle) * r;
+      const py = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+
+    // Gradiente metálico líquido profundo con reflejos
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(1, baseRadius * 1.15));
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.70, '#ffffff');
+    grad.addColorStop(0.88, 'rgba(248, 250, 252, 0.98)');
+    grad.addColorStop(0.96, 'rgba(226, 232, 240, 0.92)');
+    grad.addColorStop(1, 'rgba(203, 213, 225, 0.6)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 4. CRESTA DE ONDA / MENISCO LÍQUIDO BRILLANTE (SURFACE TENSION WAVE)
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.stroke();
+
+    // 5. ONDA CONCÉNTRICA SECUNDARIA (RIPPLE DE PROPAGACIÓN INTERNA)
+    if (baseRadius > 14) {
+      const rippleRadius = baseRadius * 0.58;
+      ctx.beginPath();
+      for (let i = 0; i <= numPoints; i++) {
+        const angle = (i / numPoints) * Math.PI * 2;
+        const wobble = 0.11 * Math.sin(angle * 4 + time * 4.5);
+        const r = Math.max(0, rippleRadius * (1 + wobble));
+        const px = cx + Math.cos(angle) * r;
+        const py = cy + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.stroke();
+    }
+
+    ctx.restore();
+  }, [char, progress]);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full pointer-events-none" />;
 }
 
 export default function KineticTitle({
@@ -64,7 +173,7 @@ export default function KineticTitle({
     }
 
     const initialDelay = 500; // Pausa inicial para contemplar los moldes vacíos
-    const letterFillDuration = 3000; // Llenado pausado, gradual y cinematográfico por molde (3.0s)
+    const letterFillDuration = 3200; // Llenado pausado, gradual y fluido (3.2s)
     const staggerDelay = 160; // Desfase rítmico pausado entre letras
 
     let completedCount = 0;
@@ -172,10 +281,6 @@ export default function KineticTitle({
                 const isComplete = filledLetters[key] || currentFill >= 1;
                 const isActivelyFilling = currentFill > 0 && currentFill < 1;
 
-                // Cálculo de expansión del fluido estrictamente dentro de la cavidad del molde
-                const fluidSpreadPercent = currentFill * 150;
-                const coreSolidPercent = Math.max(0, fluidSpreadPercent - 20);
-
                 return (
                   <div
                     key={`slot-${key}`}
@@ -198,25 +303,17 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* 🌊 CAPA 2: LÍQUIDO O LETRA SÓLIDA (100% CONFINADO A LA TIPOGRAFÍA) */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                    {/* 🌊 CAPA 2: SIMULADOR HIDRODINÁMICO DE FLUIDO / LETRA SÓLIDA */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
                       {isComplete ? (
                         <span className="inline-block uppercase leading-[1.0] text-white">
                           {char}
                         </span>
                       ) : isActivelyFilling ? (
-                        <span
-                          className="inline-block uppercase leading-[1.0]"
-                          style={{
-                            backgroundImage: `radial-gradient(ellipse 130% 130% at 50% 50%, #ffffff 0%, #ffffff ${coreSolidPercent}%, rgba(255, 255, 255, 0.95) ${fluidSpreadPercent * 0.92}%, rgba(255, 255, 255, 0) ${fluidSpreadPercent}%)`,
-                            WebkitBackgroundClip: 'text',
-                            backgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            color: 'transparent',
-                          }}
-                        >
-                          {char}
-                        </span>
+                        <FluidLetterCanvas
+                          char={char}
+                          progress={currentFill}
+                        />
                       ) : null}
                     </div>
                   </div>
