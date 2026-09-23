@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético interactivo: moldes en forma de escalera en el centro con letras que se van acoplando una a una en sus moldes hasta nivelarse horizontalmente y activar el ciclo continuo de iluminación.
+ * @description Título cinético interactivo: moldes en forma de V invertida (/\) en el centro con acople simultáneo de letras desde ambas puntas exteriores hacia el vértice central, antes de nivelarse horizontalmente y activar el ciclo continuo de iluminación.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -12,16 +12,16 @@ interface KineticTitleProps {
 
 /**
  * Título interactivo en 2 líneas.
- * - Centro: Moldes en bajo relieve en forma de escalera ascendente.
- * - Cinemática: Las letras se van acoplando una a una en sus moldes correspondientes.
- * - Cierre: Toda la escalera se nivela horizontalmente y activa el ciclo continuo de iluminación.
+ * - Centro: Moldes en bajo relieve en forma de V invertida (/\).
+ * - Cinemática: Las letras se van colocando simultáneamente desde ambas puntas exteriores hacia el centro.
+ * - Cierre: Toda la estructura se nivela horizontalmente y activa el ciclo continuo de iluminación.
  */
 export default function KineticTitle({
   text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [placedCount, setPlacedCount] = useState(0);
+  const [currentStep, setCurrentStep] = useState(0);
   const [isStaircase, setIsStaircase] = useState(true);
   const [isHorizontalAligned, setIsHorizontalAligned] = useState(false);
   const [isFinalGlow, setIsFinalGlow] = useState(false);
@@ -29,19 +29,10 @@ export default function KineticTitle({
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
 
-  const allLetters = useMemo(() => {
-    let globalIndex = 0;
-    return words.flatMap((word, wordIdx) =>
-      word.split('').map((char, charIdx) => ({
-        char,
-        globalIndex: globalIndex++,
-        wordIdx,
-        charIdx,
-      }))
-    );
-  }, [words, uppercaseText]);
-
-  const totalLetters = allLetters.length;
+  // Número máximo de pasos desde los extremos hasta el centro
+  const maxSteps = useMemo(() => {
+    return Math.max(...words.map((w) => Math.ceil(w.length / 2)));
+  }, [words]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -51,34 +42,34 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  // Secuencia de Animación: Moldes en Escalera -> Acople Secuencial -> Nivelación Horizontal -> Ciclo de Brillo
+  // Secuencia de Animación: Moldes en V Invertida -> Acople desde Ambas Puntas -> Nivelación Horizontal -> Ciclo de Brillo
   useEffect(() => {
     if (prefersReducedMotion) {
-      setPlacedCount(totalLetters);
+      setCurrentStep(maxSteps + 1);
       setIsStaircase(false);
       setIsHorizontalAligned(true);
       return;
     }
 
-    let current = 0;
+    let step = 0;
     let glowInterval: ReturnType<typeof setInterval>;
 
-    // 1. Pausa inicial para apreciar los moldes en bajo relieve en escalera
+    // 1. Pausa inicial para apreciar los moldes en V invertida
     const initialTimer = setTimeout(() => {
-      // 2. Acople secuencial de cada letra en su molde
+      // 2. Acople simultáneo desde ambas puntas hacia el centro
       const placeInterval = setInterval(() => {
-        current++;
-        setPlacedCount(current);
+        step++;
+        setCurrentStep(step);
 
-        if (current >= totalLetters) {
+        if (step >= maxSteps) {
           clearInterval(placeInterval);
 
-          // 3. Pausa para contemplar la escalera armada completa
+          // 3. Pausa para contemplar la V invertida completa
           setTimeout(() => {
-            // 4. Deslizamiento y nivelación hacia el eje horizontal definitivo
+            // 4. Deslizamiento y nivelación hacia el eje horizontal
             setIsStaircase(false);
 
-            // 5. Consolidación horizontal definitiva en 2 líneas
+            // 5. Consolidación horizontal definitiva
             setTimeout(() => {
               setIsHorizontalAligned(true);
               setIsFinalGlow(true);
@@ -93,7 +84,7 @@ export default function KineticTitle({
             }, 900);
           }, 600);
         }
-      }, 95);
+      }, 140);
 
       return () => clearInterval(placeInterval);
     }, 450);
@@ -102,7 +93,7 @@ export default function KineticTitle({
       clearTimeout(initialTimer);
       clearInterval(glowInterval);
     };
-  }, [totalLetters, prefersReducedMotion]);
+  }, [maxSteps, prefersReducedMotion]);
 
   if (prefersReducedMotion) {
     return (
@@ -129,7 +120,7 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      {/* Título Central en 2 Líneas con Moldes en Escalera */}
+      {/* Título Central en 2 Líneas con Moldes en V Invertida (/\) */}
       <h1
         className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider leading-[1.0] flex flex-col items-center justify-center gap-y-3 sm:gap-y-5 md:gap-y-6 lg:gap-y-7 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
@@ -144,22 +135,19 @@ export default function KineticTitle({
               className="inline-flex items-center justify-center gap-x-2 sm:gap-x-3.5 md:gap-x-5 relative"
             >
               {word.split('').map((char, charIdx) => {
-                let globalIdx = 0;
-                for (let w = 0; w < wordIdx; w++) {
-                  globalIdx += words[w].length;
-                }
-                globalIdx += charIdx;
+                // Distancia desde el extremo más cercano (0 = punta exterior, mayor = hacia el centro)
+                const tipDistance = Math.min(charIdx, wordLen - 1 - charIdx);
+                const isPlaced = tipDistance < currentStep;
+                const isCurrentlyEntering = tipDistance === currentStep - 1 && isStaircase;
 
-                const isPlaced = globalIdx < placedCount;
-                const isCurrentlyEntering = globalIdx === placedCount - 1 && isStaircase;
-
-                // Posición del Molde en Escalera Ascendente
+                // Forma de V Invertida (/\): el centro está arriba y las puntas abajo
+                const distFromCenter = Math.abs(charIdx - wordCenter);
                 const stepHeight = 14;
-                const targetStepY = isStaircase ? (wordCenter - charIdx) * stepHeight : 0;
+                const targetStepY = isStaircase ? distFromCenter * stepHeight : 0;
 
                 return (
                   <span
-                    key={`slot-${globalIdx}-${char}`}
+                    key={`slot-${wordIdx}-${charIdx}-${char}`}
                     className="inline-flex items-center justify-center relative"
                     style={{
                       minWidth: '0.74em',
@@ -171,7 +159,7 @@ export default function KineticTitle({
                       willChange: 'transform',
                     }}
                   >
-                    {/* MOLDE: Silueta tallada en bajo relieve */}
+                    {/* MOLDE: Silueta tallada en bajo relieve en V invertida */}
                     <span
                       className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none z-0 transition-opacity duration-400 ${
                         isPlaced
@@ -183,7 +171,7 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* LETRA ACTIVA: Se acopla en su molde */}
+                    {/* LETRA ACTIVA: Se acopla desde ambas puntas hacia el centro */}
                     <span
                       className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white z-10 transition-all duration-300 ${
                         isPlaced ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
