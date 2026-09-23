@@ -1,121 +1,102 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "La Galería Curada / Exposición de Obras" (The Exhibition).
- * Concepto universal para cualquier profesión: Marcos de exhibición abstractos
- * (Arquitectura, Fotografía/Artes, Casos de Estudio, Logros/Certificaciones)
- * convergen con fluidez en una galería 3D y coronan el título 'PORTAFOLIO PROFESIONAL'.
+ * @description Título Cinético: "Firma Caligráfica en Cursiva Escrita a Mano con Lápiz".
+ * Un lápiz estilizado escribe en tiempo real el título 'Portafolio Profesional'
+ * en trazos continuos de firma en cursiva con florituras y tinta luminosa.
  */
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 interface KineticTitleProps {
   text?: string;
   className?: string;
 }
 
-type AnimationPhase = 'gallery_dispersed' | 'gallery_curating' | 'title_reveal' | 'settled';
-
-interface ExhibitionFrame {
-  id: string;
-  category: string;
-  iconType: 'geometry' | 'visual' | 'editorial' | 'achievement';
-  initialOffset: { x: number; y: number; rotate: number; z: number };
-  dockedOffset: { x: number; y: number; rotate: number; z: number };
-}
-
-const EXHIBITION_FRAMES: ExhibitionFrame[] = [
-  {
-    id: 'frame-architecture',
-    category: 'Proyectos & Estructuras',
-    iconType: 'geometry',
-    initialOffset: { x: -280, y: -120, rotate: -12, z: -80 },
-    dockedOffset: { x: -220, y: -40, rotate: -4, z: -20 },
-  },
-  {
-    id: 'frame-visual',
-    category: 'Artes & Multimedia',
-    iconType: 'visual',
-    initialOffset: { x: 280, y: -110, rotate: 14, z: -70 },
-    dockedOffset: { x: 220, y: -45, rotate: 5, z: -15 },
-  },
-  {
-    id: 'frame-editorial',
-    category: 'Casos de Estudio & Artículos',
-    iconType: 'editorial',
-    initialOffset: { x: -240, y: 130, rotate: 10, z: -60 },
-    dockedOffset: { x: -180, y: 55, rotate: 3, z: -25 },
-  },
-  {
-    id: 'frame-achievement',
-    category: 'Logros & Certificaciones',
-    iconType: 'achievement',
-    initialOffset: { x: 240, y: 140, rotate: -9, z: -90 },
-    dockedOffset: { x: 180, y: 50, rotate: -3, z: -30 },
-  },
-];
-
 /**
- * Gráficos vectoriales abstractos que representan las diferentes disciplinas profesionales.
+ * Gráfico vectorial del Lápiz de Dibujo / Caligrafía.
+ * La punta exacta del grafito/metal está calibrada en la coordenada (0, 0).
  */
-function FrameArtwork({ type }: { type: ExhibitionFrame['iconType'] }) {
-  switch (type) {
-    case 'geometry':
-      // Arquitectura / Ingeniería / Diseño Estructural
-      return (
-        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
-          <rect x="8" y="8" width="32" height="32" rx="2" strokeWidth="1.2" strokeDasharray="3 2" />
-          <polygon points="24,12 36,36 12,36" strokeWidth="1.2" />
-          <circle cx="24" cy="24" r="5" strokeWidth="1" />
-          <line x1="8" y1="24" x2="40" y2="24" strokeWidth="0.8" opacity="0.4" />
-        </svg>
-      );
-    case 'visual':
-      // Fotografía / Cine / Artes Visuales
-      return (
-        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
-          <circle cx="24" cy="24" r="16" strokeWidth="1.2" />
-          <polygon points="24,12 34,24 24,36 14,24" strokeWidth="1" />
-          <circle cx="24" cy="24" r="4" fill="#ffffff" fillOpacity="0.2" strokeWidth="1" />
-          <path d="M16 12 L32 36" strokeWidth="0.8" opacity="0.4" />
-        </svg>
-      );
-    case 'editorial':
-      // Investigación / Redacción / Derecho / Consultoría
-      return (
-        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
-          <rect x="10" y="8" width="28" height="32" rx="2" strokeWidth="1.2" />
-          <line x1="16" y1="16" x2="32" y2="16" strokeWidth="1.5" strokeLinecap="round" />
-          <line x1="16" y1="22" x2="28" y2="22" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="16" y1="28" x2="30" y2="28" strokeWidth="1.2" strokeLinecap="round" />
-          <line x1="16" y1="34" x2="24" y2="34" strokeWidth="1.2" strokeLinecap="round" />
-        </svg>
-      );
-    case 'achievement':
-      // Certificaciones / Medicina / Finanzas / Liderazgo
-      return (
-        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
-          <circle cx="24" cy="20" r="12" strokeWidth="1.2" />
-          <polygon points="24,12 26.5,17.5 32.5,18 28,22 29.5,28 24,25 18.5,28 20,22 15.5,18 21.5,17.5" fill="#ffffff" fillOpacity="0.2" strokeWidth="0.8" />
-          <path d="M19 30 L16 42 L24 38 L32 42 L29 30" strokeWidth="1.2" />
-        </svg>
-      );
-  }
+function DrawingPencilGraphic() {
+  return (
+    <div className="relative w-14 h-14 sm:w-16 sm:h-16 pointer-events-none select-none drop-shadow-[0_8px_16px_rgba(0,0,0,0.8)]">
+      <svg
+        viewBox="-6 -6 44 44"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full"
+      >
+        <g transform="rotate(25, 0, 0)">
+          {/* Cuerpo hexagonal del lápiz en titanio / madera oscura */}
+          <path
+            d="M 0 0 L 7 -14 L 28 -35 L 34 -29 L 13 -8 L 0 0 Z"
+            fill="url(#pencil-body-grad)"
+            stroke="#475569"
+            strokeWidth="0.8"
+          />
+          {/* Faceta lateral para volumen 3D */}
+          <path
+            d="M 3.5 -4 L 10.5 -11 L 31 -32 L 28 -35 L 7 -14 L 0 0 Z"
+            fill="#334155"
+            opacity="0.6"
+          />
+          {/* Punta de madera afilada */}
+          <path
+            d="M 0 0 L 4.5 -9 L 9 -4.5 L 0 0 Z"
+            fill="#d97706"
+            opacity="0.8"
+          />
+          {/* Mina de grafito / Punta de titanio en el origen (0,0) */}
+          <polygon
+            points="0,0 2,-4 4,-2"
+            fill="#ffffff"
+            className="drop-shadow-[0_0_6px_rgba(255,255,255,1)]"
+          />
+          {/* Casquillo metálico en la parte superior */}
+          <path
+            d="M 26 -33 L 29 -36 L 35 -30 L 32 -27 Z"
+            fill="url(#pencil-metal-grad)"
+            stroke="#cbd5e1"
+            strokeWidth="0.6"
+          />
+          {/* Goma de borrar en el extremo */}
+          <path
+            d="M 29 -36 L 32 -39 C 34 -41, 38 -37, 36 -35 L 33 -32 Z"
+            fill="#e11d48"
+            opacity="0.85"
+          />
+        </g>
+        <defs>
+          <linearGradient id="pencil-body-grad" x1="0" y1="0" x2="35" y2="-35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#1e293b" />
+            <stop offset="50%" stopColor="#0f172a" />
+            <stop offset="100%" stopColor="#020617" />
+          </linearGradient>
+          <linearGradient id="pencil-metal-grad" x1="26" y1="-33" x2="35" y2="-30" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="50%" stopColor="#94a3b8" />
+            <stop offset="100%" stopColor="#e2e8f0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    </div>
+  );
 }
 
 export default function KineticTitle({
-  text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [phase, setPhase] = useState<AnimationPhase>('gallery_dispersed');
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [pencilPos, setPencilPos] = useState({ x: 40, y: 55, visible: false });
+  const [progressWord1, setProgressWord1] = useState(0);
+  const [progressWord2, setProgressWord2] = useState(0);
+  const [progressFlourish, setProgressFlourish] = useState(0);
   const [isFinalGlow, setIsFinalGlow] = useState(false);
 
-  // Parallax interactivo del ratón
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
-  const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
+  const pathWord1Ref = useRef<SVGPathElement>(null);
+  const pathWord2Ref = useRef<SVGPathElement>(null);
+  const pathFlourishRef = useRef<SVGPathElement>(null);
+  const animFrameRef = useRef<number | null>(null);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -125,206 +106,270 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  const runAnimationSequence = () => {
-    setPhase('gallery_dispersed');
+  const runWritingAnimation = () => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+
+    setIsAnimating(true);
     setIsFinalGlow(false);
+    setProgressWord1(0);
+    setProgressWord2(0);
+    setProgressFlourish(0);
 
-    // 1. Los marcos de exhibición entran flotando en el espacio (500ms)
-    const t1 = setTimeout(() => {
-      // 2. Curaduría y ensamblado: los marcos convergen al centro y forman la galería (750ms)
-      setPhase('gallery_curating');
+    const path1 = pathWord1Ref.current;
+    const path2 = pathWord2Ref.current;
+    const pathF = pathFlourishRef.current;
 
-      const t2 = setTimeout(() => {
-        // 3. Revelación de título en el foco principal de la exposición (800ms)
-        setPhase('title_reveal');
+    if (!path1 || !path2 || !pathF) return;
 
-        const t3 = setTimeout(() => {
-          // 4. Asentamiento en reposo con interacción de parallax y resplandor continuo
-          setPhase('settled');
-          setIsFinalGlow(true);
+    const len1 = path1.getTotalLength();
+    const len2 = path2.getTotalLength();
+    const lenF = pathF.getTotalLength();
 
-          setTimeout(() => {
-            setIsFinalGlow(false);
-            const glowInt = setInterval(() => {
-              setIsFinalGlow((prev) => !prev);
-            }, 1800);
-            return () => clearInterval(glowInt);
-          }, 1100);
-        }, 800);
+    const startPt = path1.getPointAtLength(0);
+    setPencilPos({ x: startPt.x, y: startPt.y, visible: true });
 
-        return () => clearTimeout(t3);
-      }, 750);
+    const startTime = performance.now();
+    // Duraciones en milisegundos para una escritura natural y fluida
+    const dur1 = 1250;
+    const pause1 = 180;
+    const dur2 = 1350;
+    const pause2 = 120;
+    const durF = 650;
 
-      return () => clearTimeout(t2);
-    }, 500);
+    const totalDuration = dur1 + pause1 + dur2 + pause2 + durF;
 
-    return () => clearTimeout(t1);
+    const animate = (now: number) => {
+      const elapsed = now - startTime;
+
+      if (elapsed < dur1) {
+        // Escribiendo palabra 1: 'Portafolio'
+        const p = Math.min(elapsed / dur1, 1);
+        // Easing suave caligráfico
+        const easedP = p * (2 - p);
+        setProgressWord1(easedP);
+        const pt = path1.getPointAtLength(easedP * len1);
+        setPencilPos({ x: pt.x, y: pt.y, visible: true });
+      } else if (elapsed < dur1 + pause1) {
+        // Pausa y traslado del lápiz hacia la palabra 2
+        setProgressWord1(1);
+        const transP = (elapsed - dur1) / pause1;
+        const ptEnd1 = path1.getPointAtLength(len1);
+        const ptStart2 = path2.getPointAtLength(0);
+        // Movimiento aéreo del lápiz levantado
+        const curX = ptEnd1.x + (ptStart2.x - ptEnd1.x) * transP;
+        const curY = ptEnd1.y + (ptStart2.y - ptEnd1.y) * transP - Math.sin(transP * Math.PI) * 15;
+        setPencilPos({ x: curX, y: curY, visible: true });
+      } else if (elapsed < dur1 + pause1 + dur2) {
+        // Escribiendo palabra 2: 'Profesional'
+        setProgressWord1(1);
+        const p = Math.min((elapsed - (dur1 + pause1)) / dur2, 1);
+        const easedP = p * (2 - p);
+        setProgressWord2(easedP);
+        const pt = path2.getPointAtLength(easedP * len2);
+        setPencilPos({ x: pt.x, y: pt.y, visible: true });
+      } else if (elapsed < dur1 + pause1 + dur2 + pause2) {
+        // Pausa y traslado hacia la floritura / rúbrica final
+        setProgressWord2(1);
+        const transP = (elapsed - (dur1 + pause1 + dur2)) / pause2;
+        const ptEnd2 = path2.getPointAtLength(len2);
+        const ptStartF = pathF.getPointAtLength(0);
+        const curX = ptEnd2.x + (ptStartF.x - ptEnd2.x) * transP;
+        const curY = ptEnd2.y + (ptStartF.y - ptEnd2.y) * transP - Math.sin(transP * Math.PI) * 12;
+        setPencilPos({ x: curX, y: curY, visible: true });
+      } else if (elapsed < totalDuration) {
+        // Trazando la floritura / subrayado de firma
+        setProgressWord1(1);
+        setProgressWord2(1);
+        const p = Math.min((elapsed - (dur1 + pause1 + dur2 + pause2)) / durF, 1);
+        const easedP = p * (2 - p);
+        setProgressFlourish(easedP);
+        const pt = pathF.getPointAtLength(easedP * lenF);
+        setPencilPos({ x: pt.x, y: pt.y, visible: true });
+      } else {
+        // Firma terminada: el lápiz se retira
+        setProgressWord1(1);
+        setProgressWord2(1);
+        setProgressFlourish(1);
+        setPencilPos((prev) => ({ ...prev, visible: false }));
+        setIsAnimating(false);
+        setIsFinalGlow(true);
+
+        setTimeout(() => {
+          setIsFinalGlow(false);
+          const glowInt = setInterval(() => {
+            setIsFinalGlow((prev) => !prev);
+          }, 1800);
+          return () => clearInterval(glowInt);
+        }, 1200);
+
+        return;
+      }
+
+      animFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    animFrameRef.current = requestAnimationFrame(animate);
   };
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      setPhase('settled');
+      setProgressWord1(1);
+      setProgressWord2(1);
+      setProgressFlourish(1);
+      setPencilPos({ x: 0, y: 0, visible: false });
       return;
     }
 
-    const cleanup = runAnimationSequence();
-    return cleanup;
+    const t = setTimeout(() => {
+      runWritingAnimation();
+    }, 450);
+
+    return () => {
+      clearTimeout(t);
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    };
   }, [prefersReducedMotion]);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (prefersReducedMotion || !containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5;
-    const y = (e.clientY - rect.top) / rect.height - 0.5;
-    setMousePos({ x, y });
-  };
-
-  const handleMouseLeave = () => {
-    setMousePos({ x: 0, y: 0 });
-  };
-
-  const isSettled = phase === 'settled';
-  const isTitleVisible = phase === 'title_reveal' || phase === 'settled';
-  const isCuratingOrSettled = phase === 'gallery_curating' || phase === 'title_reveal' || phase === 'settled';
 
   if (prefersReducedMotion) {
     return (
       <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none ${className}`}>
-        <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase">
-          {words[0]}
+        <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase font-serif italic">
+          Portafolio
         </span>
-        <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[var(--color-text-primary)] leading-[1.0] uppercase">
-          {words[1]}
+        <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] text-[var(--color-text-primary)] leading-[1.0] font-serif italic">
+          Profesional
         </span>
       </div>
     );
   }
 
-  // Rotación del escenario según el cursor
-  const stageRotateY = mousePos.x * 14;
-  const stageRotateX = -mousePos.y * 12;
-
   return (
     <div
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
       onClick={() => {
-        if (isSettled) runAnimationSequence();
+        if (!isAnimating) runWritingAnimation();
       }}
-      className="relative w-full flex flex-col items-center justify-center min-h-[520px] sm:min-h-[580px] md:min-h-[640px] py-12 sm:py-16 select-none cursor-pointer [perspective:1400px] overflow-visible"
-      title="Haz clic para volver a curar la galería"
+      className="relative w-full flex flex-col items-center justify-center min-h-[500px] sm:min-h-[560px] md:min-h-[620px] py-12 sm:py-16 select-none cursor-pointer overflow-visible"
+      title="Haz clic para volver a escribir la firma"
     >
-      {/* Luz ambiental de galería / Spotlight central */}
+      {/* Resplandor ambiental de estudio */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-white/12 via-slate-500/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-out ${
-          isFinalGlow || phase === 'title_reveal' ? 'opacity-100 scale-110' : 'opacity-35 scale-95'
+          isFinalGlow || isAnimating ? 'opacity-100 scale-105' : 'opacity-30 scale-95'
         }`}
         aria-hidden="true"
       />
 
-      {/* ESCENARIO DE GALERÍA 3D CON PARALLAX */}
-      <div
-        className="relative flex items-center justify-center transition-transform duration-300 ease-out [transform-style:preserve-3d]"
-        style={{
-          transform: `rotateX(${stageRotateX}deg) rotateY(${stageRotateY}deg)`,
-        }}
-      >
-        {/* 🏛️ MARCOS DE EXHIBICIÓN DE DISCIPLINAS (THE EXHIBITION CANVASES) */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none [transform-style:preserve-3d]">
-          {EXHIBITION_FRAMES.map((frame, idx) => {
-            const currentOffset = isCuratingOrSettled ? frame.dockedOffset : frame.initialOffset;
-            const opacity = isCuratingOrSettled
-              ? isSettled
-                ? 'opacity-40 sm:opacity-55'
-                : 'opacity-85'
-              : 'opacity-0';
-
-            return (
-              <div
-                key={frame.id}
-                className={`absolute w-32 h-36 sm:w-40 sm:h-44 md:w-48 md:h-52 rounded-2xl transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${opacity}`}
-                style={{
-                  transform: `translate3d(${currentOffset.x}px, ${currentOffset.y}px, ${currentOffset.z}px) rotate(${currentOffset.rotate}deg)`,
-                  transitionDelay: `${idx * 60}ms`,
-                  background:
-                    'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(15,23,42,0.7) 50%, rgba(2,6,23,0.9) 100%)',
-                  backdropFilter: 'blur(16px)',
-                  WebkitBackdropFilter: 'blur(16px)',
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  boxShadow: '0 20px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2)',
-                }}
-              >
-                {/* Cabecera del Marco */}
-                <div className="p-3 sm:p-3.5 border-b border-white/10 flex items-center justify-between">
-                  <span className="text-[9px] sm:text-[10px] font-mono tracking-wider text-slate-400 uppercase truncate">
-                    {frame.category}
-                  </span>
-                  <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
-                </div>
-
-                {/* Contenido Visual del Marco */}
-                <div className="p-3 sm:p-4 flex items-center justify-center h-[calc(100%-42px)]">
-                  <FrameArtwork type={frame.iconType} />
-                </div>
-
-                {/* Pie del marco con código de obra */}
-                <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[8px] font-mono text-slate-500">
-                  <span>EXHIBIT 0{idx + 1}</span>
-                  <span>VERIFIED</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* 🌟 TÍTULO PRINCIPAL: LA CORONACIÓN DE LA EXPOSICIÓN */}
-        <h1
-          className={`relative z-20 flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 lg:gap-y-5 text-center select-none [transform-style:preserve-3d] ${className}`}
-          aria-label={uppercaseText}
+      {/* LIENZO SVG DE FIRMA EN CURSIVA REAL */}
+      <div className="relative w-full max-w-4xl aspect-[800/400] flex items-center justify-center">
+        <svg
+          viewBox="0 0 800 400"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full h-full overflow-visible drop-shadow-[0_4px_24px_rgba(0,0,0,0.9)]"
         >
-          {/* FILA 1: PORTAFOLIO (Emerge con impacto y nitidez en primer plano) */}
-          <div
-            className={`transition-all duration-900 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              isTitleVisible
-                ? 'opacity-100 [transform:translateZ(40px)_scale(1)]'
-                : 'opacity-0 [transform:translateZ(-50px)_scale(0.85)] blur-md'
-            }`}
-          >
-            <span
-              className={`inline-block text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-white leading-[1.0] uppercase transition-all duration-1000 ${
-                isSettled
-                  ? isFinalGlow
-                    ? 'drop-shadow-[0_0_35px_rgba(255,255,255,0.9)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.6)]'
-                    : 'drop-shadow-[0_4px_24px_rgba(255,255,255,0.4)]'
-                  : 'drop-shadow-[0_0_40px_rgba(255,255,255,1)]'
-              }`}
-            >
-              {words[0]}
-            </span>
-          </div>
+          <defs>
+            {/* Gradiente de tinta plateada/blanca luminosa */}
+            <linearGradient id="ink-gradient" x1="0" y1="0" x2="800" y2="400" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="#ffffff" />
+              <stop offset="50%" stopColor="#f8fafc" />
+              <stop offset="100%" stopColor="#cbd5e1" />
+            </linearGradient>
 
-          {/* FILA 2: PROFESIONAL (Emerge con tracking extendido de alta gama) */}
-          <div
-            className={`transition-all duration-900 ease-[cubic-bezier(0.16,1,0.3,1)] delay-100 ${
-              isTitleVisible
-                ? 'opacity-100 [transform:translateZ(30px)_scale(1)]'
-                : 'opacity-0 [transform:translateZ(-40px)_scale(0.85)] blur-md'
-            }`}
-          >
-            <span
-              className={`inline-block text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.22em] sm:tracking-[0.28em] text-white/95 leading-[1.0] uppercase transition-all duration-1000 ${
-                isSettled
-                  ? !isFinalGlow
-                    ? 'drop-shadow-[0_0_30px_rgba(255,255,255,0.85)] drop-shadow-[0_2px_14px_rgba(255,255,255,0.5)] text-white'
-                    : 'drop-shadow-[0_2px_16px_rgba(255,255,255,0.3)] text-white/90'
-                  : 'drop-shadow-[0_0_35px_rgba(255,255,255,0.9)]'
-              }`}
-            >
-              {words[1]}
-            </span>
-          </div>
-        </h1>
+            {/* Sombra sutil de la tinta sobre el lienzo */}
+            <filter id="ink-glow" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="3" result="blur" />
+              <feComposite in="SourceGraphic" in2="blur" operator="over" />
+            </filter>
+          </defs>
+
+          {/* PALABRA 1: "Portafolio" (Trazado Cursivo Caligráfico Continuo) */}
+          <path
+            ref={pathWord1Ref}
+            d="
+              M 80,140 C 75,70 125,50 145,95 C 160,130 110,185 85,210 M 115,85 C 105,120 100,165 95,210
+              C 95,200 115,160 145,150 C 175,140 185,170 165,190 C 145,210 120,185 135,160 C 150,135 180,140 195,160
+              C 205,175 200,195 215,195 C 230,195 235,170 240,150 C 245,130 255,145 260,165 C 265,185 270,195 285,195
+              M 270,135 L 265,200 M 255,155 L 285,150
+              C 285,175 300,195 320,195 C 340,195 350,170 335,150 C 320,130 295,155 310,185 C 325,205 345,195 355,160
+              C 365,125 380,60 385,45 C 390,30 380,45 375,90 C 370,140 365,210 360,250 C 358,265 370,260 378,235 C 385,210 385,175 395,170
+              C 410,165 425,150 445,150 C 465,150 475,175 455,195 C 435,215 415,190 430,165 C 445,140 475,155 490,140
+              C 500,125 515,65 520,50 C 525,35 515,50 510,95 C 505,145 500,180 515,195
+              C 525,195 535,170 540,155 C 545,175 550,195 565,195 M 542,130 A 2,2 0 1,1 542,131
+              C 565,195 580,165 600,150 C 625,135 645,165 630,190 C 610,215 585,190 605,160 C 625,135 655,145 680,140
+            "
+            stroke="url(#ink-gradient)"
+            strokeWidth="5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              strokeDasharray: 2400,
+              strokeDashoffset: (1 - progressWord1) * 2400,
+              filter: isFinalGlow ? 'drop-shadow(0 0 16px rgba(255,255,255,0.9))' : 'none',
+              transition: isAnimating ? 'none' : 'filter 1000ms ease',
+            }}
+          />
+
+          {/* PALABRA 2: "Profesional" (Trazado Cursivo Caligráfico Continuo) */}
+          <path
+            ref={pathWord2Ref}
+            d="
+              M 160,285 C 155,225 200,205 215,245 C 230,280 185,325 165,345 M 190,240 C 180,270 175,305 170,345
+              C 170,335 185,300 210,290 C 230,280 240,305 225,325 C 210,345 190,325 205,305 C 220,285 245,290 255,305
+              C 265,318 260,335 272,335 C 285,335 290,315 295,295 C 300,275 308,290 312,305 C 316,322 320,335 332,335
+              C 340,305 352,245 356,230 C 360,218 352,230 348,265 C 344,305 340,355 336,385 C 334,395 344,392 350,372 C 356,352 356,325 364,320
+              C 376,315 390,300 405,300 C 420,300 415,325 400,335 C 385,345 375,325 390,310 C 405,295 425,310 435,325
+              C 445,340 455,335 465,310 C 475,285 460,280 452,295 C 445,310 452,335 470,335
+              C 480,335 488,315 492,300 C 496,318 500,335 512,335 M 494,275 A 2,2 0 1,1 494,276
+              C 512,335 525,310 540,300 C 560,288 575,312 562,332 C 545,350 528,332 542,308 C 556,285 580,295 598,290
+              C 605,280 615,295 618,310 C 622,325 632,335 642,335 C 652,310 658,295 662,310 C 666,325 670,335 682,335
+              C 682,320 692,300 705,300 C 720,300 725,318 715,332 C 700,345 685,330 695,312 C 705,295 720,302 730,290
+              C 736,278 748,230 752,215 C 756,200 748,215 744,250 C 740,290 736,320 748,335
+            "
+            stroke="url(#ink-gradient)"
+            strokeWidth="4.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              strokeDasharray: 2800,
+              strokeDashoffset: (1 - progressWord2) * 2800,
+              filter: isFinalGlow ? 'drop-shadow(0 0 14px rgba(255,255,255,0.85))' : 'none',
+              transition: isAnimating ? 'none' : 'filter 1000ms ease',
+            }}
+          />
+
+          {/* FLORITURA / RÚBRICA FINAL ELEGANTE DE FIRMA */}
+          <path
+            ref={pathFlourishRef}
+            d="
+              M 748,335 C 710,375 560,390 400,385 C 240,380 90,360 40,340 C 20,330 30,310 65,315 C 110,320 200,350 350,365 C 500,380 680,360 760,330
+            "
+            stroke="url(#ink-gradient)"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              strokeDasharray: 1200,
+              strokeDashoffset: (1 - progressFlourish) * 1200,
+              filter: isFinalGlow ? 'drop-shadow(0 0 12px rgba(255,255,255,0.75))' : 'none',
+              transition: isAnimating ? 'none' : 'filter 1000ms ease',
+            }}
+          />
+        </svg>
+
+        {/* ✏️ LÁPIZ DINÁMICO QUE ESCRIBE EN TIEMPO REAL SIGUIENDO EL TRAZO */}
+        <div
+          className="absolute top-0 left-0 transition-opacity duration-300 pointer-events-none"
+          style={{
+            transform: `translate3d(${pencilPos.x}px, ${pencilPos.y}px, 0)`,
+            opacity: pencilPos.visible ? 1 : 0,
+            transition: 'opacity 250ms ease',
+            // El origen de la punta del lápiz en (0,0) de su contenedor
+            marginTop: '-48px',
+            marginLeft: '-1px',
+          }}
+        >
+          <DrawingPencilGraphic />
+        </div>
       </div>
     </div>
   );
