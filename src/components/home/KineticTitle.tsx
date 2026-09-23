@@ -135,7 +135,7 @@ export default function KineticTitle({
 
           const slotMinWidth = isFirstWord ? '0.74em' : '0.85em';
           const slotHeight = isFirstWord ? '1.1em' : '1.2em';
-          const stepHeight = isFirstWord ? 15 : 11;
+          const stepHeight = isFirstWord ? 26 : 20;
 
           return (
             <div
@@ -150,9 +150,10 @@ export default function KineticTitle({
                 const isPlaced = tipDistance < currentStep;
                 const isCurrentlyEntering = tipDistance === currentStep - 1 && isStaircase;
 
-                // Forma de V Invertida (/\): el centro está arriba y las puntas abajo
+                // Forma de V Invertida (/\) con inclinación pronunciada
                 const distFromCenter = Math.abs(charIdx - wordCenter);
-                const targetStepY = isStaircase ? distFromCenter * stepHeight : 0;
+                const peakOffset = isFirstWord ? 0.5 : 0;
+                const targetStepY = isStaircase ? (distFromCenter - peakOffset) * stepHeight : 0;
 
                 return (
                   <span
