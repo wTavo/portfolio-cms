@@ -63,9 +63,9 @@ export default function KineticTitle({
       [indices[i], indices[j]] = [indices[j], indices[i]];
     }
 
-    const initialDelay = 450; // Pausa para contemplar los moldes vacíos
-    const letterFillDuration = 1800; // Llenado progresivo y pausado por molde (1.8s)
-    const staggerDelay = 130; // Desfase rítmico pausado entre letras
+    const initialDelay = 500; // Pausa inicial para contemplar los moldes vacíos
+    const letterFillDuration = 3000; // Llenado pausado, gradual y cinematográfico por molde (3.0s)
+    const staggerDelay = 160; // Desfase rítmico pausado entre letras
 
     let completedCount = 0;
 
