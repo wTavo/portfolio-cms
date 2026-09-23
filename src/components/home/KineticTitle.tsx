@@ -1,8 +1,9 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Llenado Líquido Radial desde el Centro del Molde" (Radial Liquid Bloom).
- * En cada letra, el metal líquido/luz brota desde el centro geométrico del molde
- * y se expande radialmente en una onda fluida hacia los extremos hasta colmar la silueta.
+ * @description Título Cinético: "Llenado Líquido de Moldes Tipográficos con Límites Físicos Estrictos".
+ * Cada letra actúa como un molde hermético con límites físicos infranqueables.
+ * El líquido blanco fluye y abarca progresivamente la cavidad interior de cada molde
+ * de forma aleatoria, sin derramarse jamás fuera de los límites de la tipografía.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -20,14 +21,14 @@ export default function KineticTitle({
   const [fillProgress, setFillProgress] = useState<{ [key: string]: number }>({});
   const [filledLetters, setFilledLetters] = useState<{ [key: string]: boolean }>({});
   const [isAllSettled, setIsAllSettled] = useState(false);
-  const [isFinalGlow, setIsFinalGlow] = useState(false);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
 
-  // Lista de todas las letras con claves únicas
+  // Lista de todas las letras con identificadores únicos
   const letterItems = useMemo(() => {
-    const list: { wordIdx: number; charIdx: number; char: string; key: string }[] = [];
+    const list: { wordIdx: number; charIdx: number; char: string; key: string; globalIdx: number }[] = [];
+    let count = 0;
     words.forEach((word, wordIdx) => {
       word.split('').forEach((char, charIdx) => {
         list.push({
@@ -35,6 +36,7 @@ export default function KineticTitle({
           charIdx,
           char,
           key: `${wordIdx}-${charIdx}-${char}`,
+          globalIdx: count++,
         });
       });
     });
@@ -49,53 +51,55 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  const runRadialLiquidFillingSequence = () => {
+  const runFluidMoldFillingSequence = () => {
     setFillProgress({});
     setFilledLetters({});
     setIsAllSettled(false);
-    setIsFinalGlow(false);
 
-    // 1. Pausa inicial para apreciar los moldes vacíos esperando
-    const initialDelay = 400;
-    const letterFillDuration = 850; // Duración de la expansión radial por letra
-    const staggerDelay = 65; // Desfase rítmico entre moldes
+    // Orden aleatorio para el llenado de moldes (Fisher-Yates)
+    const indices = letterItems.map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
 
-    letterItems.forEach((item, index) => {
-      const startAt = initialDelay + index * staggerDelay;
+    const initialDelay = 350; // Pausa para contemplar los moldes vacíos
+    const letterFillDuration = 1100; // Llenado progresivo y viscoso por letra (1.1s)
+    const staggerDelay = 85; // Desfase rítmico aleatorio entre letras
+
+    let completedCount = 0;
+
+    letterItems.forEach((item, itemIdx) => {
+      const orderPosition = indices.indexOf(itemIdx);
+      const startAt = initialDelay + orderPosition * staggerDelay;
 
       setTimeout(() => {
         const startTime = performance.now();
 
-        const updateRadialBloom = (now: number) => {
+        const updateFluidBloom = (now: number) => {
           const elapsed = now - startTime;
-          const progress = Math.min(elapsed / letterFillDuration, 1);
-          // Easing elástico-fluido de expansión
-          const eased = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+          const rawProgress = Math.min(elapsed / letterFillDuration, 1);
           
-          setFillProgress((prev) => ({ ...prev, [item.key]: eased }));
+          // Easing viscoso: llenado fluido constante que desacelera al colmar los extremos
+          const easedProgress = 1 - Math.pow(1 - rawProgress, 2.2);
+          
+          setFillProgress((prev) => ({ ...prev, [item.key]: easedProgress }));
 
-          if (progress < 1) {
-            requestAnimationFrame(updateRadialBloom);
+          if (rawProgress < 1) {
+            requestAnimationFrame(updateFluidBloom);
           } else {
-            // Molde 100% colmado desde el centro hasta las esquinas
+            // Molde 100% colmado
             setFilledLetters((prev) => ({ ...prev, [item.key]: true }));
+            completedCount++;
 
-            // Si es la última letra
-            if (index === letterItems.length - 1) {
-              setTimeout(() => {
-                setIsAllSettled(true);
-                setIsFinalGlow(true);
-
-                // Apagar cálculos de animación (0% CPU en reposo)
-                setTimeout(() => {
-                  setIsFinalGlow(false);
-                }, 1200);
-              }, 300);
+            if (completedCount === letterItems.length) {
+              // Cierre definitivo de animación (0% CPU / GPU en reposo)
+              setIsAllSettled(true);
             }
           }
         };
 
-        requestAnimationFrame(updateRadialBloom);
+        requestAnimationFrame(updateFluidBloom);
       }, startAt);
     });
   };
@@ -114,11 +118,11 @@ export default function KineticTitle({
       return;
     }
 
-    const t = setTimeout(() => {
-      runRadialLiquidFillingSequence();
-    }, 350);
+    const timer = setTimeout(() => {
+      runFluidMoldFillingSequence();
+    }, 300);
 
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [letterItems, prefersReducedMotion]);
 
   if (prefersReducedMotion) {
@@ -135,11 +139,11 @@ export default function KineticTitle({
   }
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[540px] md:min-h-[620px] py-12 sm:py-16 select-none overflow-visible">
-      {/* Resplandor ambiental de estudio */}
+    <div className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[540px] md:min-h-[620px] py-12 sm:py-16 select-none overflow-visible cursor-default">
+      {/* Resplandor ambiental de estudio ultra suave */}
       <div
-        className={`absolute inset-0 w-full h-full bg-radial from-white/14 via-slate-500/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-out ${
-          isFinalGlow ? 'opacity-100 scale-105' : isAllSettled ? 'opacity-35 scale-100' : 'opacity-15 scale-95'
+        className={`absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none transition-opacity duration-1000 ease-out ${
+          isAllSettled ? 'opacity-40' : 'opacity-15'
         }`}
         aria-hidden="true"
       />
@@ -168,73 +172,56 @@ export default function KineticTitle({
                 const isComplete = filledLetters[key] || currentFill >= 1;
                 const isActivelyFilling = currentFill > 0 && currentFill < 1;
 
-                // Radio de expansión radial desde el centro (0% a 160% para cubrir todas las esquinas)
-                const radialRadiusPercent = currentFill * 160;
+                // Cálculo de expansión del fluido estrictamente dentro de la cavidad del molde
+                const fluidSpreadPercent = currentFill * 150;
+                const coreSolidPercent = Math.max(0, fluidSpreadPercent - 20);
+
+                const fluidBackground = isComplete
+                  ? '#ffffff'
+                  : currentFill > 0
+                  ? `radial-gradient(ellipse 130% 130% at 50% 50%, #ffffff 0%, #ffffff ${coreSolidPercent}%, rgba(255, 255, 255, 0.95) ${fluidSpreadPercent * 0.92}%, rgba(255, 255, 255, 0) ${fluidSpreadPercent}%)`
+                  : 'transparent';
 
                 return (
                   <div
                     key={`slot-${key}`}
-                    className="relative inline-flex items-center justify-center overflow-visible"
+                    className="relative inline-flex items-center justify-center"
                     style={{ minWidth: slotMinWidth }}
                   >
-                    {/* 🔲 CAPA 1: EL MOLDE HUECO BISELADO (SILUETA BASE) */}
+                    {/* 🔲 CAPA 1: PAREDES Y SILUETA DEL MOLDE (LÍMITES FÍSICOS ESTRICTOS) */}
                     <span
-                      className="select-none pointer-events-none uppercase leading-[1.0] transition-opacity duration-700"
+                      className="select-none pointer-events-none uppercase leading-[1.0] transition-colors duration-500"
                       style={{
                         WebkitTextStroke: isComplete
-                          ? '1.2px rgba(255, 255, 255, 0.4)'
+                          ? '1px rgba(255, 255, 255, 0.35)'
                           : isActivelyFilling
-                          ? '1.5px rgba(255, 255, 255, 0.8)'
-                          : '1.2px rgba(255, 255, 255, 0.24)',
-                        color: 'rgba(255, 255, 255, 0.03)',
+                          ? '1.2px rgba(255, 255, 255, 0.7)'
+                          : '1.2px rgba(255, 255, 255, 0.22)',
+                        color: 'rgba(255, 255, 255, 0.02)',
                         textShadow: isActivelyFilling
-                          ? '0 0 16px rgba(255, 255, 255, 0.35), inset 0 2px 4px rgba(0,0,0,0.9)'
-                          : '0 0 8px rgba(255, 255, 255, 0.05), inset 0 2px 4px rgba(0,0,0,0.9)',
+                          ? '0 0 10px rgba(255, 255, 255, 0.2)'
+                          : 'none',
                       }}
                       aria-hidden="true"
                     >
                       {char}
                     </span>
 
-                    {/* 🌊 CAPA 2: LÍQUIDO LUMINOSO EXPANDIÉNDOSE RADIALMENTE DESDE EL CENTRO */}
-                    <div
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-visible"
-                      style={{
-                        clipPath: isComplete ? 'none' : `circle(${radialRadiusPercent}% at 50% 50%)`,
-                        willChange: isActivelyFilling ? 'clip-path' : 'auto',
-                      }}
-                    >
+                    {/* 🌊 CAPA 2: LÍQUIDO BLANCO FLUYENDO 100% CONFINADO DENTRO DE LA CAVIDAD DEL MOLDE */}
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
                       <span
-                        className={`inline-block text-white leading-[1.0] uppercase transition-all duration-700 ${
-                          isAllSettled
-                            ? isFinalGlow
-                              ? 'drop-shadow-[0_0_35px_rgba(255,255,255,0.95)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.6)]'
-                              : 'drop-shadow-[0_4px_20px_rgba(255,255,255,0.35)]'
-                            : isComplete
-                            ? 'drop-shadow-[0_0_30px_rgba(255,255,255,1)] text-white'
-                            : 'drop-shadow-[0_0_18px_rgba(255,255,255,0.9)]'
-                        }`}
+                        className="inline-block uppercase leading-[1.0] transition-none"
                         style={{
-                          background: 'radial-gradient(circle at center, #ffffff 0%, #f1f5f9 60%, #cbd5e1 100%)',
+                          background: fluidBackground,
                           WebkitBackgroundClip: 'text',
+                          backgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
+                          color: 'transparent',
                         }}
                       >
                         {char}
                       </span>
                     </div>
-
-                    {/* 💫 CAPA 3: ONDA DE CHOQUE / FRENTE DE ONDA RADIAL BRILLANTE DESDE EL CENTRO */}
-                    {isActivelyFilling && (
-                      <div
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/90 blur-[0.8px] shadow-[0_0_16px_4px_rgba(255,255,255,0.95)] pointer-events-none transition-none"
-                        style={{
-                          width: `${currentFill * 200}%`,
-                          height: `${currentFill * 200}%`,
-                          opacity: Math.max(0, 1 - currentFill * 0.3),
-                        }}
-                      />
-                    )}
                   </div>
                 );
               })}
