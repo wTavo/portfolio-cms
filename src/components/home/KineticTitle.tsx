@@ -108,16 +108,15 @@ export default function KineticTitle({
     );
   }
 
-  // Constantes de coreografía estricta:
-  // 1. Fase de Dibujo: cada letra se traza en orden continuo (globalIndex 0 .. N-1)
-  const initialDelay = 0.15;
-  const strokeDuration = 0.48;
-  const strokeStagger = 0.075;
-  // Momento exacto en que la ÚLTIMA letra termina de dibujarse
-  const totalStrokeEndTime = initialDelay + (totalLetterCount - 1) * strokeStagger + strokeDuration;
-  // 2. Pausa dramática y Momento de Inicio de Llenado (DESPUÉS de que todas las letras están dibujadas)
-  const fillStartDelay = totalStrokeEndTime + 0.30;
-  const fillStagger = 0.045;
+  // Constantes de coreografía simultánea:
+  // 1. Fase de Dibujo: TODAS las letras se empiezan a trazar al mismo tiempo a un ritmo pausado y visible
+  const initialDelay = 0.25;
+  const strokeDuration = 1.8; // Ritmo pausado y elegante para apreciar el trazado de cada silueta
+  const totalStrokeEndTime = initialDelay + strokeDuration;
+
+  // 2. Pausa sutil y Momento de Inicio de Llenado con color (DESPUÉS de que todos los moldes están dibujados)
+  const fillStartDelay = totalStrokeEndTime + 0.35;
+  const fillDuration = 0.85;
 
   return (
     <div
@@ -155,10 +154,10 @@ export default function KineticTitle({
               aria-label={wordLayout.word}
             >
               {wordLayout.letters.map((letter) => {
-                // Cada letra se dibuja estrictamente en su turno según su globalIndex
-                const strokeDelay = initialDelay + letter.globalIndex * strokeStagger;
-                // El llenado se produce ÚNICAMENTE después de que TODAS las letras completaron su trazo
-                const fillDelay = fillStartDelay + letter.globalIndex * fillStagger;
+                // Todas las letras inician el trazado al mismo tiempo
+                const strokeDelay = initialDelay;
+                // El llenado se produce uniformemente una vez completados todos los moldes
+                const fillDelay = fillStartDelay;
 
                 return (
                   <g
@@ -225,9 +224,9 @@ export default function KineticTitle({
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{
-                        duration: 0.55,
+                        duration: fillDuration,
                         delay: fillDelay,
-                        ease: [0.2, 0, 0, 1],
+                        ease: [0.16, 1, 0.3, 1],
                       }}
                       fill="#ffffff"
                       stroke="#ffffff"
