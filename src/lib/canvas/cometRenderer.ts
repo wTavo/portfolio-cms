@@ -238,17 +238,17 @@ export function renderAstronomicalComet(
   // disolver todo contorno en una niebla celestial continua y suave.
   // =========================================================================
 
-  // --- CAPA A: Velo exterior estilizado y esbelto (blur 15px) ---
-  ctx.filter = 'blur(15px)';
+  // --- CAPA A: Velo exterior equilibrado y difuminado (blur 20px) ---
+  ctx.filter = 'blur(20px)';
   ctx.beginPath();
 
   // Lado izquierdo del velo
   for (let i = 0; i < spineLen; i++) {
     const pt = spine[i];
     const t = i / (spineLen - 1);
-    // Expansión suave y ahusamiento al final (silueta aerodinámica esbelta)
-    const profile = (1 - t * 0.88) * (Math.pow(t, 0.45) * 1.8 + 0.1);
-    const width = 5 + profile * 22;
+    // Expansión suave y ahusamiento armónico al final
+    const profile = (1 - t * 0.86) * (Math.pow(t, 0.45) * 1.9 + 0.12);
+    const width = 8 + profile * 42;
     const normal = pt.angle + Math.PI / 2;
     const px = pt.x + Math.cos(normal) * width;
     const py = pt.y + Math.sin(normal) * width;
@@ -261,8 +261,8 @@ export function renderAstronomicalComet(
   for (let i = spineLen - 1; i >= 0; i--) {
     const pt = spine[i];
     const t = i / (spineLen - 1);
-    const profile = (1 - t * 0.88) * (Math.pow(t, 0.45) * 1.8 + 0.1);
-    const width = 5 + profile * 22;
+    const profile = (1 - t * 0.86) * (Math.pow(t, 0.45) * 1.9 + 0.12);
+    const width = 8 + profile * 42;
     const normal = pt.angle - Math.PI / 2;
     const px = pt.x + Math.cos(normal) * width;
     const py = pt.y + Math.sin(normal) * width;
@@ -272,23 +272,23 @@ export function renderAstronomicalComet(
   ctx.closePath();
 
   const outerGrad = ctx.createLinearGradient(head.x, head.y, tailEnd.x, tailEnd.y);
-  outerGrad.addColorStop(0, 'rgba(255, 255, 255, 0.52)');
-  outerGrad.addColorStop(0.15, 'rgba(224, 242, 254, 0.40)');
-  outerGrad.addColorStop(0.45, 'rgba(186, 230, 253, 0.22)');
+  outerGrad.addColorStop(0, 'rgba(255, 255, 255, 0.50)');
+  outerGrad.addColorStop(0.15, 'rgba(224, 242, 254, 0.38)');
+  outerGrad.addColorStop(0.45, 'rgba(186, 230, 253, 0.20)');
   outerGrad.addColorStop(0.78, 'rgba(147, 197, 253, 0.05)');
   outerGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
   ctx.fillStyle = outerGrad;
   ctx.fill();
 
-  // --- CAPA B: Cuerpo medio estilizado difuminado (blur 8px) ---
-  ctx.filter = 'blur(8px)';
+  // --- CAPA B: Cuerpo medio difuminado armónico (blur 11px) ---
+  ctx.filter = 'blur(11px)';
   const midLen = Math.floor(spineLen * 0.72);
   if (midLen > 2) {
     ctx.beginPath();
     for (let i = 0; i < midLen; i++) {
       const pt = spine[i];
       const t = i / (midLen - 1);
-      const width = 3 + Math.sin(t * Math.PI) * 11;
+      const width = 5 + Math.sin(t * Math.PI) * 20;
       const normal = pt.angle + Math.PI / 2;
       const px = pt.x + Math.cos(normal) * width;
       const py = pt.y + Math.sin(normal) * width;
@@ -299,7 +299,7 @@ export function renderAstronomicalComet(
     for (let i = midLen - 1; i >= 0; i--) {
       const pt = spine[i];
       const t = i / (midLen - 1);
-      const width = 3 + Math.sin(t * Math.PI) * 11;
+      const width = 5 + Math.sin(t * Math.PI) * 20;
       const normal = pt.angle - Math.PI / 2;
       const px = pt.x + Math.cos(normal) * width;
       const py = pt.y + Math.sin(normal) * width;
@@ -309,16 +309,16 @@ export function renderAstronomicalComet(
     ctx.closePath();
 
     const midGrad = ctx.createLinearGradient(head.x, head.y, spine[midLen - 1].x, spine[midLen - 1].y);
-    midGrad.addColorStop(0, 'rgba(255, 255, 255, 0.70)');
-    midGrad.addColorStop(0.25, 'rgba(224, 242, 254, 0.50)');
-    midGrad.addColorStop(0.65, 'rgba(186, 230, 253, 0.18)');
+    midGrad.addColorStop(0, 'rgba(255, 255, 255, 0.68)');
+    midGrad.addColorStop(0.25, 'rgba(224, 242, 254, 0.48)');
+    midGrad.addColorStop(0.65, 'rgba(186, 230, 253, 0.17)');
     midGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
     ctx.fillStyle = midGrad;
     ctx.fill();
   }
 
-  // --- CAPA C: Núcleo de gas incandescente estilizado (blur 4px) ---
-  ctx.filter = 'blur(4px)';
+  // --- CAPA C: Núcleo de gas incandescente intermedio (blur 6px) ---
+  ctx.filter = 'blur(6px)';
   const jetLen = Math.floor(spineLen * 0.42);
   if (jetLen > 2) {
     ctx.beginPath();
@@ -329,13 +329,13 @@ export function renderAstronomicalComet(
     }
 
     const jetGrad = ctx.createLinearGradient(head.x, head.y, spine[jetLen - 1].x, spine[jetLen - 1].y);
-    jetGrad.addColorStop(0, 'rgba(255, 255, 255, 0.90)');
-    jetGrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.60)');
+    jetGrad.addColorStop(0, 'rgba(255, 255, 255, 0.88)');
+    jetGrad.addColorStop(0.35, 'rgba(224, 242, 254, 0.58)');
     jetGrad.addColorStop(1, 'rgba(186, 230, 253, 0)');
 
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 10;
     ctx.strokeStyle = jetGrad;
     ctx.stroke();
   }
@@ -358,7 +358,7 @@ export function renderAstronomicalComet(
   // COMA PARABÓLICA (ATMÓSFERA CELESTIAL DE GAS)
   const hx = state.headX;
   const hy = state.headY;
-  const comaRadius = 35;
+  const comaRadius = 45;
 
   const comaGrad = ctx.createRadialGradient(hx, hy, 0, hx, hy, comaRadius);
   comaGrad.addColorStop(0, 'rgba(255, 255, 255, 1)');
