@@ -110,15 +110,15 @@ export default function KineticTitle({
     );
   }
 
-  // Constantes de coreografía simultánea a velocidad uniforme (linear):
-  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente con velocidad constante y lenta (sin acelerones ni frenados)
+  // Constantes de coreografía simultánea:
+  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente con trazo nítido y visible (no tan apagado) pero sin destellos
   const initialDelay = 0.25;
   const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
-  const totalStrokeEndTime = initialDelay + strokeDuration;
+  const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s
 
-  // 2. Pausa sutil y Momento de Inicio de Llenado con color (DESPUÉS de que todos los moldes están dibujados al mismo tiempo)
-  const fillStartDelay = totalStrokeEndTime + 0.35;
-  const fillDuration = 0.9;
+  // 2. Tiempo de contemplación de siluetas encendidas y posterior llenado gradual (NO instantáneo)
+  const fillStartDelay = totalStrokeEndTime + 0.85; // Pausa apreciable con las siluetas encendidas brillando solas
+  const fillDuration = 1.6; // Llenado lento, suave y no instantáneo del color blanco
 
   return (
     <div
@@ -166,7 +166,7 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA BASE DEL MOLDE (SE TRAZA APAGADA Y SE ENCIENDE AL COMPLETARSE EL DIBUJO) */}
+                    {/* 1. SILUETA DEL MOLDE (NÍTIDA Y VISIBLE DURANTE EL DIBUJO, SE ENCIENDE AL COMPLETARSE) */}
                     {letter.subpaths.map((subD, subIdx) => (
                       <motion.path
                         key={`mold-stroke-${subIdx}`}
@@ -174,16 +174,16 @@ export default function KineticTitle({
                         initial={{
                           pathLength: 0,
                           opacity: 0,
-                          stroke: 'rgba(255, 255, 255, 0.22)',
+                          stroke: 'rgba(255, 255, 255, 0.52)', // Visible y nítido pero no deslumbrante
                           filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
                         }}
                         animate={{
                           pathLength: 1,
                           opacity: 1,
                           stroke: [
-                            'rgba(255, 255, 255, 0.22)', // apagado mientras se dibuja
-                            'rgba(255, 255, 255, 0.22)', // sigue apagado hasta que se completa
-                            '#ffffff',                   // ¡SE ENCIENDE EN EL MOMENTO DE TERMINAR!
+                            'rgba(255, 255, 255, 0.52)', // visible y claro durante el dibujo
+                            'rgba(255, 255, 255, 0.52)', // permanece nítido hasta terminar el trazado
+                            '#ffffff',                   // ¡SE ENCIENDE EN EL MOMENTO DE CERRARSE!
                             'rgba(255, 255, 255, 0.95)', // permanece encendido
                           ],
                           filter: [
@@ -223,7 +223,7 @@ export default function KineticTitle({
                       />
                     ))}
 
-                    {/* 2. RELLENO DE COLOR POSTERIOR (SOLO COMIENZA CUANDO TODAS LAS SILUETAS SE ENCIENDEN) */}
+                    {/* 2. RELLENO DE COLOR POSTERIOR (NO INSTANTÁNEO: PAUSA DE APRECIACIÓN + LLENADO GRADUAL) */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
