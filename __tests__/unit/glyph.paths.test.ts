@@ -17,6 +17,11 @@ describe('glyphPaths - Diccionario Tipográfico Vectorial', () => {
       if (ch !== ' ') {
         expect(data.d.length).toBeGreaterThan(10);
         expect(data.d.startsWith('M')).toBe(true);
+        expect(data.subpaths.length).toBeGreaterThan(0);
+        data.subpaths.forEach((sub) => {
+          expect(sub.startsWith('M')).toBe(true);
+          expect(sub.endsWith('Z')).toBe(true);
+        });
       }
     });
   });

@@ -18,6 +18,7 @@ interface LetterLayout {
   char: string;
   x: number;
   d: string;
+  subpaths: string[];
   advanceWidth: number;
   globalIndex: number;
   wordIndex: number;
@@ -59,12 +60,13 @@ export default function KineticTitle({
 
       for (let charIndex = 0; charIndex < word.length; charIndex++) {
         const char = word[charIndex];
-        const glyph = GLYPH_PATHS[char] || { d: '', advanceWidth: 400 };
+        const glyph = GLYPH_PATHS[char] || { d: '', subpaths: [], advanceWidth: 400 };
 
         letters.push({
           char,
           x: currentX,
           d: glyph.d,
+          subpaths: glyph.subpaths && glyph.subpaths.length > 0 ? glyph.subpaths : (glyph.d ? [glyph.d] : []),
           advanceWidth: glyph.advanceWidth,
           globalIndex: globalCounter++,
           wordIndex,
@@ -164,62 +166,69 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA BASE DEL MOLDE (TRAZADO UNIFORME LINEAL CONSTANTE) */}
-                    <motion.path
-                      d={letter.d}
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{ pathLength: 1, opacity: 1 }}
-                      transition={{
-                        pathLength: {
-                          duration: strokeDuration,
-                          delay: strokeDelay,
-                          ease: 'linear',
-                        },
-                        opacity: {
-                          duration: 0.05,
-                          delay: strokeDelay,
-                        },
-                      }}
-                      stroke="rgba(255, 255, 255, 0.35)"
-                      strokeWidth={3.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="transparent"
-                    />
+                    {/* 1. SILUETA BASE DEL MOLDE (CADA CONTORNO SE TRAZA EN PARALELO DE 0 A 100% UNIFORME) */}
+                    {letter.subpaths.map((subD, subIdx) => (
+                      <motion.path
+                        key={`mold-stroke-${subIdx}`}
+                        d={subD}
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{ pathLength: 1, opacity: 1 }}
+                        transition={{
+                          pathLength: {
+                            duration: strokeDuration,
+                            delay: strokeDelay,
+                            ease: 'linear',
+                          },
+                          opacity: {
+                            duration: 0.05,
+                            delay: strokeDelay,
+                          },
+                        }}
+                        stroke="rgba(255, 255, 255, 0.35)"
+                        strokeWidth={3.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="transparent"
+                      />
+                    ))}
 
-                    {/* 2. TRAZO LUMINOSO INCANDESCENTE DURANTE EL DIBUJO (DESTELLO LÁSER ACTIVO LINEAL) */}
-                    <motion.path
-                      d={letter.d}
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={{
-                        pathLength: 1,
-                        opacity: [0, 1, 1, 0],
-                      }}
-                      transition={{
-                        pathLength: {
-                          duration: strokeDuration,
-                          delay: strokeDelay,
-                          ease: 'linear',
-                        },
-                        opacity: {
-                          duration: strokeDuration,
-                          delay: strokeDelay,
-                          times: [0, 0.04, 0.96, 1],
-                        },
-                      }}
-                      stroke="#ffffff"
-                      strokeWidth={5.5}
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="transparent"
-                      style={{
-                        filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.6))',
-                      }}
-                    />
+                    {/* 2. TRAZO LUMINOSO INCANDESCENTE DURANTE EL DIBUJO (DESTELLO LÁSER ACTIVO LINEAL EN PARALELO) */}
+                    {letter.subpaths.map((subD, subIdx) => (
+                      <motion.path
+                        key={`laser-stroke-${subIdx}`}
+                        d={subD}
+                        initial={{ pathLength: 0, opacity: 0 }}
+                        animate={{
+                          pathLength: 1,
+                          opacity: [0, 1, 1, 0],
+                        }}
+                        transition={{
+                          pathLength: {
+                            duration: strokeDuration,
+                            delay: strokeDelay,
+                            ease: 'linear',
+                          },
+                          opacity: {
+                            duration: strokeDuration,
+                            delay: strokeDelay,
+                            times: [0, 0.04, 0.96, 1],
+                          },
+                        }}
+                        stroke="#ffffff"
+                        strokeWidth={5.5}
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="transparent"
+                        style={{
+                          filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.6))',
+                        }}
+                      />
+                    ))}
 
                     {/* 3. RELLENO DE COLOR POSTERIOR (SOLO COMIENZA CUANDO TODAS LAS LETRAS ESTÁN DIBUJADAS) */}
                     <motion.path
                       d={letter.d}
+                      fillRule="nonzero"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{
