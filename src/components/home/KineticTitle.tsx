@@ -188,8 +188,8 @@ export default function KineticTitle({
                 const isLifted = globalIdx < liftedCount;
                 const isCurrentlyFloating = globalIdx === liftedCount - 1 && isStaircase;
 
-                // 1. Posición en Escalera
-                const stepHeight = 12;
+                // 1. Posición en Escalera con Escalones Marcados
+                const stepHeight = 16;
                 const targetStepY = isStaircase ? (wordCenter - charIdx) * stepHeight : 0;
 
                 // 2. Parámetros de la Pila en la Base Inferior
@@ -218,6 +218,24 @@ export default function KineticTitle({
                       willChange: 'transform',
                     }}
                   >
+                    {/* HUELLA HORIZONTAL DEL ESCALÓN (Base/Peldaño de la Escalera) */}
+                    <div
+                      className={`absolute -bottom-1 sm:-bottom-1.5 left-0 right-0 h-[2px] sm:h-[3px] bg-gradient-to-r from-cyan-400/20 via-cyan-400/70 to-cyan-400/20 rounded-full shadow-[0_0_8px_rgba(56,189,248,0.7)] pointer-events-none transition-all duration-700 ${
+                        isStaircase ? 'opacity-85 scale-100' : 'opacity-0 scale-75'
+                      }`}
+                      aria-hidden="true"
+                    />
+
+                    {/* CONTRAHUELLA VERTICAL DEL ESCALÓN (Unión entre peldaños) */}
+                    {charIdx < wordLen - 1 && (
+                      <div
+                        className={`absolute -right-1.5 sm:-right-2.5 md:-right-3.5 -bottom-1 sm:-bottom-1.5 w-[2px] h-3.5 sm:h-4.5 bg-gradient-to-b from-cyan-400/70 to-cyan-400/10 shadow-[0_0_6px_rgba(56,189,248,0.4)] pointer-events-none transition-all duration-700 ${
+                          isStaircase ? 'opacity-70 scale-100' : 'opacity-0 scale-75'
+                        }`}
+                        aria-hidden="true"
+                      />
+                    )}
+
                     {/* MOLDE: Silueta tallada fija en el centro de esta misma casilla */}
                     <span
                       className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none transition-opacity duration-400 ${
