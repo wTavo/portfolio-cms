@@ -189,7 +189,7 @@ export default function KineticTitle({
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [phase, setPhase] = useState<AnimationPhase>('briefcase_solo');
-  const [fannedStep, setFannedStep] = useState(0);
+  const [ejectedStep, setEjectedStep] = useState(0);
   const [isFinalGlow, setIsFinalGlow] = useState(false);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
@@ -209,50 +209,47 @@ export default function KineticTitle({
 
   const runAnimationSequence = () => {
     setPhase('briefcase_solo');
-    setFannedStep(0);
+    setEjectedStep(0);
     setIsFinalGlow(false);
 
-    // 1. El Portafolio aparece solitario en el centro con pulso de luz
+    // 1. El Portafolio aparece solitario en el centro
     const t1 = setTimeout(() => {
-      // 2. El portafolio se abre
+      // 2. El portafolio se abre en 3D
       setPhase('briefcase_opening');
 
       const t2 = setTimeout(() => {
-        // 3. Despliegue en abanico (Fan-Out): el título completo brota del portafolio
-        setPhase('fanning_out');
+        // 3. Expulsión de letras: brotan desde el interior del portafolio y se expanden en línea horizontal
+        setPhase('ejecting_letters');
 
         let step = 0;
         const interval = setInterval(() => {
           step++;
-          setFannedStep(step);
+          setEjectedStep(step);
 
-          if (step >= maxSteps) {
+          if (step >= maxSteps + 1) {
             clearInterval(interval);
 
-            // 4. Pausa para contemplar la V invertida desplegada
+            // 4. Las letras completan su acomodo horizontal y el título queda asentado
             const t3 = setTimeout(() => {
-              // 5. La estructura se posa y nivela suavemente sobre la línea horizontal
-              setPhase('leveling');
+              setPhase('settled');
+              setIsFinalGlow(true);
 
-              const t4 = setTimeout(() => {
-                setPhase('settled');
-                setIsFinalGlow(true);
-
-                // 6. Ciclo continuo de resplandor suave
-                setTimeout(() => {
-                  setIsFinalGlow(false);
-                  const glowInt = setInterval(() => {
-                    setIsFinalGlow((prev) => !prev);
-                  }, 1800);
-                  return () => clearInterval(glowInt);
-                }, 1100);
-              }, 900);
+              // 5. Ciclo continuo de resplandor suave
+              setTimeout(() => {
+                setIsFinalGlow(false);
+                const glowInt = setInterval(() => {
+                  setIsFinalGlow((prev) => !prev);
+                }, 1800);
+                return () => clearInterval(glowInt);
+              }, 1100);
             }, 600);
+
+            return () => clearTimeout(t3);
           }
-        }, 110);
+        }, 90);
 
         return () => clearInterval(interval);
-      }, 400);
+      }, 500);
 
       return () => clearTimeout(t2);
     }, 700);
@@ -263,7 +260,7 @@ export default function KineticTitle({
   useEffect(() => {
     if (prefersReducedMotion) {
       setPhase('settled');
-      setFannedStep(maxSteps + 1);
+      setEjectedStep(maxSteps + 2);
       return;
     }
 
@@ -271,8 +268,7 @@ export default function KineticTitle({
     return cleanup;
   }, [maxSteps, prefersReducedMotion]);
 
-  const isStaircase = phase === 'briefcase_opening' || phase === 'fanning_out';
-  const isSettled = phase === 'leveling' || phase === 'settled';
+  const isSettled = phase === 'settled';
 
   if (prefersReducedMotion) {
     return (
@@ -297,7 +293,7 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      {/* PORTAFOLIO CENTRAL INDEPENDIENTE QUE SE ABRE Y EXPULSA EL TÍTULO */}
+      {/* PORTAFOLIO CENTRAL QUE SE ABRE Y EXPULSA LAS LETRAS */}
       <div
         onClick={() => runAnimationSequence()}
         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center justify-center cursor-pointer transition-all duration-700 ease-out ${
@@ -305,7 +301,9 @@ export default function KineticTitle({
             ? 'opacity-100 scale-110 drop-shadow-[0_16px_48px_rgba(0,0,0,0.95)]'
             : phase === 'briefcase_opening'
             ? 'opacity-100 scale-105 drop-shadow-[0_12px_36px_rgba(0,0,0,0.85)]'
-            : 'opacity-0 scale-70 pointer-events-none'
+            : phase === 'ejecting_letters'
+            ? 'opacity-40 scale-90 translate-y-3 pointer-events-none'
+            : 'opacity-0 scale-75 translate-y-6 pointer-events-none'
         }`}
         title="Haz clic para volver a reproducir"
         aria-hidden={phase === 'settled'}
@@ -313,7 +311,7 @@ export default function KineticTitle({
         <PortfolioBriefcaseGraphic isOpen={phase !== 'briefcase_solo'} />
       </div>
 
-      {/* Título Principal Completo (Todas las Letras Normales, Incluyendo la 'A') */}
+      {/* Título Principal Completo (Líneas Horizontales Directas, Sin Inclinación /\) */}
       <h1
         onClick={() => {
           if (phase === 'settled') runAnimationSequence();
@@ -333,7 +331,6 @@ export default function KineticTitle({
 
           const slotMinWidth = isFirstWord ? '0.74em' : '0.85em';
           const slotHeight = isFirstWord ? '1.1em' : '1.2em';
-          const stepHeight = isFirstWord ? 26 : 20;
 
           return (
             <div
@@ -343,21 +340,17 @@ export default function KineticTitle({
               }`}
             >
               {word.split('').map((char, charIdx) => {
-                // Distancia desde el vértice central
+                // Distancia desde el centro para expulsión en cascada desde el interior del maletín
                 const distFromCenter = Math.abs(charIdx - wordCenter);
-                const fanOutStep = Math.floor(distFromCenter);
+                const letterStep = Math.floor(distFromCenter);
 
                 // Estado de visibilidad y despliegue
-                const isPlaced = isSettled || (phase === 'fanning_out' && fanOutStep < fannedStep);
-                const isCurrentlyEmerging = phase === 'fanning_out' && fanOutStep === fannedStep - 1;
+                const isPlaced = isSettled || (phase === 'ejecting_letters' && letterStep < ejectedStep);
+                const isCurrentlyEmerging = phase === 'ejecting_letters' && letterStep === ejectedStep - 1;
 
-                // Desplazamiento en V invertida (/\) o nivelado en 0
-                const peakOffset = isFirstWord ? 0.5 : 0;
-                const targetStepY = isStaircase ? (distFromCenter - peakOffset) * stepHeight : 0;
-
-                // Vector de nacimiento desde el centro del portafolio
-                const relativeSpawnX = `calc(${(- (charIdx - wordCenter) * 0.88).toFixed(2)}em)`;
-                const relativeSpawnY = `calc(-${targetStepY}px)`;
+                // Vector de nacimiento: nace exactamente en la boca del maletín central
+                const relativeSpawnX = `calc(${(- (charIdx - wordCenter) * 0.9).toFixed(2)}em)`;
+                const relativeSpawnY = isFirstWord ? '42px' : '-24px';
 
                 return (
                   <span
@@ -366,24 +359,19 @@ export default function KineticTitle({
                     style={{
                       minWidth: slotMinWidth,
                       height: slotHeight,
-                      transform: `translate3d(0, ${targetStepY.toFixed(1)}px, 0)`,
-                      transition: isStaircase
-                        ? 'none'
-                        : 'transform 850ms cubic-bezier(0.16, 1, 0.3, 1)',
-                      willChange: 'transform',
                     }}
                   >
-                    {/* LETRA NORMAL: Nace desde el portafolio y se despliega en abanico */}
+                    {/* LETRA: Brota desde el maletín y vuela directamente a su posición horizontal */}
                     <span
                       className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white ${
-                        isPlaced ? 'opacity-100 scale-100' : 'opacity-0 scale-40'
+                        isPlaced ? 'opacity-100' : 'opacity-0'
                       }`}
                       style={{
                         transform: isPlaced
                           ? 'translate3d(0, 0, 0) scale(1)'
-                          : `translate3d(${relativeSpawnX}, ${relativeSpawnY}, 0) scale(0.15)`,
+                          : `translate3d(${relativeSpawnX}, ${relativeSpawnY}, 0) scale(0.12)`,
                         transition: isPlaced
-                          ? 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease'
+                          ? 'transform 700ms cubic-bezier(0.16, 1, 0.3, 1), opacity 350ms ease-out'
                           : 'none',
                         willChange: 'transform, opacity',
                       }}
