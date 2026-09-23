@@ -108,15 +108,15 @@ export default function KineticTitle({
     );
   }
 
-  // Constantes de coreografía simultánea:
-  // 1. Fase de Dibujo: TODAS las letras se empiezan a trazar al mismo tiempo a un ritmo pausado y visible
+  // Constantes de coreografía simultánea a velocidad uniforme (linear):
+  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente con velocidad constante y lenta (sin acelerones ni frenados)
   const initialDelay = 0.25;
-  const strokeDuration = 1.8; // Ritmo pausado y elegante para apreciar el trazado de cada silueta
+  const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
   const totalStrokeEndTime = initialDelay + strokeDuration;
 
-  // 2. Pausa sutil y Momento de Inicio de Llenado con color (DESPUÉS de que todos los moldes están dibujados)
+  // 2. Pausa sutil y Momento de Inicio de Llenado con color (DESPUÉS de que todos los moldes están dibujados al mismo tiempo)
   const fillStartDelay = totalStrokeEndTime + 0.35;
-  const fillDuration = 0.85;
+  const fillDuration = 0.9;
 
   return (
     <div
@@ -154,9 +154,8 @@ export default function KineticTitle({
               aria-label={wordLayout.word}
             >
               {wordLayout.letters.map((letter) => {
-                // Todas las letras inician el trazado al mismo tiempo
+                // Todas las letras inician y terminan el trazado exactamente al mismo tiempo
                 const strokeDelay = initialDelay;
-                // El llenado se produce uniformemente una vez completados todos los moldes
                 const fillDelay = fillStartDelay;
 
                 return (
@@ -165,7 +164,7 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA BASE DEL MOLDE (SE TRAZA Y QUEDA EN BAJORRELIEVE) */}
+                    {/* 1. SILUETA BASE DEL MOLDE (TRAZADO UNIFORME LINEAL CONSTANTE) */}
                     <motion.path
                       d={letter.d}
                       initial={{ pathLength: 0, opacity: 0 }}
@@ -174,7 +173,7 @@ export default function KineticTitle({
                         pathLength: {
                           duration: strokeDuration,
                           delay: strokeDelay,
-                          ease: [0.2, 0, 0, 1],
+                          ease: 'linear',
                         },
                         opacity: {
                           duration: 0.05,
@@ -188,24 +187,24 @@ export default function KineticTitle({
                       fill="transparent"
                     />
 
-                    {/* 2. TRAZO LUMINOSO INCANDESCENTE DURANTE EL DIBUJO (DESTELLO LÁSER ACTIVO) */}
+                    {/* 2. TRAZO LUMINOSO INCANDESCENTE DURANTE EL DIBUJO (DESTELLO LÁSER ACTIVO LINEAL) */}
                     <motion.path
                       d={letter.d}
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={{
-                        pathLength: [0, 1],
-                        opacity: [0, 1, 0],
+                        pathLength: 1,
+                        opacity: [0, 1, 1, 0],
                       }}
                       transition={{
                         pathLength: {
                           duration: strokeDuration,
                           delay: strokeDelay,
-                          ease: [0.2, 0, 0, 1],
+                          ease: 'linear',
                         },
                         opacity: {
                           duration: strokeDuration,
                           delay: strokeDelay,
-                          times: [0, 0.2, 1],
+                          times: [0, 0.04, 0.96, 1],
                         },
                       }}
                       stroke="#ffffff"
