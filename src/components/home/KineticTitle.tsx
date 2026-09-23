@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético interactivo: moldes en forma de escalera en el centro con letras acostadas en una base inferior que se levantan y levitan una por una hacia su molde antes de nivelarse horizontalmente.
+ * @description Título cinético interactivo: letras amontonadas aleatoriamente en la base inferior. La letra superior de la pila se levanta y levita suavemente hacia su molde correspondiente en la escalera central antes de nivelarse horizontalmente.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -10,11 +10,37 @@ interface KineticTitleProps {
   className?: string;
 }
 
+// Configuración de dispersión física para la pila aleatoria en la base
+const PILE_OFFSETS = [
+  { jX: -55, jY: 8, rotX: 74, rotZ: -32 },
+  { jX: 40, jY: -6, rotX: 70, rotZ: 22 },
+  { jX: -20, jY: 14, rotX: 76, rotZ: -12 },
+  { jX: 65, jY: -4, rotX: 72, rotZ: 36 },
+  { jX: -75, jY: 6, rotX: 75, rotZ: -40 },
+  { jX: 15, jY: 18, rotX: 68, rotZ: 16 },
+  { jX: -40, jY: -10, rotX: 73, rotZ: -18 },
+  { jX: 55, jY: 12, rotX: 71, rotZ: 28 },
+  { jX: -85, jY: -2, rotX: 77, rotZ: -45 },
+  { jX: 30, jY: 16, rotX: 69, rotZ: 18 },
+  // Fila 2 (PROFESIONAL)
+  { jX: -60, jY: 4, rotX: 73, rotZ: -26 },
+  { jX: 45, jY: -8, rotX: 71, rotZ: 25 },
+  { jX: -25, jY: 12, rotX: 76, rotZ: -15 },
+  { jX: 70, jY: 0, rotX: 69, rotZ: 38 },
+  { jX: 5, jY: -14, rotX: 74, rotZ: 8 },
+  { jX: -70, jY: 10, rotX: 72, rotZ: -34 },
+  { jX: 35, jY: 15, rotX: 70, rotZ: 20 },
+  { jX: -15, jY: -6, rotX: 75, rotZ: -10 },
+  { jX: 80, jY: -12, rotX: 73, rotZ: 42 },
+  { jX: -45, jY: 18, rotX: 77, rotZ: -28 },
+  { jX: 20, jY: -2, rotX: 71, rotZ: 10 },
+];
+
 /**
- * Título interactivo en 2 líneas.
- * - Centro: Moldes en bajo relieve en forma de escalera ascendente.
- * - Base inferior: Todas las letras inician acostadas/tiradas en el suelo en perspectiva 3D.
- * - Cinemática: Cada letra se levanta del suelo, levita hacia el centro y encaja en su molde.
+ * Título cinético:
+ * - Centro: Moldes en bajo relieve esperando en formación de escalera ascendente.
+ * - Base inferior: Todas las letras amontonadas aleatoriamente en una pila física 3D.
+ * - Cinemática: La letra en la cima de la pila se yergue y levita suavemente hacia su molde.
  * - Cierre: Toda la escalera se nivela horizontalmente y activa el ciclo continuo de iluminación.
  */
 export default function KineticTitle({
@@ -52,7 +78,7 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  // Secuencia de Animación: Letras en el Suelo -> Levitación hacia Moldes -> Nivelación Horizontal
+  // Secuencia de Animación: Pila en el Suelo -> Levitación desde la Cima de la Pila -> Moldes -> Nivelación
   useEffect(() => {
     if (prefersReducedMotion) {
       setLiftedCount(totalLetters);
@@ -64,9 +90,9 @@ export default function KineticTitle({
     let current = 0;
     let glowInterval: ReturnType<typeof setInterval>;
 
-    // 1. Pausa inicial para apreciar las letras acostadas en la base y los moldes arriba
+    // 1. Pausa inicial para apreciar la pila amontonada abajo y los moldes en escalera arriba
     const initialTimer = setTimeout(() => {
-      // 2. Levantamiento y levitación secuencial una a una hacia sus moldes
+      // 2. Levantamiento secuencial: la letra en la cima de la pila levita hacia su molde
       const liftInterval = setInterval(() => {
         current++;
         setLiftedCount(current);
@@ -94,10 +120,10 @@ export default function KineticTitle({
             }, 900);
           }, 600);
         }
-      }, 85);
+      }, 120);
 
       return () => clearInterval(liftInterval);
-    }, 500);
+    }, 600);
 
     return () => {
       clearTimeout(initialTimer);
@@ -121,7 +147,7 @@ export default function KineticTitle({
   }
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center min-h-[540px] sm:min-h-[640px] py-16 sm:py-24 overflow-visible [perspective:1000px]">
+    <div className="relative w-full flex flex-col items-center justify-center min-h-[580px] sm:min-h-[680px] py-16 sm:py-24 overflow-visible [perspective:1000px]">
       {/* Resplandor ambiental que alterna suavemente entre encendido pleno y atenuado */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-[var(--color-brand-accent)]/20 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-in-out ${
@@ -132,7 +158,7 @@ export default function KineticTitle({
 
       {/* Título Central con Moldes en Escalera y Letras Levitantes */}
       <h1
-        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider leading-[1.08] flex flex-col items-center justify-center gap-y-12 sm:gap-y-16 md:gap-y-20 lg:gap-y-24 select-none relative z-10 ${className}`}
+        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider leading-[1.08] flex flex-col items-center justify-center gap-y-14 sm:gap-y-18 md:gap-y-22 lg:gap-y-28 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
       >
         {words.map((word, wordIdx) => {
@@ -158,10 +184,20 @@ export default function KineticTitle({
                 const stepHeight = 16;
                 const targetStepY = isStaircase ? (wordCenter - charIdx) * stepHeight : 0;
 
-                // 2. Coordenadas de la Base / Suelo (letras acostadas abajo en perspectiva)
-                const baseFloorY = (wordIdx === 0 ? 300 : 150) + ((globalIdx % 3) * 6);
-                const fallenRotX = 74; // Acostada horizontalmente en perspectiva 3D
-                const fallenRotZ = ((globalIdx * 17) % 24) - 12; // Leve variación natural en el suelo (-12° a +12°)
+                // 2. Parámetros de la Pila Amontonada en la Base
+                const pileConfig = PILE_OFFSETS[globalIdx % PILE_OFFSETS.length];
+                const pileJitterX = pileConfig.jX;
+                const pileJitterY = pileConfig.jY;
+                const pileRotX = pileConfig.rotX;
+                const pileRotZ = pileConfig.rotZ;
+
+                // Profundidad de apilado: la letra 0 está en la cima y levita primero
+                const pileZIndex = isLifted ? 30 : totalLetters - globalIdx;
+
+                // Distancia horizontal y vertical desde este molde particular hacia el centro de la pila
+                const relativePileXCalc = `calc(${(- (charIdx - wordCenter) * 0.88).toFixed(2)}em + ${pileJitterX}px)`;
+                const verticalFloorBase = wordIdx === 0 ? '3.8em + 130px' : '1.8em + 65px';
+                const relativePileYCalc = `calc(${verticalFloorBase} + ${pileJitterY}px - ${targetStepY.toFixed(1)}px)`;
 
                 return (
                   <span
@@ -191,20 +227,21 @@ export default function KineticTitle({
                       </span>
                     </span>
 
-                    {/* LETRA ACTIVA: Inicia acostada en la base inferior y levita hacia su molde */}
+                    {/* LETRA: Inicia en la pila amontonada abajo y la de arriba levita hacia el molde */}
                     <span
                       className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none ${
                         isLifted
-                          ? 'text-white opacity-100 z-20'
-                          : 'text-neutral-400 opacity-40 z-10'
+                          ? 'text-white opacity-100'
+                          : 'text-neutral-400 opacity-55'
                       }`}
                       style={{
+                        zIndex: pileZIndex,
                         transform: isLifted
                           ? 'translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg) scale(1)'
-                          : `translate3d(0, ${(baseFloorY - targetStepY).toFixed(1)}px, 0) rotateX(${fallenRotX}deg) rotateZ(${fallenRotZ}deg) scale(0.8)`,
+                          : `translate3d(${relativePileXCalc}, ${relativePileYCalc}, 0) rotateX(${pileRotX}deg) rotateZ(${pileRotZ}deg) scale(0.78)`,
                         transition: isLifted
                           ? isStaircase
-                            ? 'transform 650ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease, color 300ms ease'
+                            ? 'transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease, color 300ms ease'
                             : 'none'
                           : 'none',
                         willChange: 'transform, opacity',
@@ -217,7 +254,7 @@ export default function KineticTitle({
                               ? 'drop-shadow-[0_0_24px_rgba(255,255,255,0.85)] drop-shadow-[0_2px_16px_rgba(255,255,255,0.6)]'
                               : 'drop-shadow-[0_2px_14px_rgba(255,255,255,0.35)]'
                             : isCurrentlyFloating
-                            ? 'drop-shadow-[0_0_28px_rgba(56,189,248,0.9)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.8)]'
+                            ? 'drop-shadow-[0_0_28px_rgba(56,189,248,0.95)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.85)]'
                             : isLifted
                             ? 'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
                             : 'drop-shadow-[0_6px_14px_rgba(0,0,0,0.95)]'
@@ -234,9 +271,9 @@ export default function KineticTitle({
         })}
       </h1>
 
-      {/* Base / Repisa Inferior donde reposan las letras antes de levitar */}
+      {/* Base / Suelo Inferior donde reposa la pila de letras */}
       <div
-        className={`absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 w-[85%] max-w-4xl flex items-center justify-center pointer-events-none transition-all duration-1000 ${
+        className={`absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 w-[70%] max-w-2xl flex items-center justify-center pointer-events-none transition-all duration-1000 ${
           liftedCount >= totalLetters ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
         }`}
         aria-hidden="true"
