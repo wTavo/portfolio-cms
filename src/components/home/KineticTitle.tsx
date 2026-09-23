@@ -121,8 +121,8 @@ export default function KineticTitle({
   }
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center min-h-[560px] sm:min-h-[660px] py-16 sm:py-24 overflow-visible [perspective:1000px]">
-      {/* Resplandor ambiental que alterna entre encendido pleno y atenuado */}
+    <div className="relative w-full flex flex-col items-center justify-center min-h-[540px] sm:min-h-[640px] py-16 sm:py-24 overflow-visible [perspective:1000px]">
+      {/* Resplandor ambiental que alterna suavemente entre encendido pleno y atenuado */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-[var(--color-brand-accent)]/20 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-in-out ${
           isFinalGlow ? 'opacity-100 scale-105' : 'opacity-0 scale-95'
@@ -130,9 +130,9 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      {/* Título Central con Moldes y Letras Levitantes */}
+      {/* Título Central con Moldes en Escalera y Letras Levitantes */}
       <h1
-        className={`flex flex-col items-center justify-center gap-y-12 sm:gap-y-16 md:gap-y-20 lg:gap-y-24 select-none relative z-10 ${className}`}
+        className={`text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider leading-[1.08] flex flex-col items-center justify-center gap-y-12 sm:gap-y-16 md:gap-y-20 lg:gap-y-24 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
       >
         {words.map((word, wordIdx) => {
@@ -142,7 +142,7 @@ export default function KineticTitle({
           return (
             <div
               key={`word-row-${wordIdx}`}
-              className="inline-flex items-center justify-center gap-x-2 sm:gap-x-4 md:gap-x-6 relative"
+              className="inline-flex items-center justify-center gap-x-2 sm:gap-x-3.5 md:gap-x-5 relative"
             >
               {word.split('').map((char, charIdx) => {
                 let globalIdx = 0;
@@ -155,20 +155,13 @@ export default function KineticTitle({
                 const isCurrentlyFloating = globalIdx === liftedCount - 1 && isStaircase;
 
                 // 1. Posición del Molde en Escalera Ascendente
-                const stepHeight = 18;
+                const stepHeight = 16;
                 const targetStepY = isStaircase ? (wordCenter - charIdx) * stepHeight : 0;
 
-                // 2. Coordenadas de la Base / Suelo (letras acostadas en la parte inferior)
-                // Se calcula para que todas las letras reposen en el mismo plano inferior
-                const baseFloorY = (wordIdx === 0 ? 320 : 180) + ((globalIdx % 4) * 8);
-                const fallenRotX = 72; // Acostada horizontalmente en perspectiva 3D
-                const fallenRotZ = ((globalIdx * 13) % 28) - 14; // Inclinación natural en el suelo (-14° a +14°)
-
-                // Transformación actual: acostada en el suelo o levitada en su molde
-                const currentY = isLifted ? targetStepY : baseFloorY;
-                const currentRotX = isLifted ? 0 : fallenRotX;
-                const currentRotZ = isLifted ? 0 : fallenRotZ;
-                const currentScale = isLifted ? 1 : 0.76;
+                // 2. Coordenadas de la Base / Suelo (letras acostadas abajo en perspectiva)
+                const baseFloorY = (wordIdx === 0 ? 300 : 150) + ((globalIdx % 3) * 6);
+                const fallenRotX = 74; // Acostada horizontalmente en perspectiva 3D
+                const fallenRotZ = ((globalIdx * 17) % 24) - 12; // Leve variación natural en el suelo (-12° a +12°)
 
                 return (
                   <span
@@ -176,7 +169,7 @@ export default function KineticTitle({
                     className="inline-flex items-center justify-center relative [transform-style:preserve-3d]"
                     style={{
                       minWidth: '0.74em',
-                      height: '1.2em',
+                      height: '1.25em',
                       transform: `translate3d(0, ${targetStepY.toFixed(1)}px, 0)`,
                       transition: isStaircase
                         ? 'none'
@@ -186,10 +179,10 @@ export default function KineticTitle({
                   >
                     {/* MOLDE FIJO EN EL CENTRO: Silueta en Escalera esperando recibir su letra */}
                     <span
-                      className={`absolute inset-0 flex items-center justify-center text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black select-none pointer-events-none z-0 transition-all duration-500 ${
+                      className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none z-0 transition-opacity duration-400 ${
                         isLifted
                           ? 'opacity-80'
-                          : 'opacity-50 drop-shadow-[0_2px_12px_rgba(0,0,0,0.9)]'
+                          : 'opacity-40 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]'
                       }`}
                       aria-hidden="true"
                     >
@@ -198,17 +191,17 @@ export default function KineticTitle({
                       </span>
                     </span>
 
-                    {/* LETRA ACTIVA: Inicia acostada en el suelo abajo y levita hacia el molde */}
+                    {/* LETRA ACTIVA: Inicia acostada en la base inferior y levita hacia su molde */}
                     <span
-                      className={`absolute inset-0 flex items-center justify-center text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black select-none pointer-events-none ${
+                      className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none ${
                         isLifted
                           ? 'text-white opacity-100 z-20'
-                          : 'text-neutral-400 opacity-45 z-10'
+                          : 'text-neutral-400 opacity-40 z-10'
                       }`}
                       style={{
                         transform: isLifted
                           ? 'translate3d(0, 0, 0) rotateX(0deg) rotateZ(0deg) scale(1)'
-                          : `translate3d(0, ${(baseFloorY - targetStepY).toFixed(1)}px, 0) rotateX(${currentRotX}deg) rotateZ(${currentRotZ}deg) scale(${currentScale})`,
+                          : `translate3d(0, ${(baseFloorY - targetStepY).toFixed(1)}px, 0) rotateX(${fallenRotX}deg) rotateZ(${fallenRotZ}deg) scale(0.8)`,
                         transition: isLifted
                           ? isStaircase
                             ? 'transform 650ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease, color 300ms ease'
@@ -227,7 +220,7 @@ export default function KineticTitle({
                             ? 'drop-shadow-[0_0_28px_rgba(56,189,248,0.9)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.8)]'
                             : isLifted
                             ? 'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
-                            : 'drop-shadow-[0_8px_16px_rgba(0,0,0,0.95)]'
+                            : 'drop-shadow-[0_6px_14px_rgba(0,0,0,0.95)]'
                         }`}
                       >
                         {char}
@@ -241,9 +234,9 @@ export default function KineticTitle({
         })}
       </h1>
 
-      {/* Base / Suelo Inferior donde reposan las letras antes de levitar */}
+      {/* Base / Repisa Inferior donde reposan las letras antes de levitar */}
       <div
-        className={`absolute bottom-4 sm:bottom-8 left-1/2 -translate-x-1/2 w-[85%] max-w-4xl flex items-center justify-center pointer-events-none transition-all duration-1000 ${
+        className={`absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 w-[85%] max-w-4xl flex items-center justify-center pointer-events-none transition-all duration-1000 ${
           liftedCount >= totalLetters ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
         }`}
         aria-hidden="true"
