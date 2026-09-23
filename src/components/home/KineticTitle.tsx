@@ -185,21 +185,19 @@ export default function KineticTitle({
                 const isComplete = filledLetters[key] || currentFill >= 1;
                 const isActivelyFilling = currentFill > 0 && currentFill < 1;
 
-                // Dinámica de oleaje y nivel de agua
-                const waterPercent = currentFill * 103; // 0% a 103% para colmar el borde superior
-                const waveAmp = Math.sin(Math.min(currentFill, 1) * Math.PI) * 4.5 * Math.max(0, 1 - Math.pow(currentFill, 3));
-                const waveOffset1 = Math.sin(waveTime * 5.0 + charIdx * 1.8) * waveAmp;
-                const waveOffset2 = Math.cos(waveTime * 3.8 - charIdx * 1.4) * (waveAmp * 0.7);
+                // Expansión fluida desde el centro hacia todos los extremos del molde (50% 50%)
+                const fluidRadius = currentFill * 145; // 0% a 145% para cubrir esquinas
+                const waveAmp = Math.sin(Math.min(currentFill, 1) * Math.PI) * 4.0;
+                const waveOffset = Math.sin(waveTime * 5.0 + charIdx * 1.6) * waveAmp;
 
-                const primaryLevel = Math.max(0, Math.min(100, waterPercent + waveOffset1));
-                const secondaryLevel = Math.max(0, Math.min(100, waterPercent + waveOffset2));
+                const effRadius = Math.max(0, fluidRadius + waveOffset);
+                const coreSolid = Math.max(0, effRadius - 18);
 
-                const fluidGradient = `linear-gradient(to top,
+                const fluidGradient = `radial-gradient(ellipse 130% 130% at 50% 50%,
                   #ffffff 0%,
-                  #ffffff ${primaryLevel}%,
-                  rgba(255, 255, 255, 0.96) ${primaryLevel + 1.5}%,
-                  rgba(255, 255, 255, 0.45) ${secondaryLevel + 3.5}%,
-                  transparent ${Math.max(primaryLevel, secondaryLevel) + 5}%
+                  #ffffff ${coreSolid}%,
+                  rgba(255, 255, 255, 0.95) ${effRadius * 0.94}%,
+                  transparent ${effRadius}%
                 )`;
 
                 return (
