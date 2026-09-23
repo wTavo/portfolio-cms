@@ -14,6 +14,12 @@ export default defineConfig({
     plugins: [tailwindcss()],
     optimizeDeps: {
       exclude: ['@astrojs/cloudflare']
+    },
+    ssr: {
+      optimizeDeps: {
+        exclude: ['@astrojs/cloudflare']
+      },
+      noExternal: ['@astrojs/cloudflare']
     }
   },
   adapter: cloudflare({
