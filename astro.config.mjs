@@ -11,7 +11,10 @@ export default defineConfig({
   output: 'server',
   integrations: [react()],
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()],
+    optimizeDeps: {
+      exclude: ['@astrojs/cloudflare']
+    }
   },
   adapter: cloudflare({
     imageService: 'passthrough'
