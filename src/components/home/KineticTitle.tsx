@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético interactivo con Monograma de Diamante/Prisma en la 'A' y despliegue cinemático en abanico (Fan-Out) desde el vértice hacia los extremos, con posterior nivelación horizontal y ciclo continuo de iluminación.
+ * @description Título cinético interactivo: La experiencia nace con un icono de Diamante/Prisma solitario en el centro. Al cargar, el prisma se abre como un compás geométrico y despliega en cascada las letras hacia ambos lados en un abanico cinemático (/\) que luego se posa en la línea horizontal definitiva.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -10,119 +10,91 @@ interface KineticTitleProps {
   className?: string;
 }
 
+type AnimationPhase = 'prism_solo' | 'compass_opening' | 'fanning_out' | 'leveling' | 'settled';
+
 /**
- * Monograma geométrico de Diamante / Prisma de Cristal tallado que forma una 'A' incandescente.
+ * Monograma geométrico de Diamante / Prisma de Cristal tallado.
  */
-function DiamondMonogramA({
-  isPlaced,
-  isEntering,
+function DiamondPrismIcon({
+  phase,
   isFinalGlow,
-  isHorizontalAligned,
+  onClick,
 }: {
-  isPlaced: boolean;
-  isEntering: boolean;
+  phase: AnimationPhase;
   isFinalGlow: boolean;
-  isHorizontalAligned: boolean;
+  onClick?: () => void;
 }) {
+  const isSolo = phase === 'prism_solo';
+  const isOpening = phase === 'compass_opening' || phase === 'fanning_out';
+  const isSettled = phase === 'leveling' || phase === 'settled';
+
   return (
-    <span className="inline-flex items-center justify-center relative w-[0.88em] h-[1.05em] select-none">
+    <div
+      onClick={onClick}
+      className={`inline-flex items-center justify-center relative cursor-pointer select-none transition-all duration-700 ${
+        isSolo
+          ? 'scale-135 drop-shadow-[0_0_35px_rgba(56,189,248,1)] drop-shadow-[0_0_60px_rgba(255,255,255,0.9)] animate-pulse'
+          : isOpening
+          ? 'scale-115 drop-shadow-[0_0_28px_rgba(56,189,248,0.95)]'
+          : isFinalGlow
+          ? 'scale-105 drop-shadow-[0_0_24px_rgba(255,255,255,0.95)] drop-shadow-[0_0_35px_rgba(56,189,248,0.8)]'
+          : 'scale-100 drop-shadow-[0_0_14px_rgba(56,189,248,0.6)]'
+      }`}
+      style={{ width: '0.88em', height: '1.05em' }}
+    >
       <svg
         viewBox="0 0 54 54"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={`w-full h-full transition-all duration-1000 ease-in-out ${
-          isPlaced
-            ? isHorizontalAligned
-              ? isFinalGlow
-                ? 'drop-shadow-[0_0_24px_rgba(255,255,255,0.95)] drop-shadow-[0_0_40px_rgba(56,189,248,0.85)] scale-105'
-                : 'drop-shadow-[0_0_14px_rgba(56,189,248,0.6)] scale-100'
-              : isEntering
-              ? 'scale-115 drop-shadow-[0_0_28px_rgba(56,189,248,1)] drop-shadow-[0_0_45px_rgba(255,255,255,1)]'
-              : 'scale-100 drop-shadow-[0_0_18px_rgba(56,189,248,0.7)]'
-            : 'opacity-0 scale-75'
-        }`}
+        className="w-full h-full"
         aria-label="A"
       >
         <defs>
-          <linearGradient id="diamond-facet-body" x1="27" y1="4" x2="27" y2="48" gradientUnits="userSpaceOnUse">
+          <linearGradient id="prism-grad-body" x1="27" y1="4" x2="27" y2="48" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="55%" stopColor="#F0F9FF" />
+            <stop offset="50%" stopColor="#F0F9FF" />
             <stop offset="100%" stopColor="#38BDF8" />
           </linearGradient>
-          <linearGradient id="diamond-facet-inner" x1="18" y1="16" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+          <linearGradient id="prism-grad-inner" x1="18" y1="16" x2="36" y2="38" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.45" />
+            <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.5" />
           </linearGradient>
         </defs>
 
-        {/* Silueta Base de la 'A' de Diamante */}
+        {/* Silueta Base Facetada en 'A' */}
         <path
           d="M27 4 L48 46 H38 L33 34 H21 L16 46 H6 L27 4 Z"
-          fill="url(#diamond-facet-body)"
+          fill="url(#prism-grad-body)"
           stroke="#FFFFFF"
           strokeWidth="1.2"
         />
 
-        {/* Facetas de Cristal del Vértice y Travesaño */}
+        {/* Facetas de Cristal Internas */}
         <polygon points="27,12 33,26 21,26" fill="#080c18" stroke="#38BDF8" strokeWidth="1" />
-        <polygon points="27,4 35,18 27,26 19,18" fill="url(#diamond-facet-inner)" opacity="0.85" />
+        <polygon points="27,4 35,18 27,26 19,18" fill="url(#prism-grad-inner)" opacity="0.85" />
         <line x1="27" y1="4" x2="27" y2="26" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.95" />
         <line x1="16" y1="46" x2="21" y2="34" stroke="#E0F2FE" strokeWidth="1" opacity="0.75" />
         <line x1="38" y1="46" x2="33" y2="34" stroke="#E0F2FE" strokeWidth="1" opacity="0.75" />
 
-        {/* Núcleo de Destello Central */}
-        <circle cx="27" cy="18" r="2.5" fill="#FFFFFF" />
+        {/* Núcleo Incandescente */}
+        <circle cx="27" cy="18" r="2.8" fill="#FFFFFF" />
       </svg>
-    </span>
+    </div>
   );
 }
 
-/**
- * Molde en bajo relieve para la 'A' de diamante.
- */
-function DiamondMoldA() {
-  return (
-    <span className="inline-flex items-center justify-center relative w-[0.88em] h-[1.05em] select-none pointer-events-none opacity-40">
-      <svg
-        viewBox="0 0 54 54"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="w-full h-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
-        aria-hidden="true"
-      >
-        <path
-          d="M27 4 L48 46 H38 L33 34 H21 L16 46 H6 L27 4 Z"
-          fill="#141824"
-          stroke="rgba(255,255,255,0.08)"
-          strokeWidth="1"
-        />
-        <polygon points="27,12 33,26 21,26" fill="#080b12" />
-      </svg>
-    </span>
-  );
-}
-
-/**
- * Título cinético con Monograma Diamante y Despliegue en Abanico:
- * - Vértice: Monograma de Diamante/Prisma en la 'A'.
- * - Cinemática: Despliegue en abanico (Fan-Out) naciendo del vértice hacia las puntas exteriores.
- * - Nivelación: Deslizamiento suave hacia la alineación horizontal definitiva.
- * - Cierre: Ciclo continuo de resplandor.
- */
 export default function KineticTitle({
   text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isStaircase, setIsStaircase] = useState(true);
-  const [isHorizontalAligned, setIsHorizontalAligned] = useState(false);
+  const [phase, setPhase] = useState<AnimationPhase>('prism_solo');
+  const [fannedStep, setFannedStep] = useState(0);
   const [isFinalGlow, setIsFinalGlow] = useState(false);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
 
-  // Número máximo de pasos desde el vértice hacia los extremos
   const maxSteps = useMemo(() => {
     return Math.max(...words.map((w) => Math.ceil(w.length / 2)));
   }, [words]);
@@ -135,58 +107,72 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  // Secuencia de Animación: Despertar del Monograma -> Despliegue en Abanico (Fan-Out) -> Nivelación -> Resplandor
+  const runAnimationSequence = () => {
+    setPhase('prism_solo');
+    setFannedStep(0);
+    setIsFinalGlow(false);
+
+    // 1. El Prisma de Diamante nace en solitario en el centro
+    const t1 = setTimeout(() => {
+      // 2. El prisma se abre como compás geométrico
+      setPhase('compass_opening');
+
+      const t2 = setTimeout(() => {
+        // 3. Despliegue en abanico (Fan-Out) en cascada hacia ambos lados
+        setPhase('fanning_out');
+
+        let step = 0;
+        const interval = setInterval(() => {
+          step++;
+          setFannedStep(step);
+
+          if (step >= maxSteps) {
+            clearInterval(interval);
+
+            // 4. Pausa para contemplar la V invertida desplegada
+            const t3 = setTimeout(() => {
+              // 5. La estructura se posa y nivela suavemente sobre la línea horizontal
+              setPhase('leveling');
+
+              const t4 = setTimeout(() => {
+                setPhase('settled');
+                setIsFinalGlow(true);
+
+                // 6. Ciclo continuo de resplandor
+                setTimeout(() => {
+                  setIsFinalGlow(false);
+                  const glowInt = setInterval(() => {
+                    setIsFinalGlow((prev) => !prev);
+                  }, 1800);
+                  return () => clearInterval(glowInt);
+                }, 1100);
+              }, 900);
+            }, 600);
+          }
+        }, 110);
+
+        return () => clearInterval(interval);
+      }, 350);
+
+      return () => clearTimeout(t2);
+    }, 700);
+
+    return () => clearTimeout(t1);
+  };
+
   useEffect(() => {
     if (prefersReducedMotion) {
-      setCurrentStep(maxSteps + 1);
-      setIsStaircase(false);
-      setIsHorizontalAligned(true);
+      setPhase('settled');
+      setFannedStep(maxSteps + 1);
       return;
     }
 
-    let step = 0;
-    let glowInterval: ReturnType<typeof setInterval>;
-
-    // 1. Pausa inicial: el monograma de diamante en el vértice despierta
-    const initialTimer = setTimeout(() => {
-      // 2. Despliegue en abanico (Fan-Out) desde el vértice hacia las puntas
-      const placeInterval = setInterval(() => {
-        step++;
-        setCurrentStep(step);
-
-        if (step >= maxSteps) {
-          clearInterval(placeInterval);
-
-          // 3. Pausa para contemplar la V invertida desplegada
-          setTimeout(() => {
-            // 4. Deslizamiento y nivelación hacia el eje horizontal
-            setIsStaircase(false);
-
-            // 5. Consolidación horizontal definitiva
-            setTimeout(() => {
-              setIsHorizontalAligned(true);
-              setIsFinalGlow(true);
-
-              // 6. Ciclo continuo entre Imagen 1 (Iluminada) e Imagen 2 (Atenuada)
-              setTimeout(() => {
-                setIsFinalGlow(false);
-                glowInterval = setInterval(() => {
-                  setIsFinalGlow((prev) => !prev);
-                }, 1800);
-              }, 1100);
-            }, 900);
-          }, 600);
-        }
-      }, 135);
-
-      return () => clearInterval(placeInterval);
-    }, 450);
-
-    return () => {
-      clearTimeout(initialTimer);
-      clearInterval(glowInterval);
-    };
+    const cleanup = runAnimationSequence();
+    return cleanup;
   }, [maxSteps, prefersReducedMotion]);
+
+  const isStaircase = phase === 'compass_opening' || phase === 'fanning_out';
+  const isSettled = phase === 'leveling' || phase === 'settled';
 
   if (prefersReducedMotion) {
     return (
@@ -194,13 +180,7 @@ export default function KineticTitle({
         <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase inline-flex items-center justify-center">
           {words[0].split('').map((char, i) =>
             i === 4 ? (
-              <DiamondMonogramA
-                key="diamond-reduced"
-                isPlaced={true}
-                isEntering={false}
-                isFinalGlow={false}
-                isHorizontalAligned={true}
-              />
+              <DiamondPrismIcon key="diamond-red" phase="settled" isFinalGlow={false} />
             ) : (
               <span key={`char-red-0-${i}`}>{char}</span>
             )
@@ -214,16 +194,43 @@ export default function KineticTitle({
   }
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[560px] py-12 sm:py-16 overflow-visible">
-      {/* Resplandor ambiental que alterna suavemente */}
+    <div className="relative w-full flex flex-col items-center justify-center min-h-[500px] sm:min-h-[580px] py-12 sm:py-16 overflow-visible">
+      {/* Resplandor ambiental de fondo */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-[var(--color-brand-accent)]/20 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-in-out ${
-          isFinalGlow ? 'opacity-100 scale-105' : 'opacity-0 scale-95'
+          isFinalGlow || phase === 'prism_solo' ? 'opacity-100 scale-105' : 'opacity-0 scale-95'
         }`}
         aria-hidden="true"
       />
 
-      {/* Título Central en 2 Líneas Jerarquizadas con Monograma de Diamante */}
+      {/* BRAZOS DEL COMPÁS GEOMÉTRICO (Rayos de Luz que se abren desde el Diamante) */}
+      <div
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl h-1 pointer-events-none transition-all duration-700 ${
+          phase === 'compass_opening' || phase === 'fanning_out'
+            ? 'opacity-80 scale-100'
+            : 'opacity-0 scale-50'
+        }`}
+        aria-hidden="true"
+      >
+        {/* Brazo Izquierdo del Compás */}
+        <div
+          className="absolute right-1/2 top-0 h-0.5 bg-gradient-to-l from-cyan-400 via-cyan-300 to-transparent shadow-[0_0_12px_rgba(56,189,248,0.8)] origin-right transition-transform duration-700"
+          style={{
+            width: '280px',
+            transform: phase === 'prism_solo' ? 'rotate(0deg)' : 'rotate(24deg)',
+          }}
+        />
+        {/* Brazo Derecho del Compás */}
+        <div
+          className="absolute left-1/2 top-0 h-0.5 bg-gradient-to-r from-cyan-400 via-cyan-300 to-transparent shadow-[0_0_12px_rgba(56,189,248,0.8)] origin-left transition-transform duration-700"
+          style={{
+            width: '280px',
+            transform: phase === 'prism_solo' ? 'rotate(0deg)' : 'rotate(-24deg)',
+          }}
+        />
+      </div>
+
+      {/* Título Principal en 2 Líneas Jerarquizadas */}
       <h1
         className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 lg:gap-y-5 select-none relative z-10 ${className}`}
         aria-label={uppercaseText}
@@ -233,7 +240,7 @@ export default function KineticTitle({
           const wordCenter = (wordLen - 1) / 2;
           const isFirstWord = wordIdx === 0;
 
-          // Jerarquía visual: PORTAFOLIO grande e imponente, PROFESIONAL compacto con tracking
+          // Jerarquía visual
           const fontClasses = isFirstWord
             ? 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider'
             : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em]';
@@ -250,18 +257,23 @@ export default function KineticTitle({
               }`}
             >
               {word.split('').map((char, charIdx) => {
-                const isDiamondLetter = isFirstWord && charIdx === 4; // Letra 'A' en PORTAFOLIO
+                const isDiamondLetter = isFirstWord && charIdx === 4; // 'A' en PORTAFOLIO
 
-                // Distancia desde el vértice central (0 = vértice central, mayor = hacia los extremos)
+                // Distancia desde el vértice central
                 const distFromCenter = Math.abs(charIdx - wordCenter);
                 const fanOutStep = Math.floor(distFromCenter);
 
-                const isPlaced = fanOutStep < currentStep;
-                const isCurrentlyEntering = fanOutStep === currentStep - 1 && isStaircase;
+                // Estado de visibilidad y despliegue
+                const isPlaced = isDiamondLetter ? true : isSettled || (phase === 'fanning_out' && fanOutStep < fannedStep);
+                const isCurrentlyEmerging = phase === 'fanning_out' && fanOutStep === fannedStep - 1;
 
-                // Desplazamiento vertical en V invertida (/\)
+                // Desplazamiento en V invertida (/\) o nivelado en 0
                 const peakOffset = isFirstWord ? 0.5 : 0;
                 const targetStepY = isStaircase ? (distFromCenter - peakOffset) * stepHeight : 0;
+
+                // Vector de nacimiento desde el vértice (X relativo hacia el centro)
+                const relativeSpawnX = `calc(${(- (charIdx - wordCenter) * 0.88).toFixed(2)}em)`;
+                const relativeSpawnY = `calc(-${targetStepY}px)`;
 
                 return (
                   <span
@@ -277,47 +289,36 @@ export default function KineticTitle({
                       willChange: 'transform',
                     }}
                   >
-                    {/* MOLDE: Silueta tallada fija en bajo relieve */}
                     {isDiamondLetter ? (
-                      <span className="absolute inset-0 flex items-center justify-center">
-                        <DiamondMoldA />
-                      </span>
+                      /* EL DIAMANTE / PRISMA CENTRAL */
+                      <DiamondPrismIcon
+                        phase={phase}
+                        isFinalGlow={isFinalGlow}
+                        onClick={() => runAnimationSequence()}
+                      />
                     ) : (
+                      /* LETRAS QUE SE DESPLIEGAN EN ABANICO DESDE EL DIAMANTE */
                       <span
-                        className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none z-0 transition-opacity duration-400 ${
-                          isPlaced
-                            ? 'opacity-80'
-                            : 'opacity-40 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]'
-                        } [text-shadow:_0_3px_8px_rgba(0,0,0,1),_0_1px_2px_rgba(0,0,0,1),_0_-1px_1px_rgba(255,255,255,0.08)] text-[#141824]`}
-                        aria-hidden="true"
-                      >
-                        {char}
-                      </span>
-                    )}
-
-                    {/* LETRA ACTIVA / MONOGRAMA DIAMANTE: Se despliega en abanico desde el vértice */}
-                    {isDiamondLetter ? (
-                      <span className="absolute inset-0 flex items-center justify-center z-20">
-                        <DiamondMonogramA
-                          isPlaced={isPlaced}
-                          isEntering={isCurrentlyEntering}
-                          isFinalGlow={isFinalGlow}
-                          isHorizontalAligned={isHorizontalAligned}
-                        />
-                      </span>
-                    ) : (
-                      <span
-                        className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white z-10 transition-all duration-300 ${
-                          isPlaced ? 'opacity-100 scale-100' : 'opacity-0 scale-90'
+                        className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white ${
+                          isPlaced ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
                         }`}
+                        style={{
+                          transform: isPlaced
+                            ? 'translate3d(0, 0, 0) scale(1)'
+                            : `translate3d(${relativeSpawnX}, ${relativeSpawnY}, 0) scale(0.2)`,
+                          transition: isPlaced
+                            ? 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 350ms ease'
+                            : 'none',
+                          willChange: 'transform, opacity',
+                        }}
                       >
                         <span
                           className={`transition-all duration-1000 ease-in-out ${
-                            isHorizontalAligned
+                            isSettled
                               ? isFinalGlow
                                 ? 'drop-shadow-[0_0_24px_rgba(255,255,255,0.85)] drop-shadow-[0_2px_16px_rgba(255,255,255,0.6)]'
                                 : 'drop-shadow-[0_2px_14px_rgba(255,255,255,0.35)]'
-                              : isCurrentlyEntering
+                              : isCurrentlyEmerging
                               ? 'drop-shadow-[0_0_28px_rgba(56,189,248,0.95)] drop-shadow-[0_4px_16px_rgba(255,255,255,0.85)]'
                               : 'drop-shadow-[0_4px_18px_rgba(0,0,0,0.9)]'
                           }`}
