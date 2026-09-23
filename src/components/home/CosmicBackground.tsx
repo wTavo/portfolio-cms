@@ -1,6 +1,6 @@
 /**
  * @file CosmicBackground.tsx
- * @description Fondo cósmico infinito con cometas continuos claramente visibles y campo estelar multicapa con destellos de difracción.
+ * @description Fondo cósmico infinito con cometas distantes de vuelo majestuoso y campo estelar natural con titileo orgánico.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -14,7 +14,7 @@ interface DistantComet {
   angle: number; // Radianes de trayectoria
   thickness: number;
   opacity: number;
-  hue: string; // Color base (#38BDF8, #818CF8, #38E0E8)
+  hue: string; // Color base (#38BDF8, #818CF8)
   sparks: { offset: number; drift: number; size: number }[];
   active: boolean;
   cooldown: number;
@@ -25,17 +25,16 @@ interface CosmicStar {
   x: number;
   y: number;
   radius: number;
-  type: 'micro' | 'gleam' | 'flare';
   baseAlpha: number;
   twinkleSpeed: number;
   phase: number;
-  flareSize: number;
   color: string;
+  hasSoftGlow: boolean;
 }
 
 /**
- * Componente de fondo cósmico perpetuo con estrellas y cometas continuos.
- * Se sitúa en la capa base (z-0) asegurando máxima visibilidad sobre el fondo oscuro sin interferir con el contenido interactivo.
+ * Componente de fondo cósmico perpetuo con estrellas naturales y cometas de navegación pausada.
+ * Se sitúa en la capa base (z-0) asegurando máxima visibilidad sobre el fondo oscuro sin interferir con el contenido.
  */
 export default function CosmicBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -64,54 +63,54 @@ export default function CosmicBackground() {
 
     window.addEventListener('resize', handleResize);
 
-    // 1. Generar Campo Estelar Galáctico Multicapa (160 estrellas)
-    const starCount = 160;
+    // 1. Campo Estelar Natural y Orgánico (170 estrellas esféricas puras)
+    const starCount = 170;
     const stars: CosmicStar[] = Array.from({ length: starCount }, (_, i) => {
-      // 8 estrellas destacadas con destellos en cruz de difracción
-      const isFlare = i < 8;
-      // 45 estrellas medianas brillantes
-      const isGleam = !isFlare && i < 53;
+      // Distribución natural de tamaños y luminosidad
+      const isBright = i < 18; // 18 estrellas más luminosas con halo difuso suave
+      const isMedium = !isBright && i < 65; // Estrellas medianas
 
-      let type: CosmicStar['type'] = 'micro';
-      let radius = Math.random() * 0.9 + 0.5;
-      let baseAlpha = Math.random() * 0.45 + 0.25;
-      let flareSize = 0;
-      let color = 'rgba(224, 242, 254, '; // Blanco celeste por defecto
+      let radius = Math.random() * 0.7 + 0.4; // 0.4px a 1.1px (polvo estelar)
+      let baseAlpha = Math.random() * 0.4 + 0.2;
+      let hasSoftGlow = false;
 
-      if (isFlare) {
-        type = 'flare';
-        radius = Math.random() * 1.2 + 2.2;
-        baseAlpha = Math.random() * 0.3 + 0.7;
-        flareSize = Math.random() * 6 + 10;
-        color = Math.random() > 0.5 ? 'rgba(255, 255, 255, ' : 'rgba(186, 230, 253, ';
-      } else if (isGleam) {
-        type = 'gleam';
-        radius = Math.random() * 0.9 + 1.3;
-        baseAlpha = Math.random() * 0.35 + 0.5;
-        color = Math.random() > 0.3 ? 'rgba(224, 242, 254, ' : 'rgba(199, 210, 254, ';
+      // Variación sutil de color astronómico (blanco puro, celeste hielo o índigo suave)
+      const colorRoll = Math.random();
+      const color =
+        colorRoll > 0.6
+          ? 'rgba(255, 255, 255, '
+          : colorRoll > 0.25
+          ? 'rgba(224, 242, 254, '
+          : 'rgba(199, 210, 254, ';
+
+      if (isBright) {
+        radius = Math.random() * 0.8 + 1.6; // 1.6px a 2.4px
+        baseAlpha = Math.random() * 0.25 + 0.7;
+        hasSoftGlow = true;
+      } else if (isMedium) {
+        radius = Math.random() * 0.5 + 1.1; // 1.1px a 1.6px
+        baseAlpha = Math.random() * 0.3 + 0.45;
       }
 
       return {
         x: Math.random() * width,
         y: Math.random() * height,
         radius,
-        type,
         baseAlpha,
-        twinkleSpeed: Math.random() * 0.025 + 0.008,
+        twinkleSpeed: Math.random() * 0.02 + 0.006,
         phase: Math.random() * Math.PI * 2,
-        flareSize,
         color,
+        hasSoftGlow,
       };
     });
 
-    // 2. Generador de Cometas Distantes
+    // 2. Generador de Cometas Distantes con Vuelo Pausado y Sereno
     const createDistantComet = (initialSpawn = false): DistantComet => {
-      // Ángulo diagonal natural espacial (entre 30° y 55°)
-      const angle = (Math.PI / 180) * (30 + Math.random() * 25);
+      // Ángulo diagonal suave (entre 32° y 48°)
+      const angle = (Math.PI / 180) * (32 + Math.random() * 16);
       const isCyan = Math.random() > 0.35;
       const hue = isCyan ? '#38BDF8' : '#818CF8';
 
-      // Posición inicial: si es inicio, dispersar por la pantalla; si es reciclaje, arriba/afuera
       let startX: number;
       let startY: number;
 
@@ -119,25 +118,25 @@ export default function CosmicBackground() {
         startX = Math.random() * width;
         startY = Math.random() * height * 0.7;
       } else {
-        startX = Math.random() * (width + 300) - 150;
-        startY = -60 - Math.random() * 100;
+        startX = Math.random() * (width + 400) - 200;
+        startY = -80 - Math.random() * 120;
       }
 
       const sparkCount = Math.floor(Math.random() * 4) + 2;
       const sparks = Array.from({ length: sparkCount }, () => ({
-        offset: Math.random() * 0.7 + 0.15, // Porcentaje a lo largo de la cola
-        drift: (Math.random() - 0.5) * 6, // Separación lateral
-        size: Math.random() * 1.5 + 0.8,
+        offset: Math.random() * 0.65 + 0.2, // Distancia en la estela
+        drift: (Math.random() - 0.5) * 5,
+        size: Math.random() * 1.2 + 0.7,
       }));
 
       return {
         x: startX,
         y: startY,
-        length: Math.random() * 90 + 110, // 110px a 200px
-        speed: Math.random() * 3.5 + 4.2, // Velocidad continua y fluida
+        length: Math.random() * 80 + 130, // 130px a 210px de cola estilizada
+        speed: Math.random() * 0.7 + 1.1, // Velocidad pausada y majestuosa (1.1 a 1.8 px/frame)
         angle,
-        thickness: Math.random() * 1.4 + 1.8,
-        opacity: Math.random() * 0.25 + 0.7, // Alta visibilidad (0.70 a 0.95)
+        thickness: Math.random() * 1.2 + 1.6,
+        opacity: Math.random() * 0.25 + 0.7, // Alta nitidez sobre fondo oscuro
         hue,
         sparks,
         active: true,
@@ -145,12 +144,11 @@ export default function CosmicBackground() {
       };
     };
 
-    // 4 cometas activos en rotación continua y escalonada
+    // 3 cometas activos navegando simultáneamente a ritmo relajado
     const comets: DistantComet[] = [
       createDistantComet(true),
-      { ...createDistantComet(true), x: width * 0.65, y: height * 0.2 },
-      { ...createDistantComet(true), x: width * 0.25, y: height * 0.45 },
-      { ...createDistantComet(false), cooldown: 40 },
+      { ...createDistantComet(true), x: width * 0.7, y: height * 0.25 },
+      { ...createDistantComet(true), x: width * 0.3, y: height * 0.55 },
     ];
 
     let lastTime = performance.now();
@@ -162,45 +160,32 @@ export default function CosmicBackground() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // --- DIBUJAR CAMPO ESTELAR ---
+      // --- DIBUJAR CAMPO ESTELAR NATURAL ---
       stars.forEach((star) => {
         if (!prefersReduced) {
           star.phase += star.twinkleSpeed;
         }
         const currentAlpha = Math.max(
           0.1,
-          Math.min(1, star.baseAlpha + Math.sin(star.phase) * 0.28)
+          Math.min(1, star.baseAlpha + Math.sin(star.phase) * 0.25)
         );
 
-        // Núcleo de la estrella
+        // Halo suave difuso para estrellas destacadas (sin líneas ni cruces artificiales)
+        if (star.hasSoftGlow) {
+          ctx.fillStyle = `rgba(56, 189, 248, ${currentAlpha * 0.2})`;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.radius * 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Punto de luz esférico puro
         ctx.fillStyle = `${star.color}${currentAlpha})`;
         ctx.beginPath();
         ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
         ctx.fill();
-
-        // Destello en cruz de 4 puntas para estrellas de tipo 'flare'
-        if (star.type === 'flare') {
-          const flareAlpha = currentAlpha * 0.75;
-          ctx.strokeStyle = `${star.color}${flareAlpha})`;
-          ctx.lineWidth = 1;
-          ctx.beginPath();
-          // Rayo horizontal
-          ctx.moveTo(star.x - star.flareSize, star.y);
-          ctx.lineTo(star.x + star.flareSize, star.y);
-          // Rayo vertical
-          ctx.moveTo(star.x, star.y - star.flareSize);
-          ctx.lineTo(star.x, star.y + star.flareSize);
-          ctx.stroke();
-
-          // Halo concéntrico suave
-          ctx.fillStyle = `rgba(56, 189, 248, ${currentAlpha * 0.25})`;
-          ctx.beginPath();
-          ctx.arc(star.x, star.y, star.radius * 3.5, 0, Math.PI * 2);
-          ctx.fill();
-        }
       });
 
-      // --- DIBUJAR COMETAS PERPETUOS CONTINUOS ---
+      // --- DIBUJAR COMETAS DISTANTES SERENOS ---
       if (!prefersReduced) {
         comets.forEach((comet) => {
           if (!comet.active) {
@@ -212,7 +197,7 @@ export default function CosmicBackground() {
             return;
           }
 
-          // Avanzar posición del cometa
+          // Desplazamiento pausado y majestuoso
           const vx = Math.cos(comet.angle) * comet.speed;
           const vy = Math.sin(comet.angle) * comet.speed;
           comet.x += vx;
@@ -221,25 +206,25 @@ export default function CosmicBackground() {
           const tailX = comet.x - Math.cos(comet.angle) * comet.length;
           const tailY = comet.y - Math.sin(comet.angle) * comet.length;
 
-          // 1. Estela ancha difusa exterior (Halo de plasma)
+          // 1. Estela exterior difusa de polvo/plasma
           const outerGrad = ctx.createLinearGradient(comet.x, comet.y, tailX, tailY);
-          outerGrad.addColorStop(0, `rgba(56, 189, 248, ${comet.opacity * 0.6})`);
-          outerGrad.addColorStop(0.4, `rgba(14, 165, 233, ${comet.opacity * 0.35})`);
+          outerGrad.addColorStop(0, `rgba(56, 189, 248, ${comet.opacity * 0.55})`);
+          outerGrad.addColorStop(0.35, `rgba(14, 165, 233, ${comet.opacity * 0.3})`);
           outerGrad.addColorStop(1, 'rgba(15, 23, 42, 0)');
 
           ctx.beginPath();
           ctx.moveTo(comet.x, comet.y);
           ctx.lineTo(tailX, tailY);
           ctx.strokeStyle = outerGrad;
-          ctx.lineWidth = comet.thickness * 3.8;
+          ctx.lineWidth = comet.thickness * 3.5;
           ctx.lineCap = 'round';
           ctx.stroke();
 
-          // 2. Haz interior incandescente nítido
+          // 2. Haz interior incandescente blanco/celeste
           const coreGrad = ctx.createLinearGradient(comet.x, comet.y, tailX, tailY);
           coreGrad.addColorStop(0, `rgba(255, 255, 255, ${comet.opacity})`);
-          coreGrad.addColorStop(0.3, `rgba(224, 242, 254, ${comet.opacity * 0.85})`);
-          coreGrad.addColorStop(0.7, `${comet.hue}66`);
+          coreGrad.addColorStop(0.25, `rgba(224, 242, 254, ${comet.opacity * 0.85})`);
+          coreGrad.addColorStop(0.65, `${comet.hue}66`);
           coreGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
 
           ctx.beginPath();
@@ -250,18 +235,18 @@ export default function CosmicBackground() {
           ctx.lineCap = 'round';
           ctx.stroke();
 
-          // 3. Halo y Núcleo brillante
+          // 3. Resplandor y Núcleo del cometa
           ctx.beginPath();
-          ctx.arc(comet.x, comet.y, comet.thickness * 3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(56, 189, 248, ${comet.opacity * 0.5})`;
+          ctx.arc(comet.x, comet.y, comet.thickness * 2.8, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(56, 189, 248, ${comet.opacity * 0.45})`;
           ctx.fill();
 
           ctx.beginPath();
-          ctx.arc(comet.x, comet.y, comet.thickness * 1.3, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, comet.opacity * 1.2)})`;
+          ctx.arc(comet.x, comet.y, comet.thickness * 1.2, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(1, comet.opacity * 1.15)})`;
           ctx.fill();
 
-          // 4. Micro-chispas a lo largo de la estela
+          // 4. Micro-partículas desprendidas en la estela
           const perpAngle = comet.angle + Math.PI / 2;
           comet.sparks.forEach((spark) => {
             const spX =
@@ -275,15 +260,15 @@ export default function CosmicBackground() {
 
             ctx.beginPath();
             ctx.arc(spX, spY, spark.size, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(224, 242, 254, ${comet.opacity * 0.75})`;
+            ctx.fillStyle = `rgba(224, 242, 254, ${comet.opacity * 0.7})`;
             ctx.fill();
           });
 
-          // 5. Reciclaje al salir del viewport
+          // 5. Salida del viewport y reinicio
           if (comet.x > width + 250 || comet.y > height + 250) {
             comet.active = false;
-            // Cooldown casi instantáneo (15 a 50 frames, ~0.25s a 0.8s) para flujo perpetuo
-            comet.cooldown = Math.random() * 35 + 15;
+            // Cooldown de 20 a 60 frames (~0.3s a 1s) para reingreso continuo
+            comet.cooldown = Math.random() * 40 + 20;
           }
         });
       }
