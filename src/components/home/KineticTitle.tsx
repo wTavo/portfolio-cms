@@ -161,7 +161,7 @@ export default function KineticTitle({
       let startY = 0;
       let endX = winW + 550;
       let endY = 0;
-      const speed = 0.0055;
+      const speed = 0.0030; // Velocidad pausada, majestuosa y cinematográfica
 
       const mode = trajectoryCounter % 3;
       trajectoryCounter++;
@@ -169,9 +169,9 @@ export default function KineticTitle({
       if (mode === 0) {
         // Trayectoria 1: Gran diagonal descendente que cruza PORTAFOLIO y PROFESIONAL
         startX = -450;
-        startY = titleCenterY - titleHeight * 1.4;
+        startY = titleCenterY - titleHeight * 1.3;
         endX = winW + 550;
-        endY = titleCenterY + titleHeight * 1.4;
+        endY = titleCenterY + titleHeight * 1.3;
       } else if (mode === 1) {
         // Trayectoria 2: Diagonal suave ascendente que atraviesa PROFESIONAL y luego PORTAFOLIO
         startX = -450;
@@ -181,9 +181,9 @@ export default function KineticTitle({
       } else {
         // Trayectoria 3: Cruce central amplio y rasante que baña todo el bloque tipográfico
         startX = -450;
-        startY = titleCenterY - 30;
+        startY = titleCenterY - 25;
         endX = winW + 550;
-        endY = titleCenterY + 40;
+        endY = titleCenterY + 35;
       }
 
       activeComet = {
@@ -209,9 +209,9 @@ export default function KineticTitle({
 
       ctx.clearRect(0, 0, winW, winH);
 
-      // Decaimiento fosforescente suave de todas las letras (fade out)
+      // Decaimiento fosforescente suave de todas las letras (fade out gradual)
       letterItems.forEach((item) => {
-        currentBrightness[item.key] = Math.max(0, (currentBrightness[item.key] ?? 0) * 0.94);
+        currentBrightness[item.key] = Math.max(0, (currentBrightness[item.key] ?? 0) * 0.95);
       });
 
       if (activeComet) {
@@ -227,11 +227,11 @@ export default function KineticTitle({
         const tailX = currentHeadX - Math.cos(angle) * comet.tailLength;
         const tailY = currentHeadY - Math.sin(angle) * comet.tailLength;
 
-        // Generar partículas de polvo estelar cósmico
-        if (Math.random() < 0.8) {
+        // Generar partículas de polvo estelar cósmico mientras esté en pantalla
+        if (comet.progress < 1.05 && Math.random() < 0.75) {
           const spread = (Math.random() - 0.5) * 28;
           const pAngle = angle + Math.PI + (Math.random() - 0.5) * 0.3;
-          const pSpeed = 1.0 + Math.random() * 3.5;
+          const pSpeed = 0.8 + Math.random() * 2.5;
           comet.particles.push({
             x: currentHeadX + Math.sin(angle) * spread,
             y: currentHeadY - Math.cos(angle) * spread,
@@ -373,11 +373,14 @@ export default function KineticTitle({
           }
         });
 
-        // Al salir de la pantalla completa
-        if (comet.progress >= 1.25 && comet.particles.length === 0) {
+        // Al salir de la pantalla completa: reiniciar y programar el siguiente cometa
+        if (comet.progress >= 1.25) {
           activeComet = null;
-          // Pausa de 3.0 segundos antes del siguiente cometa
-          cometCooldownTimer = setTimeout(launchComet, 3000);
+          if (cometCooldownTimer) clearTimeout(cometCooldownTimer);
+          cometCooldownTimer = setTimeout(() => {
+            cometCooldownTimer = null;
+            launchComet();
+          }, 2600);
         }
       }
 
