@@ -1,8 +1,8 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Dibujo Secuencial Trazo por Trazo de Moldes y Posterior Relleno Blanco".
- * Todas las letras del título completan primero su dibujo de contorno vectorial trazo por trazo,
- * estableciendo la totalidad de los moldes antes de dar paso al llenado progresivo con color blanco incandescente.
+ * @description Título Cinético: "Cierre de Circuito Vectorial y Encendido de Foco con Parpadeo Eléctrico".
+ * Las siluetas se trazan iluminadas simulando cables/filamentos. Al conectarse y cerrar el circuito,
+ * la corriente eléctrica fluye y el color interior se enciende con un parpadeo de foco antes de quedar fijo.
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -111,14 +111,14 @@ export default function KineticTitle({
   }
 
   // Constantes de coreografía simultánea:
-  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente con siluetas siempre iluminadas y resplandecientes desde el inicio
+  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente como cables/filamentos iluminados
   const initialDelay = 0.25;
   const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
-  const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s
+  const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s (Momento exacto en que los cables se conectan y cierran el circuito)
 
-  // 2. Tiempo de contemplación de siluetas encendidas y posterior llenado gradual (NO instantáneo)
-  const fillStartDelay = totalStrokeEndTime + 0.85; // Pausa apreciable con las siluetas encendidas brillando solas
-  const fillDuration = 1.6; // Llenado lento, suave y no instantáneo del color blanco
+  // 2. Encendido del foco (el color): al llegar la corriente tras la conexión, parpadea como un foco antes de estabilizarse
+  const fillStartDelay = totalStrokeEndTime + 0.10; // La corriente llega de inmediato al completarse la conexión del circuito
+  const fillFlickerDuration = 0.85; // Duración del parpadeo eléctrico hasta quedar fijo y brillante
 
   return (
     <div
@@ -212,23 +212,35 @@ export default function KineticTitle({
                       />
                     ))}
 
-                    {/* 2. RELLENO DE COLOR POSTERIOR (NO INSTANTÁNEO: PAUSA DE APRECIACIÓN + LLENADO GRADUAL) */}
+                    {/* 2. ENCENDIDO DEL FOCO CON PARPADEO ELÉCTRICO TRAS CONECTARSE LOS CABLES */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
+                      initial={{
+                        opacity: 0,
+                        filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                      }}
+                      animate={{
+                        opacity: [0, 0.92, 0.15, 1, 0.42, 1, 1],
+                        filter: [
+                          'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                          'drop-shadow(0 0 24px rgba(255, 255, 255, 1)) drop-shadow(0 0 45px rgba(186, 230, 253, 0.8))',
+                          'drop-shadow(0 0 4px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 10px rgba(186, 230, 253, 0.2))',
+                          'drop-shadow(0 0 28px rgba(255, 255, 255, 1)) drop-shadow(0 0 55px rgba(186, 230, 253, 0.9))',
+                          'drop-shadow(0 0 10px rgba(255, 255, 255, 0.5)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.35))',
+                          'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                          'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                        ],
+                      }}
                       transition={{
-                        duration: fillDuration,
+                        duration: fillFlickerDuration,
                         delay: fillDelay,
-                        ease: [0.16, 1, 0.3, 1],
+                        times: [0, 0.14, 0.26, 0.45, 0.62, 0.80, 1],
+                        ease: 'easeInOut',
                       }}
                       fill="#ffffff"
                       stroke="#ffffff"
                       strokeWidth={1}
-                      style={{
-                        filter: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
-                      }}
                     />
                   </g>
                 );
