@@ -166,13 +166,33 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA BASE DEL MOLDE (CADA CONTORNO SE TRAZA EN PARALELO DE 0 A 100% UNIFORME) */}
+                    {/* 1. SILUETA BASE DEL MOLDE (SE TRAZA APAGADA Y SE ENCIENDE AL COMPLETARSE EL DIBUJO) */}
                     {letter.subpaths.map((subD, subIdx) => (
                       <motion.path
                         key={`mold-stroke-${subIdx}`}
                         d={subD}
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{ pathLength: 1, opacity: 1 }}
+                        initial={{
+                          pathLength: 0,
+                          opacity: 0,
+                          stroke: 'rgba(255, 255, 255, 0.22)',
+                          filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                        }}
+                        animate={{
+                          pathLength: 1,
+                          opacity: 1,
+                          stroke: [
+                            'rgba(255, 255, 255, 0.22)', // apagado mientras se dibuja
+                            'rgba(255, 255, 255, 0.22)', // sigue apagado hasta que se completa
+                            '#ffffff',                   // ¡SE ENCIENDE EN EL MOMENTO DE TERMINAR!
+                            'rgba(255, 255, 255, 0.95)', // permanece encendido
+                          ],
+                          filter: [
+                            'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                            'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                            'drop-shadow(0 0 16px rgba(255, 255, 255, 1)) drop-shadow(0 0 32px rgba(186, 230, 253, 0.85))',
+                            'drop-shadow(0 0 10px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.45))',
+                          ],
+                        }}
                         transition={{
                           pathLength: {
                             duration: strokeDuration,
@@ -183,49 +203,27 @@ export default function KineticTitle({
                             duration: 0.05,
                             delay: strokeDelay,
                           },
+                          stroke: {
+                            duration: strokeDuration + 0.35,
+                            delay: strokeDelay,
+                            times: [0, 0.94, 0.98, 1],
+                            ease: [0.16, 1, 0.3, 1],
+                          },
+                          filter: {
+                            duration: strokeDuration + 0.35,
+                            delay: strokeDelay,
+                            times: [0, 0.94, 0.98, 1],
+                            ease: [0.16, 1, 0.3, 1],
+                          },
                         }}
-                        stroke="rgba(255, 255, 255, 0.35)"
-                        strokeWidth={3.5}
+                        strokeWidth={3}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         fill="transparent"
                       />
                     ))}
 
-                    {/* 2. TRAZO LUMINOSO INCANDESCENTE DURANTE EL DIBUJO (DESTELLO LÁSER ACTIVO LINEAL EN PARALELO) */}
-                    {letter.subpaths.map((subD, subIdx) => (
-                      <motion.path
-                        key={`laser-stroke-${subIdx}`}
-                        d={subD}
-                        initial={{ pathLength: 0, opacity: 0 }}
-                        animate={{
-                          pathLength: 1,
-                          opacity: [0, 1, 1, 0],
-                        }}
-                        transition={{
-                          pathLength: {
-                            duration: strokeDuration,
-                            delay: strokeDelay,
-                            ease: 'linear',
-                          },
-                          opacity: {
-                            duration: strokeDuration,
-                            delay: strokeDelay,
-                            times: [0, 0.04, 0.96, 1],
-                          },
-                        }}
-                        stroke="#ffffff"
-                        strokeWidth={5.5}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="transparent"
-                        style={{
-                          filter: 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.6))',
-                        }}
-                      />
-                    ))}
-
-                    {/* 3. RELLENO DE COLOR POSTERIOR (SOLO COMIENZA CUANDO TODAS LAS LETRAS ESTÁN DIBUJADAS) */}
+                    {/* 2. RELLENO DE COLOR POSTERIOR (SOLO COMIENZA CUANDO TODAS LAS SILUETAS SE ENCIENDEN) */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
