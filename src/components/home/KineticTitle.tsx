@@ -376,11 +376,11 @@ export default function KineticTitle({
         className="absolute inset-0 w-full h-full pointer-events-none z-20 overflow-visible"
       />
 
-      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4 gap-y-8 sm:gap-y-10 md:gap-y-14 z-10 overflow-visible">
+      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4 gap-y-2 sm:gap-y-3.5 md:gap-y-4 z-10 overflow-visible">
         {words.map((word, wordIdx) => {
           const isFirstWord = wordIdx === 0;
 
-          // Jerarquía tipográfica monumental con line-height desahogado para evitar recortes
+          // Jerarquía tipográfica monumental con espaciado equilibrado
           const fontClasses = isFirstWord
             ? 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider'
             : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.28em] md:tracking-[0.32em]';
@@ -390,7 +390,7 @@ export default function KineticTitle({
           return (
             <div
               key={`word-row-${wordIdx}`}
-              className={`inline-flex items-center justify-center relative leading-[1.15] py-2 overflow-visible ${fontClasses} ${
+              className={`inline-flex items-center justify-center relative leading-[1.08] overflow-visible ${fontClasses} ${
                 isFirstWord ? 'gap-x-1 sm:gap-x-2 md:gap-x-3' : 'gap-x-1 sm:gap-x-1.5 md:gap-x-2.5'
               }`}
             >
@@ -402,12 +402,12 @@ export default function KineticTitle({
                   <div
                     id={`kinetic-char-${key}`}
                     key={`slot-${key}`}
-                    className="relative inline-flex items-center justify-center py-2 overflow-visible"
+                    className="relative inline-flex items-center justify-center overflow-visible"
                     style={{ minWidth: slotMinWidth }}
                   >
                     {/* 🔲 CAPA 1: PAREDES Y SILUETA DEL MOLDE BASE */}
                     <span
-                      className="select-none pointer-events-none uppercase leading-[1.15] transition-colors duration-200"
+                      className="select-none pointer-events-none uppercase leading-[1.08] transition-colors duration-200"
                       style={{
                         WebkitTextStroke: brightness > 0.05
                           ? `1.5px rgba(255, 255, 255, ${0.3 + brightness * 0.7})`
@@ -430,7 +430,7 @@ export default function KineticTitle({
                       }}
                     >
                       <span
-                        className="inline-block uppercase leading-[1.15] text-white transition-all"
+                        className="inline-block uppercase leading-[1.08] text-white transition-all"
                         style={{
                           textShadow: brightness > 0.3
                             ? `0 0 24px rgba(255, 255, 255, ${brightness * 0.95}), 0 0 45px rgba(255, 255, 255, ${brightness * 0.6})`
