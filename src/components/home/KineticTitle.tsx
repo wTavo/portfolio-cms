@@ -230,16 +230,16 @@ export default function KineticTitle({
                       {char}
                     </span>
 
-                    {/* LETRA: 100% Opaca con masa física 3D y sombras oclusivas */}
+                    {/* LETRA: 100% Opaca con masa física 3D y elevación Z sin clipping */}
                     <span
                       className="absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white opacity-100"
                       style={{
                         zIndex: isCurrentlyFloating ? 60 : isLifted ? 30 : totalLetters - globalIdx,
                         transform: isLifted
                           ? isCurrentlyFloating
-                            ? 'translate3d(0, 0, 40px) rotateX(0deg) rotateZ(0deg) scale(1)'
+                            ? 'translate3d(0, 0, 90px) rotateX(0deg) rotateZ(0deg) scale(1)'
                             : 'translate3d(0, 0, 2px) rotateX(0deg) rotateZ(0deg) scale(1)'
-                          : `translate3d(${relativePileXCalc}, ${relativePileYCalc}, 5px) rotateX(${pileRotX}deg) rotateZ(${pileRotZ}deg) scale(0.8)`,
+                          : `translate3d(${relativePileXCalc}, ${relativePileYCalc}, 70px) rotateX(${pileRotX}deg) rotateZ(${pileRotZ}deg) scale(0.8)`,
                         transition: isLifted
                           ? isStaircase
                             ? 'transform 900ms cubic-bezier(0.22, 1, 0.36, 1), opacity 300ms ease, text-shadow 400ms ease'
@@ -263,7 +263,7 @@ export default function KineticTitle({
                         style={{
                           textShadow: isLifted
                             ? 'none'
-                            : '0 1px 0 #e2e8f0, 0 2px 0 #cbd5e1, 0 3px 0 #94a3b8, 0 4px 1px #64748b, 0 6px 10px rgba(0,0,0,0.9), 0 10px 20px rgba(0,0,0,0.95)',
+                            : '0 1px 0 #cbd5e1, 0 2px 0 #94a3b8, 0 4px 6px rgba(0,0,0,0.85), 0 8px 16px rgba(0,0,0,0.95)',
                         }}
                       >
                         {char}
