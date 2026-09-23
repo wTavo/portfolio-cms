@@ -176,12 +176,6 @@ export default function KineticTitle({
                 const fluidSpreadPercent = currentFill * 150;
                 const coreSolidPercent = Math.max(0, fluidSpreadPercent - 20);
 
-                const fluidBackground = isComplete
-                  ? '#ffffff'
-                  : currentFill > 0
-                  ? `radial-gradient(ellipse 130% 130% at 50% 50%, #ffffff 0%, #ffffff ${coreSolidPercent}%, rgba(255, 255, 255, 0.95) ${fluidSpreadPercent * 0.92}%, rgba(255, 255, 255, 0) ${fluidSpreadPercent}%)`
-                  : 'transparent';
-
                 return (
                   <div
                     key={`slot-${key}`}
@@ -197,30 +191,33 @@ export default function KineticTitle({
                           : isActivelyFilling
                           ? '1.2px rgba(255, 255, 255, 0.7)'
                           : '1.2px rgba(255, 255, 255, 0.22)',
-                        color: 'rgba(255, 255, 255, 0.02)',
-                        textShadow: isActivelyFilling
-                          ? '0 0 10px rgba(255, 255, 255, 0.2)'
-                          : 'none',
+                        color: 'transparent',
                       }}
                       aria-hidden="true"
                     >
                       {char}
                     </span>
 
-                    {/* 🌊 CAPA 2: LÍQUIDO BLANCO FLUYENDO 100% CONFINADO DENTRO DE LA CAVIDAD DEL MOLDE */}
+                    {/* 🌊 CAPA 2: LÍQUIDO O LETRA SÓLIDA (100% CONFINADO A LA TIPOGRAFÍA) */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
-                      <span
-                        className="inline-block uppercase leading-[1.0] transition-none"
-                        style={{
-                          background: fluidBackground,
-                          WebkitBackgroundClip: 'text',
-                          backgroundClip: 'text',
-                          WebkitTextFillColor: 'transparent',
-                          color: 'transparent',
-                        }}
-                      >
-                        {char}
-                      </span>
+                      {isComplete ? (
+                        <span className="inline-block uppercase leading-[1.0] text-white">
+                          {char}
+                        </span>
+                      ) : isActivelyFilling ? (
+                        <span
+                          className="inline-block uppercase leading-[1.0]"
+                          style={{
+                            backgroundImage: `radial-gradient(ellipse 130% 130% at 50% 50%, #ffffff 0%, #ffffff ${coreSolidPercent}%, rgba(255, 255, 255, 0.95) ${fluidSpreadPercent * 0.92}%, rgba(255, 255, 255, 0) ${fluidSpreadPercent}%)`,
+                            WebkitBackgroundClip: 'text',
+                            backgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            color: 'transparent',
+                          }}
+                        >
+                          {char}
+                        </span>
+                      ) : null}
                     </div>
                   </div>
                 );
