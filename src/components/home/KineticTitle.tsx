@@ -1,36 +1,32 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Firma Caligráfica de Autor con Trazado Vectorial en Tiempo Real".
- * Cada letra, curva y bucle de 'Portafolio Profesional' se dibuja progresivamente a velocidad
- * pausada y elegante, con un punto de luz viva en la punta del trazo y floritura de firma final.
+ * @description Título Cinético: "Cromo Líquido y Refracción Cáustica" (Liquid Chrome & Specular Glare).
+ * Tipografía monumental tallada en cromo líquido y titanio pulido con destellos de bisel,
+ * barrido de luz cáustica y reflejo especular interactivo en tiempo real con el mouse.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 interface KineticTitleProps {
   text?: string;
   className?: string;
 }
 
+type AnimationPhase = 'mercury_flow' | 'caustic_flare' | 'settled';
+
 export default function KineticTitle({
+  text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [progressWord1, setProgressWord1] = useState(0);
-  const [progressWord2, setProgressWord2] = useState(0);
-  const [progressFlourish, setProgressFlourish] = useState(0);
-  const [tracerPoint, setTracerPoint] = useState<{ x: number; y: number; visible: boolean }>({
-    x: 75,
-    y: 130,
-    visible: false,
-  });
-  const [isFinalGlow, setIsFinalGlow] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [phase, setPhase] = useState<AnimationPhase>('mercury_flow');
+  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
+  const [isWaveActive, setIsWaveActive] = useState(false);
 
-  const pathWord1Ref = useRef<SVGPathElement>(null);
-  const pathWord2Ref = useRef<SVGPathElement>(null);
-  const pathFlourishRef = useRef<SVGPathElement>(null);
-  const animFrameRef = useRef<number | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
+  const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -40,135 +36,57 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  const runSignatureDrawing = () => {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+  const runLiquidChromeSequence = () => {
+    setPhase('mercury_flow');
+    setIsWaveActive(true);
 
-    setIsAnimating(true);
-    setIsFinalGlow(false);
-    setProgressWord1(0);
-    setProgressWord2(0);
-    setProgressFlourish(0);
+    // 1. Flujo de mercurio líquido e ignición cáustica (600ms)
+    const t1 = setTimeout(() => {
+      setPhase('caustic_flare');
 
-    const path1 = pathWord1Ref.current;
-    const path2 = pathWord2Ref.current;
-    const pathF = pathFlourishRef.current;
+      // 2. Asentamiento en cromo interactivo permanente (800ms)
+      const t2 = setTimeout(() => {
+        setPhase('settled');
+        setIsWaveActive(false);
+      }, 800);
 
-    if (!path1 || !path2 || !pathF) return;
+      return () => clearTimeout(t2);
+    }, 600);
 
-    const len1 = path1.getTotalLength();
-    const len2 = path2.getTotalLength();
-    const lenF = pathF.getTotalLength();
-
-    const startPt = path1.getPointAtLength(0);
-    setTracerPoint({ x: startPt.x, y: startPt.y, visible: true });
-
-    const startTime = performance.now();
-    // Tiempos más pausados para apreciar el dibujo de cada bucle y letra
-    const dur1 = 2200;    // 'Portafolio'
-    const pause1 = 300;   // Traslado aéreo suave
-    const dur2 = 2400;    // 'Profesional'
-    const pause2 = 200;   // Pausa antes de la rúbrica
-    const durF = 1100;    // Floritura / Subrayado
-    const totalDuration = dur1 + pause1 + dur2 + pause2 + durF;
-
-    const animate = (now: number) => {
-      const elapsed = now - startTime;
-
-      if (elapsed < dur1) {
-        // Trazando 'Portafolio'
-        const p = Math.min(elapsed / dur1, 1);
-        const eased = p * (2 - p);
-        setProgressWord1(eased);
-        const pt = path1.getPointAtLength(eased * len1);
-        setTracerPoint({ x: pt.x, y: pt.y, visible: true });
-      } else if (elapsed < dur1 + pause1) {
-        // Traslado del trazo hacia la línea 2
-        setProgressWord1(1);
-        const transP = (elapsed - dur1) / pause1;
-        const ptEnd1 = path1.getPointAtLength(len1);
-        const ptStart2 = path2.getPointAtLength(0);
-        const curX = ptEnd1.x + (ptStart2.x - ptEnd1.x) * transP;
-        const curY = ptEnd1.y + (ptStart2.y - ptEnd1.y) * transP - Math.sin(transP * Math.PI) * 18;
-        setTracerPoint({ x: curX, y: curY, visible: true });
-      } else if (elapsed < dur1 + pause1 + dur2) {
-        // Trazando 'Profesional'
-        setProgressWord1(1);
-        const p = Math.min((elapsed - (dur1 + pause1)) / dur2, 1);
-        const eased = p * (2 - p);
-        setProgressWord2(eased);
-        const pt = path2.getPointAtLength(eased * len2);
-        setTracerPoint({ x: pt.x, y: pt.y, visible: true });
-      } else if (elapsed < dur1 + pause1 + dur2 + pause2) {
-        // Traslado hacia la floritura
-        setProgressWord2(1);
-        const transP = (elapsed - (dur1 + pause1 + dur2)) / pause2;
-        const ptEnd2 = path2.getPointAtLength(len2);
-        const ptStartF = pathF.getPointAtLength(0);
-        const curX = ptEnd2.x + (ptStartF.x - ptEnd2.x) * transP;
-        const curY = ptEnd2.y + (ptStartF.y - ptEnd2.y) * transP - Math.sin(transP * Math.PI) * 14;
-        setTracerPoint({ x: curX, y: curY, visible: true });
-      } else if (elapsed < totalDuration) {
-        // Trazando la floritura
-        setProgressWord1(1);
-        setProgressWord2(1);
-        const p = Math.min((elapsed - (dur1 + pause1 + dur2 + pause2)) / durF, 1);
-        const eased = p * (2 - p);
-        setProgressFlourish(eased);
-        const pt = pathF.getPointAtLength(eased * lenF);
-        setTracerPoint({ x: pt.x, y: pt.y, visible: true });
-      } else {
-        // Asentamiento completo
-        setProgressWord1(1);
-        setProgressWord2(1);
-        setProgressFlourish(1);
-        setTracerPoint((prev) => ({ ...prev, visible: false }));
-        setIsAnimating(false);
-        setIsFinalGlow(true);
-
-        setTimeout(() => {
-          setIsFinalGlow(false);
-          const glowInt = setInterval(() => {
-            setIsFinalGlow((prev) => !prev);
-          }, 1800);
-          return () => clearInterval(glowInt);
-        }, 1200);
-
-        return;
-      }
-
-      animFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animFrameRef.current = requestAnimationFrame(animate);
+    return () => clearTimeout(t1);
   };
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      setProgressWord1(1);
-      setProgressWord2(1);
-      setProgressFlourish(1);
-      setTracerPoint({ x: 0, y: 0, visible: false });
+      setPhase('settled');
       return;
     }
 
-    const t = setTimeout(() => {
-      runSignatureDrawing();
-    }, 450);
-
-    return () => {
-      clearTimeout(t);
-      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    };
+    const cleanup = runLiquidChromeSequence();
+    return cleanup;
   }, [prefersReducedMotion]);
+
+  // Manejador del mouse para el reflejo especular en tiempo real
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (prefersReducedMotion || !containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setMousePos({ x, y });
+  };
+
+  const isFlowing = phase === 'mercury_flow';
+  const isFlaring = phase === 'caustic_flare';
+  const isSettled = phase === 'settled';
 
   if (prefersReducedMotion) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-y-2 text-center select-none ${className}`}>
-        <span className="text-6xl sm:text-8xl md:text-9xl text-white font-serif italic tracking-wide">
-          Portafolio
+      <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none ${className}`}>
+        <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider text-white leading-[1.0] uppercase">
+          {words[0]}
         </span>
-        <span className="text-5xl sm:text-7xl md:text-8xl text-white/95 font-serif italic tracking-wider">
-          Profesional
+        <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.25em] sm:tracking-[0.32em] text-white/90 leading-[1.0] uppercase">
+          {words[1]}
         </span>
       </div>
     );
@@ -176,122 +94,128 @@ export default function KineticTitle({
 
   return (
     <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
       onClick={() => {
-        if (!isAnimating) runSignatureDrawing();
+        if (isSettled) runLiquidChromeSequence();
       }}
-      className="relative w-full flex flex-col items-center justify-center min-h-[520px] sm:min-h-[600px] md:min-h-[680px] py-10 sm:py-14 select-none cursor-pointer overflow-visible"
-      title="Haz clic para volver a trazar la firma"
+      className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[540px] md:min-h-[620px] py-12 sm:py-16 select-none cursor-pointer overflow-visible"
+      title="Haz clic para disparar una onda de cromo líquido"
     >
-      {/* Resplandor ambiental de estudio cinemático */}
+      <style>{`
+        @keyframes liquidSheenSweep {
+          0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
+          40% { opacity: 1; }
+          100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+        }
+        @keyframes liquidPulse {
+          0%, 100% { filter: drop-shadow(0 0 20px rgba(255,255,255,0.4)) drop-shadow(0 4px 12px rgba(0,0,0,0.9)); }
+          50% { filter: drop-shadow(0 0 35px rgba(255,255,255,0.85)) drop-shadow(0 6px 20px rgba(255,255,255,0.5)); }
+        }
+      `}</style>
+
+      {/* Resplandor ambiental de estudio líquido */}
       <div
-        className={`absolute inset-0 w-full h-full bg-radial from-white/15 via-slate-500/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-out ${
-          isFinalGlow || isAnimating ? 'opacity-100 scale-105' : 'opacity-30 scale-95'
+        className={`absolute inset-0 w-full h-full bg-radial from-white/16 via-slate-500/6 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-out ${
+          isFlaring ? 'opacity-100 scale-110' : isSettled ? 'opacity-35 scale-100' : 'opacity-10 scale-95'
         }`}
         aria-hidden="true"
       />
 
-      {/* LIENZO DE FIRMA VECTORIAL CALIGRÁFICA A GRAN ESCALA */}
-      <div className="relative w-full max-w-5xl aspect-[900/440] flex items-center justify-center">
-        <svg
-          viewBox="0 0 900 440"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="w-full h-full overflow-visible drop-shadow-[0_6px_28px_rgba(0,0,0,0.95)]"
-        >
-          <defs>
-            <linearGradient id="signature-ink" x1="0" y1="0" x2="900" y2="440" gradientUnits="userSpaceOnUse">
-              <stop offset="0%" stopColor="#ffffff" />
-              <stop offset="40%" stopColor="#f8fafc" />
-              <stop offset="80%" stopColor="#e2e8f0" />
-              <stop offset="100%" stopColor="#ffffff" />
-            </linearGradient>
-          </defs>
-
-          {/* PALABRA 1: "Portafolio" (Trazos Vectoriales de Caligrafía Fluida y Legible) */}
-          <path
-            ref={pathWord1Ref}
-            d="
-              M 85,155 C 75,95 125,75 145,115 C 158,145 115,190 92,210 M 118,105 C 108,140 102,175 98,210
-              C 100,195 120,165 148,155 C 172,145 182,170 165,188 C 148,206 128,185 142,164 C 155,142 180,146 195,164
-              C 205,178 202,192 215,192 C 228,192 232,172 238,154 C 242,136 250,148 255,166 C 260,184 266,192 278,192
-              M 268,138 L 264,196 M 254,158 L 282,154
-              C 282,174 296,192 315,192 C 332,192 342,172 328,154 C 314,136 292,156 306,182 C 318,200 336,192 346,164
-              C 356,132 370,75 375,60 C 380,45 372,58 368,98 C 364,142 360,205 356,242 C 354,256 364,252 372,230 C 378,208 378,176 388,172
-              C 400,168 414,154 432,154 C 450,154 458,175 442,192 C 425,208 408,188 420,166 C 434,144 460,156 474,144
-              C 482,130 496,76 500,62 C 504,48 496,62 492,102 C 488,144 484,178 496,192
-              C 505,192 514,170 518,156 C 522,174 526,192 538,192 M 520,134 A 2.5,2.5 0 1,1 520,135
-              C 538,192 552,166 570,154 C 592,140 610,166 596,188 C 578,210 556,188 574,162 C 592,140 618,148 642,144
-            "
-            stroke="url(#signature-ink)"
-            strokeWidth="5.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4">
+        {/* 🪞 FILA 1: PORTAFOLIO (Cromo Líquido Monumental) */}
+        <div className="relative inline-block overflow-visible group">
+          {/* Capa de Sombra y Relieve Base */}
+          <h1
+            className={`text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider text-transparent leading-[1.0] uppercase text-center transition-all duration-700 select-none ${
+              isFlowing
+                ? 'opacity-0 scale-95 blur-sm'
+                : 'opacity-100 scale-100'
+            }`}
             style={{
-              strokeDasharray: 2600,
-              strokeDashoffset: (1 - progressWord1) * 2600,
-              filter: isFinalGlow ? 'drop-shadow(0 0 18px rgba(255,255,255,0.95))' : 'none',
-              transition: isAnimating ? 'none' : 'filter 1000ms ease',
+              backgroundImage: `radial-gradient(circle at ${mousePos.x}% ${mousePos.y}%, #ffffff 0%, #e2e8f0 25%, #94a3b8 55%, #1e293b 85%, #0f172a 100%)`,
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              filter: isFlaring
+                ? 'drop-shadow(0 0 35px rgba(255,255,255,0.95)) drop-shadow(0 4px 16px rgba(255,255,255,0.7))'
+                : 'drop-shadow(0 8px 30px rgba(0,0,0,0.95)) drop-shadow(0 1px 2px rgba(255,255,255,0.4))',
+            }}
+          >
+            {words[0]}
+          </h1>
+
+          {/* Destello de Refracción Cáustica en Barra de Barrido */}
+          <div
+            className="absolute inset-0 pointer-events-none overflow-hidden"
+            style={{
+              clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0% 100%)',
+            }}
+          >
+            <div
+              className={`absolute top-0 bottom-0 w-36 bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none blur-[2px] ${
+                isWaveActive || isFlowing || isFlaring ? 'animate-[liquidSheenSweep_1.4s_cubic-bezier(0.16,1,0.3,1)_forwards]' : 'opacity-0'
+              }`}
+            />
+          </div>
+
+          {/* Línea de Bisel Especular Superior */}
+          <div
+            className={`absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-white/70 to-transparent transition-opacity duration-1000 pointer-events-none ${
+              isSettled ? 'opacity-40' : 'opacity-0'
+            }`}
+            style={{
+              transform: `translateX(${(mousePos.x - 50) * 0.3}px)`,
             }}
           />
+        </div>
 
-          {/* PALABRA 2: "Profesional" (Trazos Vectoriales de Caligrafía Fluida y Legible) */}
-          <path
-            ref={pathWord2Ref}
-            d="
-              M 165,275 C 158,218 200,200 215,236 C 228,268 188,308 170,326 M 192,230 C 182,258 178,290 174,326
-              C 174,316 188,284 210,275 C 228,266 238,288 224,306 C 210,324 192,306 205,288 C 218,270 240,275 250,288
-              C 258,300 254,316 265,316 C 276,316 280,298 285,280 C 290,262 296,275 300,288 C 304,304 308,316 318,316
-              C 325,288 335,234 338,220 C 342,208 335,220 332,252 C 328,288 325,334 322,360 C 320,370 328,366 334,348 C 340,330 340,305 348,300
-              C 358,296 370,282 384,282 C 398,282 392,306 378,315 C 365,324 356,306 370,292 C 384,278 402,292 410,305
-              C 418,318 428,314 436,292 C 445,268 432,264 425,278 C 418,292 425,316 440,316
-              C 450,316 456,298 460,284 C 464,300 468,316 478,316 M 462,260 A 2.5,2.5 0 1,1 462,261
-              C 478,316 490,292 504,282 C 522,272 535,294 524,310 C 508,326 494,310 506,290 C 518,270 540,278 556,274
-              C 562,265 570,278 573,292 C 576,306 585,316 594,316 C 602,294 608,280 612,294 C 615,306 618,316 628,316
-              C 628,302 636,284 648,284 C 662,284 666,300 658,312 C 644,324 630,310 640,294 C 650,278 662,285 672,274
-              C 676,262 686,218 690,204 C 694,190 686,204 682,236 C 678,272 675,300 686,314
-            "
-            stroke="url(#signature-ink)"
-            strokeWidth="5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{
-              strokeDasharray: 3000,
-              strokeDashoffset: (1 - progressWord2) * 3000,
-              filter: isFinalGlow ? 'drop-shadow(0 0 16px rgba(255,255,255,0.9))' : 'none',
-              transition: isAnimating ? 'none' : 'filter 1000ms ease',
-            }}
+        {/* 〰️ SEPARADOR DE HORIZONTE LÍQUIDO */}
+        <div className="relative w-full max-w-lg sm:max-w-2xl md:max-w-3xl h-5 sm:h-7 flex items-center justify-center my-1 sm:my-2 overflow-visible pointer-events-none">
+          <div
+            className={`h-[1px] transition-all duration-800 ease-out ${
+              isFlowing
+                ? 'w-0 opacity-0'
+                : isFlaring
+                ? 'w-full opacity-90 shadow-[0_0_16px_rgba(255,255,255,0.9)] bg-gradient-to-r from-transparent via-white to-transparent'
+                : 'w-3/4 opacity-40 bg-gradient-to-r from-transparent via-slate-300 to-transparent'
+            }`}
           />
+        </div>
 
-          {/* FLORITURA / RÚBRICA FINAL ELEGANTE DE FIRMA */}
-          <path
-            ref={pathFlourishRef}
-            d="
-              M 686,314 C 640,360 480,380 320,375 C 170,370 50,350 20,332 C 8,322 24,308 60,314 C 110,320 220,350 380,364 C 540,378 720,356 800,324
-            "
-            stroke="url(#signature-ink)"
-            strokeWidth="3.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        {/* 🪞 FILA 2: PROFESIONAL (Cromo Satinado con Tracking Extendido) */}
+        <div className="relative inline-block overflow-visible">
+          <p
+            className={`text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.25em] sm:tracking-[0.32em] text-transparent leading-[1.0] uppercase text-center transition-all duration-700 delay-100 select-none ${
+              isFlowing
+                ? 'opacity-0 scale-95 blur-sm'
+                : 'opacity-100 scale-100'
+            }`}
             style={{
-              strokeDasharray: 1400,
-              strokeDashoffset: (1 - progressFlourish) * 1400,
-              filter: isFinalGlow ? 'drop-shadow(0 0 14px rgba(255,255,255,0.85))' : 'none',
-              transition: isAnimating ? 'none' : 'filter 1000ms ease',
+              backgroundImage: `radial-gradient(circle at ${100 - mousePos.x}% ${mousePos.y}%, #ffffff 0%, #cbd5e1 30%, #64748b 65%, #1e293b 100%)`,
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              filter: isFlaring
+                ? 'drop-shadow(0 0 25px rgba(255,255,255,0.85)) drop-shadow(0 2px 14px rgba(255,255,255,0.6))'
+                : 'drop-shadow(0 6px 20px rgba(0,0,0,0.9)) drop-shadow(0 1px 1px rgba(255,255,255,0.3))',
             }}
-          />
+          >
+            {words[1]}
+          </p>
 
-          {/* CHISPA TRAZADORA DE LUZ QUE GUÍA LA ESCRITURA EN TIEMPO REAL */}
-          {tracerPoint.visible && (
-            <g transform={`translate(${tracerPoint.x}, ${tracerPoint.y})`}>
-              {/* Halo de luz exterior */}
-              <circle r="9" fill="#ffffff" opacity="0.4" className="blur-[2px]" />
-              {/* Núcleo de luz blanca */}
-              <circle r="4.5" fill="#ffffff" className="drop-shadow-[0_0_12px_rgba(255,255,255,1)]" />
-              {/* Partícula diminuta de brillo */}
-              <circle r="1.5" fill="#ffffff" />
-            </g>
-          )}
-        </svg>
+          {/* Destello de Refracción Línea 2 */}
+          <div
+            className="absolute inset-0 pointer-events-none overflow-hidden"
+            style={{
+              clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0% 100%)',
+            }}
+          >
+            <div
+              className={`absolute top-0 bottom-0 w-28 bg-gradient-to-r from-transparent via-white/70 to-transparent pointer-events-none blur-[2px] ${
+                isWaveActive || isFlowing || isFlaring ? 'animate-[liquidSheenSweep_1.4s_cubic-bezier(0.16,1,0.3,1)_150ms_forwards]' : 'opacity-0'
+              }`}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
