@@ -1,8 +1,8 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Dibujo de Contorno de Moldes Vectoriales y Relleno de Color Progresivo".
- * Los moldes de las letras se trazan primero de forma vectorial mediante dibujo de contorno luminoso
- * y posteriormente se van rellenando con color blanco incandescente y resplandor celestial.
+ * @description Título Cinético: "Dibujo Secuencial Trazo por Trazo de Moldes y Posterior Relleno Blanco".
+ * Todas las letras del título completan primero su dibujo de contorno vectorial trazo por trazo,
+ * estableciendo la totalidad de los moldes antes de dar paso al llenado progresivo con color blanco incandescente.
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
@@ -48,12 +48,12 @@ export default function KineticTitle({
     return () => mediaQuery.removeEventListener('change', listener);
   }, []);
 
-  // Calcular la disposición geométrica de cada palabra y letra
-  const wordsLayout = useMemo<WordLayout[]>(() => {
+  // Calcular la disposición geométrica precisa de cada palabra y letra con índice global secuencial
+  const { wordsLayout, totalLetterCount } = useMemo(() => {
     let globalCounter = 0;
-    return words.map((word, wordIndex) => {
-      // Espaciado entre letras optimizado para cada línea
-      const letterSpacing = wordIndex === 0 ? 32 : 55;
+    const layouts = words.map((word, wordIndex) => {
+      // Espaciado entre letras equilibrado
+      const letterSpacing = wordIndex === 0 ? 34 : 56;
       let currentX = 0;
       const letters: LetterLayout[] = [];
 
@@ -80,9 +80,11 @@ export default function KineticTitle({
         totalWidth: Math.max(currentX - letterSpacing, 100),
       };
     });
+
+    return { wordsLayout: layouts, totalLetterCount: globalCounter };
   }, [words]);
 
-  // Permite reiniciar la animación al hacer clic en el título
+  // Reiniciar animación al hacer clic en el título
   const handleReplay = useCallback(() => {
     setAnimationKey((prev) => prev + 1);
   }, []);
@@ -105,6 +107,17 @@ export default function KineticTitle({
       </div>
     );
   }
+
+  // Constantes de coreografía estricta:
+  // 1. Fase de Dibujo: cada letra se traza en orden continuo (globalIndex 0 .. N-1)
+  const initialDelay = 0.15;
+  const strokeDuration = 0.48;
+  const strokeStagger = 0.075;
+  // Momento exacto en que la ÚLTIMA letra termina de dibujarse
+  const totalStrokeEndTime = initialDelay + (totalLetterCount - 1) * strokeStagger + strokeDuration;
+  // 2. Pausa dramática y Momento de Inicio de Llenado (DESPUÉS de que todas las letras están dibujadas)
+  const fillStartDelay = totalStrokeEndTime + 0.30;
+  const fillStagger = 0.045;
 
   return (
     <div
@@ -134,11 +147,6 @@ export default function KineticTitle({
             ? 'w-full max-w-5xl h-auto drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]'
             : 'w-[90%] max-w-4xl h-auto drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]';
 
-          // Base temporal para secuenciar el dibujo y posterior llenado
-          const baseDelay = isFirstLine ? 0.15 : 0.75;
-          const strokeStagger = 0.08;
-          const strokeDuration = 0.85;
-
           return (
             <svg
               key={`word-svg-${wordLayout.word}-${wordIdx}`}
@@ -147,9 +155,10 @@ export default function KineticTitle({
               aria-label={wordLayout.word}
             >
               {wordLayout.letters.map((letter) => {
-                const charDelay = baseDelay + letter.charIndex * strokeStagger;
-                // El llenado se inicia progresivamente cuando el contorno del molde está trazado
-                const fillDelay = charDelay + strokeDuration * 0.7;
+                // Cada letra se dibuja estrictamente en su turno según su globalIndex
+                const strokeDelay = initialDelay + letter.globalIndex * strokeStagger;
+                // El llenado se produce ÚNICAMENTE después de que TODAS las letras completaron su trazo
+                const fillDelay = fillStartDelay + letter.globalIndex * fillStagger;
 
                 return (
                   <g
@@ -157,7 +166,7 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA BASE DEL MOLDE (BAJORRELIEVE QUE SE DIBUJA PRIMERO) */}
+                    {/* 1. SILUETA BASE DEL MOLDE (SE TRAZA Y QUEDA EN BAJORRELIEVE) */}
                     <motion.path
                       d={letter.d}
                       initial={{ pathLength: 0, opacity: 0 }}
@@ -165,43 +174,43 @@ export default function KineticTitle({
                       transition={{
                         pathLength: {
                           duration: strokeDuration,
-                          delay: charDelay,
-                          ease: [0.16, 1, 0.3, 1],
+                          delay: strokeDelay,
+                          ease: [0.2, 0, 0, 1],
                         },
                         opacity: {
-                          duration: 0.15,
-                          delay: charDelay,
+                          duration: 0.05,
+                          delay: strokeDelay,
                         },
                       }}
-                      stroke="rgba(255, 255, 255, 0.32)"
+                      stroke="rgba(255, 255, 255, 0.35)"
                       strokeWidth={3.5}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       fill="transparent"
                     />
 
-                    {/* 2. TRAZO LUMINOSO INCANDESCENTE (EFECTO LÁSER DE DIBUJADO DE CONTORNO) */}
+                    {/* 2. TRAZO LUMINOSO INCANDESCENTE DURANTE EL DIBUJO (DESTELLO LÁSER ACTIVO) */}
                     <motion.path
                       d={letter.d}
                       initial={{ pathLength: 0, opacity: 0 }}
                       animate={{
                         pathLength: [0, 1],
-                        opacity: [0, 1, 0.8, 0],
+                        opacity: [0, 1, 0],
                       }}
                       transition={{
                         pathLength: {
                           duration: strokeDuration,
-                          delay: charDelay,
-                          ease: [0.16, 1, 0.3, 1],
+                          delay: strokeDelay,
+                          ease: [0.2, 0, 0, 1],
                         },
                         opacity: {
-                          duration: strokeDuration + 0.35,
-                          delay: charDelay,
-                          times: [0, 0.15, 0.8, 1],
+                          duration: strokeDuration,
+                          delay: strokeDelay,
+                          times: [0, 0.2, 1],
                         },
                       }}
                       stroke="#ffffff"
-                      strokeWidth={5}
+                      strokeWidth={5.5}
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       fill="transparent"
@@ -210,15 +219,15 @@ export default function KineticTitle({
                       }}
                     />
 
-                    {/* 3. RELLENO DE COLOR POSTERIOR (COLOR BLANCO INCANDESCENTE Y RESPLANDOR CELESTIAL) */}
+                    {/* 3. RELLENO DE COLOR POSTERIOR (SOLO COMIENZA CUANDO TODAS LAS LETRAS ESTÁN DIBUJADAS) */}
                     <motion.path
                       d={letter.d}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{
-                        duration: 0.65,
+                        duration: 0.55,
                         delay: fillDelay,
-                        ease: [0.16, 1, 0.3, 1],
+                        ease: [0.2, 0, 0, 1],
                       }}
                       fill="#ffffff"
                       stroke="#ffffff"
