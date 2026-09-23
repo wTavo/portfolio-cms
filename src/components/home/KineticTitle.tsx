@@ -111,7 +111,7 @@ export default function KineticTitle({
   }
 
   // Constantes de coreografía simultánea:
-  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente con trazo nítido y visible (no tan apagado) pero sin destellos
+  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente con siluetas siempre iluminadas y resplandecientes desde el inicio
   const initialDelay = 0.25;
   const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
   const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s
@@ -166,7 +166,7 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA DEL MOLDE (NÍTIDA Y VISIBLE DURANTE EL DIBUJO, SE ENCIENDE AL COMPLETARSE) */}
+                    {/* 1. SILUETA DEL MOLDE (SIEMPRE ILUMINADA: CON RESPLANDOR DESDE EL INICIO DEL TRAZADO) */}
                     {letter.subpaths.map((subD, subIdx) => (
                       <motion.path
                         key={`mold-stroke-${subIdx}`}
@@ -174,23 +174,18 @@ export default function KineticTitle({
                         initial={{
                           pathLength: 0,
                           opacity: 0,
-                          stroke: 'rgba(255, 255, 255, 0.52)', // Visible y nítido pero no deslumbrante
-                          filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                          stroke: '#ffffff',
+                          filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
                         }}
                         animate={{
                           pathLength: 1,
                           opacity: 1,
-                          stroke: [
-                            'rgba(255, 255, 255, 0.52)', // visible y claro durante el dibujo
-                            'rgba(255, 255, 255, 0.52)', // permanece nítido hasta terminar el trazado
-                            '#ffffff',                   // ¡SE ENCIENDE EN EL MOMENTO DE CERRARSE!
-                            'rgba(255, 255, 255, 0.95)', // permanece encendido
-                          ],
+                          stroke: '#ffffff',
                           filter: [
-                            'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
-                            'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
-                            'drop-shadow(0 0 16px rgba(255, 255, 255, 1)) drop-shadow(0 0 32px rgba(186, 230, 253, 0.85))',
-                            'drop-shadow(0 0 10px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.45))',
+                            'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+                            'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+                            'drop-shadow(0 0 18px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.9))',
+                            'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
                           ],
                         }}
                         transition={{
@@ -202,12 +197,6 @@ export default function KineticTitle({
                           opacity: {
                             duration: 0.05,
                             delay: strokeDelay,
-                          },
-                          stroke: {
-                            duration: strokeDuration + 0.35,
-                            delay: strokeDelay,
-                            times: [0, 0.94, 0.98, 1],
-                            ease: [0.16, 1, 0.3, 1],
                           },
                           filter: {
                             duration: strokeDuration + 0.35,
