@@ -97,11 +97,11 @@ export default function KineticTitle({
 
   if (prefersReducedMotion) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none font-[family-name:var(--font-display)] ${className}`}>
-        <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[var(--color-text-primary)] leading-[1.0] uppercase">
+      <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none ${className}`}>
+        <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase">
           {words[0]}
         </span>
-        <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase">
+        <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em] text-[var(--color-text-primary)] leading-[1.0] uppercase">
           {words[1]}
         </span>
       </div>
@@ -109,7 +109,7 @@ export default function KineticTitle({
   }
 
   return (
-    <div className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[560px] py-12 sm:py-16 overflow-visible font-[family-name:var(--font-display)]">
+    <div className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[560px] py-12 sm:py-16 overflow-visible">
       {/* Resplandor ambiental que alterna suavemente */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-[var(--color-brand-accent)]/20 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-in-out ${
@@ -128,20 +128,20 @@ export default function KineticTitle({
           const wordCenter = (wordLen - 1) / 2;
           const isFirstWord = wordIdx === 0;
 
-          // Tipografía jerarquizada: PORTAFOLIO más chica con tracking amplio, PROFESIONAL grande e imponente
+          // Tipografía jerarquizada: PORTAFOLIO grande e imponente, PROFESIONAL más chica con tracking amplio
           const fontClasses = isFirstWord
-            ? 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em]'
-            : 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider';
+            ? 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider'
+            : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em]';
 
-          const slotMinWidth = isFirstWord ? '0.85em' : '0.74em';
-          const slotHeight = isFirstWord ? '1.2em' : '1.1em';
-          const stepHeight = isFirstWord ? 11 : 15;
+          const slotMinWidth = isFirstWord ? '0.74em' : '0.85em';
+          const slotHeight = isFirstWord ? '1.1em' : '1.2em';
+          const stepHeight = isFirstWord ? 15 : 11;
 
           return (
             <div
               key={`word-row-${wordIdx}`}
               className={`inline-flex items-center justify-center relative ${fontClasses} ${
-                isFirstWord ? 'gap-x-1.5 sm:gap-x-2.5 md:gap-x-3.5' : 'gap-x-2 sm:gap-x-3.5 md:gap-x-5'
+                isFirstWord ? 'gap-x-2 sm:gap-x-3.5 md:gap-x-5' : 'gap-x-1.5 sm:gap-x-2.5 md:gap-x-3.5'
               }`}
             >
               {word.split('').map((char, charIdx) => {
