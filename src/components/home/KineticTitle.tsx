@@ -1,8 +1,9 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: Monolito de Cristal Holográfico 3D (Estilo Apple Pro / Linear).
- * Una tarjeta de cristal oscuro esmerilado en 3D emite un pulso refractivo y proyecta
- * el título 'PORTAFOLIO PROFESIONAL' en capas holográficas con inclinación y profundidad de campo.
+ * @description Título Cinético: "La Galería Curada / Exposición de Obras" (The Exhibition).
+ * Concepto universal para cualquier profesión: Marcos de exhibición abstractos
+ * (Arquitectura, Fotografía/Artes, Casos de Estudio, Logros/Certificaciones)
+ * convergen con fluidez en una galería 3D y coronan el título 'PORTAFOLIO PROFESIONAL'.
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -12,16 +13,103 @@ interface KineticTitleProps {
   className?: string;
 }
 
-type AnimationPhase = 'monolith_entry' | 'holographic_pulse' | 'projecting_text' | 'settled';
+type AnimationPhase = 'gallery_dispersed' | 'gallery_curating' | 'title_reveal' | 'settled';
+
+interface ExhibitionFrame {
+  id: string;
+  category: string;
+  iconType: 'geometry' | 'visual' | 'editorial' | 'achievement';
+  initialOffset: { x: number; y: number; rotate: number; z: number };
+  dockedOffset: { x: number; y: number; rotate: number; z: number };
+}
+
+const EXHIBITION_FRAMES: ExhibitionFrame[] = [
+  {
+    id: 'frame-architecture',
+    category: 'Proyectos & Estructuras',
+    iconType: 'geometry',
+    initialOffset: { x: -280, y: -120, rotate: -12, z: -80 },
+    dockedOffset: { x: -220, y: -40, rotate: -4, z: -20 },
+  },
+  {
+    id: 'frame-visual',
+    category: 'Artes & Multimedia',
+    iconType: 'visual',
+    initialOffset: { x: 280, y: -110, rotate: 14, z: -70 },
+    dockedOffset: { x: 220, y: -45, rotate: 5, z: -15 },
+  },
+  {
+    id: 'frame-editorial',
+    category: 'Casos de Estudio & Artículos',
+    iconType: 'editorial',
+    initialOffset: { x: -240, y: 130, rotate: 10, z: -60 },
+    dockedOffset: { x: -180, y: 55, rotate: 3, z: -25 },
+  },
+  {
+    id: 'frame-achievement',
+    category: 'Logros & Certificaciones',
+    iconType: 'achievement',
+    initialOffset: { x: 240, y: 140, rotate: -9, z: -90 },
+    dockedOffset: { x: 180, y: 50, rotate: -3, z: -30 },
+  },
+];
+
+/**
+ * Gráficos vectoriales abstractos que representan las diferentes disciplinas profesionales.
+ */
+function FrameArtwork({ type }: { type: ExhibitionFrame['iconType'] }) {
+  switch (type) {
+    case 'geometry':
+      // Arquitectura / Ingeniería / Diseño Estructural
+      return (
+        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
+          <rect x="8" y="8" width="32" height="32" rx="2" strokeWidth="1.2" strokeDasharray="3 2" />
+          <polygon points="24,12 36,36 12,36" strokeWidth="1.2" />
+          <circle cx="24" cy="24" r="5" strokeWidth="1" />
+          <line x1="8" y1="24" x2="40" y2="24" strokeWidth="0.8" opacity="0.4" />
+        </svg>
+      );
+    case 'visual':
+      // Fotografía / Cine / Artes Visuales
+      return (
+        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
+          <circle cx="24" cy="24" r="16" strokeWidth="1.2" />
+          <polygon points="24,12 34,24 24,36 14,24" strokeWidth="1" />
+          <circle cx="24" cy="24" r="4" fill="#ffffff" fillOpacity="0.2" strokeWidth="1" />
+          <path d="M16 12 L32 36" strokeWidth="0.8" opacity="0.4" />
+        </svg>
+      );
+    case 'editorial':
+      // Investigación / Redacción / Derecho / Consultoría
+      return (
+        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
+          <rect x="10" y="8" width="28" height="32" rx="2" strokeWidth="1.2" />
+          <line x1="16" y1="16" x2="32" y2="16" strokeWidth="1.5" strokeLinecap="round" />
+          <line x1="16" y1="22" x2="28" y2="22" strokeWidth="1.2" strokeLinecap="round" />
+          <line x1="16" y1="28" x2="30" y2="28" strokeWidth="1.2" strokeLinecap="round" />
+          <line x1="16" y1="34" x2="24" y2="34" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      );
+    case 'achievement':
+      // Certificaciones / Medicina / Finanzas / Liderazgo
+      return (
+        <svg viewBox="0 0 48 48" fill="none" className="w-full h-full stroke-slate-400 opacity-70">
+          <circle cx="24" cy="20" r="12" strokeWidth="1.2" />
+          <polygon points="24,12 26.5,17.5 32.5,18 28,22 29.5,28 24,25 18.5,28 20,22 15.5,18 21.5,17.5" fill="#ffffff" fillOpacity="0.2" strokeWidth="0.8" />
+          <path d="M19 30 L16 42 L24 38 L32 42 L29 30" strokeWidth="1.2" />
+        </svg>
+      );
+  }
+}
 
 export default function KineticTitle({
   text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [phase, setPhase] = useState<AnimationPhase>('monolith_entry');
+  const [phase, setPhase] = useState<AnimationPhase>('gallery_dispersed');
   const [isFinalGlow, setIsFinalGlow] = useState(false);
-  
+
   // Parallax interactivo del ratón
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
@@ -38,20 +126,20 @@ export default function KineticTitle({
   }, []);
 
   const runAnimationSequence = () => {
-    setPhase('monolith_entry');
+    setPhase('gallery_dispersed');
     setIsFinalGlow(false);
 
-    // 1. Entrada del monolito de cristal (600ms)
+    // 1. Los marcos de exhibición entran flotando en el espacio (500ms)
     const t1 = setTimeout(() => {
-      // 2. Pulso holográfico y activación del prisma (500ms)
-      setPhase('holographic_pulse');
+      // 2. Curaduría y ensamblado: los marcos convergen al centro y forman la galería (750ms)
+      setPhase('gallery_curating');
 
       const t2 = setTimeout(() => {
-        // 3. Proyección cinemática del título hacia el frente en 3D (850ms)
-        setPhase('projecting_text');
+        // 3. Revelación de título en el foco principal de la exposición (800ms)
+        setPhase('title_reveal');
 
         const t3 = setTimeout(() => {
-          // 4. Asentamiento en reposo con interacción de parallax y resplandor
+          // 4. Asentamiento en reposo con interacción de parallax y resplandor continuo
           setPhase('settled');
           setIsFinalGlow(true);
 
@@ -61,14 +149,14 @@ export default function KineticTitle({
               setIsFinalGlow((prev) => !prev);
             }, 1800);
             return () => clearInterval(glowInt);
-          }, 1000);
-        }, 850);
+          }, 1100);
+        }, 800);
 
         return () => clearTimeout(t3);
-      }, 500);
+      }, 750);
 
       return () => clearTimeout(t2);
-    }, 600);
+    }, 500);
 
     return () => clearTimeout(t1);
   };
@@ -83,11 +171,10 @@ export default function KineticTitle({
     return cleanup;
   }, [prefersReducedMotion]);
 
-  // Manejador del movimiento del mouse para la inclinación 3D del cristal
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (prefersReducedMotion || !containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const x = (e.clientX - rect.left) / rect.width - 0.5; // -0.5 a 0.5
+    const x = (e.clientX - rect.left) / rect.width - 0.5;
     const y = (e.clientY - rect.top) / rect.height - 0.5;
     setMousePos({ x, y });
   };
@@ -97,8 +184,8 @@ export default function KineticTitle({
   };
 
   const isSettled = phase === 'settled';
-  const isProjectingOrSettled = phase === 'projecting_text' || phase === 'settled';
-  const isPulsing = phase === 'holographic_pulse';
+  const isTitleVisible = phase === 'title_reveal' || phase === 'settled';
+  const isCuratingOrSettled = phase === 'gallery_curating' || phase === 'title_reveal' || phase === 'settled';
 
   if (prefersReducedMotion) {
     return (
@@ -113,9 +200,9 @@ export default function KineticTitle({
     );
   }
 
-  // Ángulos de rotación 3D basados en el ratón
-  const rotateY = mousePos.x * 16;
-  const rotateX = -mousePos.y * 14;
+  // Rotación del escenario según el cursor
+  const stageRotateY = mousePos.x * 14;
+  const stageRotateX = -mousePos.y * 12;
 
   return (
     <div
@@ -126,97 +213,82 @@ export default function KineticTitle({
         if (isSettled) runAnimationSequence();
       }}
       className="relative w-full flex flex-col items-center justify-center min-h-[520px] sm:min-h-[580px] md:min-h-[640px] py-12 sm:py-16 select-none cursor-pointer [perspective:1400px] overflow-visible"
-      title="Haz clic para volver a proyectar el holograma"
+      title="Haz clic para volver a curar la galería"
     >
-      {/* Resplandor ambiental de estudio cinemático */}
+      {/* Luz ambiental de galería / Spotlight central */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-white/12 via-slate-500/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-out ${
-          isFinalGlow || isPulsing ? 'opacity-100 scale-110' : 'opacity-30 scale-95'
+          isFinalGlow || phase === 'title_reveal' ? 'opacity-100 scale-110' : 'opacity-35 scale-95'
         }`}
         aria-hidden="true"
       />
 
-      {/* CONTENEDOR 3D CON INCLINACIÓN PARALLAX */}
+      {/* ESCENARIO DE GALERÍA 3D CON PARALLAX */}
       <div
         className="relative flex items-center justify-center transition-transform duration-300 ease-out [transform-style:preserve-3d]"
         style={{
-          transform: `rotateX(${rotateX}deg) rotateY(${rotateY}deg)`,
+          transform: `rotateX(${stageRotateX}deg) rotateY(${stageRotateY}deg)`,
         }}
       >
-        {/* 🪟 MONOLITO DE CRISTAL OSCURO ESMERILADO (FROSTED GLASS CARD) */}
-        <div
-          className={`relative flex items-center justify-center rounded-3xl md:rounded-[32px] transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-            phase === 'monolith_entry'
-              ? 'w-72 h-44 sm:w-96 sm:h-56 opacity-85 scale-90 [transform:translateZ(0px)]'
-              : phase === 'holographic_pulse'
-              ? 'w-80 h-48 sm:w-[440px] sm:h-64 opacity-100 scale-105 [transform:translateZ(15px)] shadow-[0_0_80px_rgba(255,255,255,0.25)]'
-              : 'w-[90vw] max-w-4xl h-56 sm:h-72 md:h-80 opacity-90 scale-100 [transform:translateZ(0px)]'
-          }`}
-          style={{
-            background:
-              'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(15,23,42,0.65) 40%, rgba(2,6,23,0.85) 100%)',
-            backdropFilter: 'blur(24px)',
-            WebkitBackdropFilter: 'blur(24px)',
-            border: '1px solid rgba(255,255,255,0.18)',
-            boxShadow:
-              '0 30px 80px -15px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.35), inset 0 -1px 1px rgba(0,0,0,0.5)',
-          }}
-        >
-          {/* Reflejo especular / Glare interactivo que sigue al mouse */}
-          <div
-            className="absolute inset-0 rounded-3xl md:rounded-[32px] pointer-events-none transition-opacity duration-500 overflow-hidden"
-            style={{
-              background: `radial-gradient(circle at ${(mousePos.x + 0.5) * 100}% ${(mousePos.y + 0.5) * 100}%, rgba(255,255,255,0.18) 0%, transparent 60%)`,
-            }}
-          />
+        {/* 🏛️ MARCOS DE EXHIBICIÓN DE DISCIPLINAS (THE EXHIBITION CANVASES) */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none [transform-style:preserve-3d]">
+          {EXHIBITION_FRAMES.map((frame, idx) => {
+            const currentOffset = isCuratingOrSettled ? frame.dockedOffset : frame.initialOffset;
+            const opacity = isCuratingOrSettled
+              ? isSettled
+                ? 'opacity-40 sm:opacity-55'
+                : 'opacity-85'
+              : 'opacity-0';
 
-          {/* Micro-malla de circuito / matriz holográfica */}
-          <div
-            className="absolute inset-0 rounded-3xl md:rounded-[32px] opacity-10 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]"
-            aria-hidden="true"
-          />
+            return (
+              <div
+                key={frame.id}
+                className={`absolute w-32 h-36 sm:w-40 sm:h-44 md:w-48 md:h-52 rounded-2xl transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] ${opacity}`}
+                style={{
+                  transform: `translate3d(${currentOffset.x}px, ${currentOffset.y}px, ${currentOffset.z}px) rotate(${currentOffset.rotate}deg)`,
+                  transitionDelay: `${idx * 60}ms`,
+                  background:
+                    'linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(15,23,42,0.7) 50%, rgba(2,6,23,0.9) 100%)',
+                  backdropFilter: 'blur(16px)',
+                  WebkitBackdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(255,255,255,0.15)',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.2)',
+                }}
+              >
+                {/* Cabecera del Marco */}
+                <div className="p-3 sm:p-3.5 border-b border-white/10 flex items-center justify-between">
+                  <span className="text-[9px] sm:text-[10px] font-mono tracking-wider text-slate-400 uppercase truncate">
+                    {frame.category}
+                  </span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/40" />
+                </div>
 
-          {/* Prisma Óptico Central / Emisor Holográfico */}
-          <div
-            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-700 ease-out pointer-events-none ${
-              isPulsing
-                ? 'w-36 h-36 opacity-100 scale-125'
-                : phase === 'monolith_entry'
-                ? 'w-24 h-24 opacity-80 scale-95'
-                : 'w-48 h-48 opacity-25 scale-150'
-            }`}
-          >
-            {/* Ondas refractivas de luz que emanan del prisma */}
-            <div
-              className={`absolute inset-0 rounded-full border border-white/40 transition-all duration-1000 ${
-                isPulsing ? 'scale-150 opacity-100' : 'scale-75 opacity-0'
-              }`}
-            />
-            <div
-              className={`absolute inset-4 rounded-full border border-white/60 bg-radial from-white/30 via-white/5 to-transparent blur-md transition-all duration-700 ${
-                isPulsing ? 'scale-120 opacity-100' : 'scale-50 opacity-20'
-              }`}
-            />
-          </div>
+                {/* Contenido Visual del Marco */}
+                <div className="p-3 sm:p-4 flex items-center justify-center h-[calc(100%-42px)]">
+                  <FrameArtwork type={frame.iconType} />
+                </div>
 
-          {/* Esquinas biseladas con marcadores de titanio/plata */}
-          <div className="absolute top-3 left-3 w-3 h-3 border-t border-l border-white/40 rounded-tl pointer-events-none" />
-          <div className="absolute top-3 right-3 w-3 h-3 border-t border-r border-white/40 rounded-tr pointer-events-none" />
-          <div className="absolute bottom-3 left-3 w-3 h-3 border-b border-l border-white/40 rounded-bl pointer-events-none" />
-          <div className="absolute bottom-3 right-3 w-3 h-3 border-b border-r border-white/40 rounded-br pointer-events-none" />
+                {/* Pie del marco con código de obra */}
+                <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-[8px] font-mono text-slate-500">
+                  <span>EXHIBIT 0{idx + 1}</span>
+                  <span>VERIFIED</span>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* 🌟 TÍTULO HOLOGRÁFICO PROYECTADO HACIA EL FRENTE EN 3D */}
+        {/* 🌟 TÍTULO PRINCIPAL: LA CORONACIÓN DE LA EXPOSICIÓN */}
         <h1
-          className={`absolute inset-0 flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 lg:gap-y-5 text-center select-none pointer-events-none [transform-style:preserve-3d] ${className}`}
+          className={`relative z-20 flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 lg:gap-y-5 text-center select-none [transform-style:preserve-3d] ${className}`}
           aria-label={uppercaseText}
         >
-          {/* FILA 1: PORTAFOLIO (Proyectada más al frente con profundidad translateZ) */}
+          {/* FILA 1: PORTAFOLIO (Emerge con impacto y nitidez en primer plano) */}
           <div
             className={`transition-all duration-900 ease-[cubic-bezier(0.16,1,0.3,1)] ${
-              isProjectingOrSettled
-                ? 'opacity-100 [transform:translateZ(50px)_scale(1)]'
-                : 'opacity-0 [transform:translateZ(-40px)_scale(0.85)] blur-sm'
+              isTitleVisible
+                ? 'opacity-100 [transform:translateZ(40px)_scale(1)]'
+                : 'opacity-0 [transform:translateZ(-50px)_scale(0.85)] blur-md'
             }`}
           >
             <span
@@ -232,12 +304,12 @@ export default function KineticTitle({
             </span>
           </div>
 
-          {/* FILA 2: PROFESIONAL (Proyectada con tracking extendido elegante) */}
+          {/* FILA 2: PROFESIONAL (Emerge con tracking extendido de alta gama) */}
           <div
             className={`transition-all duration-900 ease-[cubic-bezier(0.16,1,0.3,1)] delay-100 ${
-              isProjectingOrSettled
-                ? 'opacity-100 [transform:translateZ(35px)_scale(1)]'
-                : 'opacity-0 [transform:translateZ(-30px)_scale(0.85)] blur-sm'
+              isTitleVisible
+                ? 'opacity-100 [transform:translateZ(30px)_scale(1)]'
+                : 'opacity-0 [transform:translateZ(-40px)_scale(0.85)] blur-md'
             }`}
           >
             <span
