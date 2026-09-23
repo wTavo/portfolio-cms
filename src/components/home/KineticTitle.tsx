@@ -1,6 +1,6 @@
 /**
  * @file KineticTitle.tsx
- * @description Título cinético interactivo: La experiencia nace con un icono de Diamante/Prisma solitario en el centro. Al cargar, el prisma se abre como un compás geométrico y despliega en cascada las letras hacia ambos lados en un abanico cinemático (/\) que luego se posa en la línea horizontal definitiva.
+ * @description Título cinético interactivo: La experiencia nace con un icono de Portafolio/Maletín Tech en solitario. Al abrirse, despliega en cascada las letras hacia ambos lados como documentos de luz en un abanico cinemático (/\) que luego se posa en la línea horizontal definitiva, integrando el maletín como la 'A' icónica.
  */
 
 import React, { useState, useEffect, useMemo } from 'react';
@@ -10,12 +10,12 @@ interface KineticTitleProps {
   className?: string;
 }
 
-type AnimationPhase = 'prism_solo' | 'compass_opening' | 'fanning_out' | 'leveling' | 'settled';
+type AnimationPhase = 'briefcase_solo' | 'briefcase_opening' | 'fanning_out' | 'leveling' | 'settled';
 
 /**
- * Monograma geométrico de Diamante / Prisma de Cristal tallado.
+ * Icono de Portafolio / Maletín Ejecutivo Tech con diseño estilizado en 'A'.
  */
-function DiamondPrismIcon({
+function PortfolioBriefcaseIcon({
   phase,
   isFinalGlow,
   onClick,
@@ -24,23 +24,22 @@ function DiamondPrismIcon({
   isFinalGlow: boolean;
   onClick?: () => void;
 }) {
-  const isSolo = phase === 'prism_solo';
-  const isOpening = phase === 'compass_opening' || phase === 'fanning_out';
-  const isSettled = phase === 'leveling' || phase === 'settled';
+  const isSolo = phase === 'briefcase_solo';
+  const isOpening = phase === 'briefcase_opening' || phase === 'fanning_out';
 
   return (
     <div
       onClick={onClick}
       className={`inline-flex items-center justify-center relative cursor-pointer select-none transition-all duration-700 ${
         isSolo
-          ? 'scale-135 drop-shadow-[0_0_35px_rgba(56,189,248,1)] drop-shadow-[0_0_60px_rgba(255,255,255,0.9)] animate-pulse'
+          ? 'scale-140 drop-shadow-[0_0_35px_rgba(56,189,248,1)] drop-shadow-[0_0_60px_rgba(255,255,255,0.95)] animate-pulse'
           : isOpening
-          ? 'scale-115 drop-shadow-[0_0_28px_rgba(56,189,248,0.95)]'
+          ? 'scale-120 drop-shadow-[0_0_28px_rgba(56,189,248,0.95)]'
           : isFinalGlow
           ? 'scale-105 drop-shadow-[0_0_24px_rgba(255,255,255,0.95)] drop-shadow-[0_0_35px_rgba(56,189,248,0.8)]'
           : 'scale-100 drop-shadow-[0_0_14px_rgba(56,189,248,0.6)]'
       }`}
-      style={{ width: '0.88em', height: '1.05em' }}
+      style={{ width: '0.92em', height: '1.15em' }}
     >
       <svg
         viewBox="0 0 54 54"
@@ -50,36 +49,95 @@ function DiamondPrismIcon({
         aria-label="A"
       >
         <defs>
-          <linearGradient id="prism-grad-body" x1="27" y1="4" x2="27" y2="48" gradientUnits="userSpaceOnUse">
+          <linearGradient id="briefcase-body-grad" x1="27" y1="6" x2="27" y2="48" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="50%" stopColor="#F0F9FF" />
+            <stop offset="45%" stopColor="#F0F9FF" />
             <stop offset="100%" stopColor="#38BDF8" />
           </linearGradient>
-          <linearGradient id="prism-grad-inner" x1="18" y1="16" x2="36" y2="38" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.5" />
+          <linearGradient id="briefcase-flap-grad" x1="27" y1="16" x2="27" y2="34" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stopColor="#E0F2FE" />
+            <stop offset="100%" stopColor="#0284C7" />
           </linearGradient>
         </defs>
 
-        {/* Silueta Base Facetada en 'A' */}
+        {/* Asa Superior Metálica del Portafolio (Cúspide de la 'A') */}
         <path
-          d="M27 4 L48 46 H38 L33 34 H21 L16 46 H6 L27 4 Z"
-          fill="url(#prism-grad-body)"
+          d="M21 16 V9 C21 6.5 33 6.5 33 9 V16"
+          stroke="#FFFFFF"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Cuerpo Principal del Portafolio (Trapezoidal / Silueta de 'A') */}
+        <path
+          d="M16 16 H38 L46 46 H8 L16 16 Z"
+          fill="url(#briefcase-body-grad)"
           stroke="#FFFFFF"
           strokeWidth="1.2"
         />
 
-        {/* Facetas de Cristal Internas */}
-        <polygon points="27,12 33,26 21,26" fill="#080c18" stroke="#38BDF8" strokeWidth="1" />
-        <polygon points="27,4 35,18 27,26 19,18" fill="url(#prism-grad-inner)" opacity="0.85" />
-        <line x1="27" y1="4" x2="27" y2="26" stroke="#FFFFFF" strokeWidth="1.5" opacity="0.95" />
-        <line x1="16" y1="46" x2="21" y2="34" stroke="#E0F2FE" strokeWidth="1" opacity="0.75" />
-        <line x1="38" y1="46" x2="33" y2="34" stroke="#E0F2FE" strokeWidth="1" opacity="0.75" />
+        {/* Solapa Superior Plegable del Portafolio */}
+        <path
+          d="M16 16 H38 L41 28 L27 34 L13 28 L16 16 Z"
+          fill="url(#briefcase-flap-grad)"
+          opacity="0.9"
+          stroke="#38BDF8"
+          strokeWidth="1"
+        />
 
-        {/* Núcleo Incandescente */}
-        <circle cx="27" cy="18" r="2.8" fill="#FFFFFF" />
+        {/* Barra Transversal y Broche Central de Titanio (Travesaño de la 'A') */}
+        <line x1="14" y1="34" x2="40" y2="34" stroke="#FFFFFF" strokeWidth="1.8" opacity="0.9" />
+        
+        {/* Broche / Cerradura de Seguridad Iluminada */}
+        <rect
+          x="24"
+          y="30"
+          width="6"
+          height="7"
+          rx="1.5"
+          fill="#0c1222"
+          stroke="#38BDF8"
+          strokeWidth="1.2"
+        />
+        <circle cx="27" cy="33.5" r="1.2" fill="#FFFFFF" />
+
+        {/* Costuras y Biseles Reforzados en Esquinas */}
+        <line x1="10" y1="44" x2="16" y2="18" stroke="#FFFFFF" strokeWidth="0.8" opacity="0.6" />
+        <line x1="44" y1="44" x2="38" y2="18" stroke="#FFFFFF" strokeWidth="0.8" opacity="0.6" />
       </svg>
     </div>
+  );
+}
+
+/**
+ * Molde en bajo relieve para el Portafolio.
+ */
+function PortfolioBriefcaseMold() {
+  return (
+    <span className="inline-flex items-center justify-center relative w-[0.92em] h-[1.15em] select-none pointer-events-none opacity-40">
+      <svg
+        viewBox="0 0 54 54"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        className="w-full h-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]"
+        aria-hidden="true"
+      >
+        <path
+          d="M21 16 V9 C21 6.5 33 6.5 33 9 V16"
+          stroke="rgba(255,255,255,0.1)"
+          strokeWidth="2"
+          fill="none"
+        />
+        <path
+          d="M16 16 H38 L46 46 H8 L16 16 Z"
+          fill="#141824"
+          stroke="rgba(255,255,255,0.08)"
+          strokeWidth="1"
+        />
+        <line x1="14" y1="34" x2="40" y2="34" stroke="#080c18" strokeWidth="1.5" />
+      </svg>
+    </span>
   );
 }
 
@@ -88,7 +146,7 @@ export default function KineticTitle({
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [phase, setPhase] = useState<AnimationPhase>('prism_solo');
+  const [phase, setPhase] = useState<AnimationPhase>('briefcase_solo');
   const [fannedStep, setFannedStep] = useState(0);
   const [isFinalGlow, setIsFinalGlow] = useState(false);
 
@@ -108,17 +166,17 @@ export default function KineticTitle({
   }, []);
 
   const runAnimationSequence = () => {
-    setPhase('prism_solo');
+    setPhase('briefcase_solo');
     setFannedStep(0);
     setIsFinalGlow(false);
 
-    // 1. El Prisma de Diamante nace en solitario en el centro
+    // 1. El Portafolio nace en solitario en el centro con pulso de luz
     const t1 = setTimeout(() => {
-      // 2. El prisma se abre como compás geométrico
-      setPhase('compass_opening');
+      // 2. El portafolio se abre y proyecta los rayos de luz
+      setPhase('briefcase_opening');
 
       const t2 = setTimeout(() => {
-        // 3. Despliegue en abanico (Fan-Out) en cascada hacia ambos lados
+        // 3. Despliegue en abanico (Fan-Out) expulsando las letras en cascada
         setPhase('fanning_out');
 
         let step = 0;
@@ -138,7 +196,7 @@ export default function KineticTitle({
                 setPhase('settled');
                 setIsFinalGlow(true);
 
-                // 6. Ciclo continuo de resplandor
+                // 6. Ciclo continuo de resplandor suave
                 setTimeout(() => {
                   setIsFinalGlow(false);
                   const glowInt = setInterval(() => {
@@ -171,7 +229,7 @@ export default function KineticTitle({
     return cleanup;
   }, [maxSteps, prefersReducedMotion]);
 
-  const isStaircase = phase === 'compass_opening' || phase === 'fanning_out';
+  const isStaircase = phase === 'briefcase_opening' || phase === 'fanning_out';
   const isSettled = phase === 'leveling' || phase === 'settled';
 
   if (prefersReducedMotion) {
@@ -180,7 +238,7 @@ export default function KineticTitle({
         <span className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider text-[var(--color-text-primary)] leading-[1.0] uppercase inline-flex items-center justify-center">
           {words[0].split('').map((char, i) =>
             i === 4 ? (
-              <DiamondPrismIcon key="diamond-red" phase="settled" isFinalGlow={false} />
+              <PortfolioBriefcaseIcon key="briefcase-red" phase="settled" isFinalGlow={false} />
             ) : (
               <span key={`char-red-0-${i}`}>{char}</span>
             )
@@ -198,34 +256,34 @@ export default function KineticTitle({
       {/* Resplandor ambiental de fondo */}
       <div
         className={`absolute inset-0 w-full h-full bg-radial from-[var(--color-brand-accent)]/20 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none transition-all duration-1000 ease-in-out ${
-          isFinalGlow || phase === 'prism_solo' ? 'opacity-100 scale-105' : 'opacity-0 scale-95'
+          isFinalGlow || phase === 'briefcase_solo' ? 'opacity-100 scale-105' : 'opacity-0 scale-95'
         }`}
         aria-hidden="true"
       />
 
-      {/* BRAZOS DEL COMPÁS GEOMÉTRICO (Rayos de Luz que se abren desde el Diamante) */}
+      {/* BRAZOS DEL COMPÁS / HACES DE LUZ QUE ABREN EL PORTAFOLIO */}
       <div
         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl h-1 pointer-events-none transition-all duration-700 ${
-          phase === 'compass_opening' || phase === 'fanning_out'
+          phase === 'briefcase_opening' || phase === 'fanning_out'
             ? 'opacity-80 scale-100'
             : 'opacity-0 scale-50'
         }`}
         aria-hidden="true"
       >
-        {/* Brazo Izquierdo del Compás */}
+        {/* Haz de Luz Izquierdo */}
         <div
           className="absolute right-1/2 top-0 h-0.5 bg-gradient-to-l from-cyan-400 via-cyan-300 to-transparent shadow-[0_0_12px_rgba(56,189,248,0.8)] origin-right transition-transform duration-700"
           style={{
             width: '280px',
-            transform: phase === 'prism_solo' ? 'rotate(0deg)' : 'rotate(24deg)',
+            transform: phase === 'briefcase_solo' ? 'rotate(0deg)' : 'rotate(24deg)',
           }}
         />
-        {/* Brazo Derecho del Compás */}
+        {/* Haz de Luz Derecho */}
         <div
           className="absolute left-1/2 top-0 h-0.5 bg-gradient-to-r from-cyan-400 via-cyan-300 to-transparent shadow-[0_0_12px_rgba(56,189,248,0.8)] origin-left transition-transform duration-700"
           style={{
             width: '280px',
-            transform: phase === 'prism_solo' ? 'rotate(0deg)' : 'rotate(-24deg)',
+            transform: phase === 'briefcase_solo' ? 'rotate(0deg)' : 'rotate(-24deg)',
           }}
         />
       </div>
@@ -240,7 +298,7 @@ export default function KineticTitle({
           const wordCenter = (wordLen - 1) / 2;
           const isFirstWord = wordIdx === 0;
 
-          // Jerarquía visual
+          // Jerarquía visual: PORTAFOLIO grande, PROFESIONAL más pequeña con tracking
           const fontClasses = isFirstWord
             ? 'text-4xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-9xl font-black tracking-wider'
             : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.25em]';
@@ -257,14 +315,14 @@ export default function KineticTitle({
               }`}
             >
               {word.split('').map((char, charIdx) => {
-                const isDiamondLetter = isFirstWord && charIdx === 4; // 'A' en PORTAFOLIO
+                const isBriefcaseLetter = isFirstWord && charIdx === 4; // Letra 'A' en PORTAFOLIO
 
                 // Distancia desde el vértice central
                 const distFromCenter = Math.abs(charIdx - wordCenter);
                 const fanOutStep = Math.floor(distFromCenter);
 
                 // Estado de visibilidad y despliegue
-                const isPlaced = isDiamondLetter ? true : isSettled || (phase === 'fanning_out' && fanOutStep < fannedStep);
+                const isPlaced = isBriefcaseLetter ? true : isSettled || (phase === 'fanning_out' && fanOutStep < fannedStep);
                 const isCurrentlyEmerging = phase === 'fanning_out' && fanOutStep === fannedStep - 1;
 
                 // Desplazamiento en V invertida (/\) o nivelado en 0
@@ -280,7 +338,7 @@ export default function KineticTitle({
                     key={`slot-${wordIdx}-${charIdx}-${char}`}
                     className="inline-flex items-center justify-center relative leading-[1.0]"
                     style={{
-                      minWidth: isDiamondLetter ? '0.88em' : slotMinWidth,
+                      minWidth: isBriefcaseLetter ? '0.92em' : slotMinWidth,
                       height: slotHeight,
                       transform: `translate3d(0, ${targetStepY.toFixed(1)}px, 0)`,
                       transition: isStaircase
@@ -289,15 +347,15 @@ export default function KineticTitle({
                       willChange: 'transform',
                     }}
                   >
-                    {isDiamondLetter ? (
-                      /* EL DIAMANTE / PRISMA CENTRAL */
-                      <DiamondPrismIcon
+                    {isBriefcaseLetter ? (
+                      /* EL PORTAFOLIO / MALETÍN CENTRAL */
+                      <PortfolioBriefcaseIcon
                         phase={phase}
                         isFinalGlow={isFinalGlow}
                         onClick={() => runAnimationSequence()}
                       />
                     ) : (
-                      /* LETRAS QUE SE DESPLIEGAN EN ABANICO DESDE EL DIAMANTE */
+                      /* LETRAS QUE BROTAN DESDE EL PORTAFOLIO */
                       <span
                         className={`absolute inset-0 flex items-center justify-center select-none pointer-events-none text-white ${
                           isPlaced ? 'opacity-100 scale-100' : 'opacity-0 scale-50'
