@@ -37,6 +37,7 @@ export default function KineticTitle({
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
@@ -88,8 +89,30 @@ export default function KineticTitle({
 
   // Reiniciar animación al hacer clic en el título
   const handleReplay = useCallback(() => {
+    setIsCompleted(false);
     setAnimationKey((prev) => prev + 1);
   }, []);
+
+  // Constantes de coreografía simultánea:
+  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente como cables/filamentos iluminados
+  const initialDelay = 0.25;
+  const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
+  const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s (Momento exacto en que los cables se conectan y cierran el circuito)
+
+  // 2. Encendido del foco: parpadeo rápido inicial de corriente seguido de una subida lenta de menor a mayor brillo
+  const fillStartDelay = totalStrokeEndTime + 0.10; // La corriente llega de inmediato al completarse la conexión del circuito
+  const fillIgnitionDuration = 1.65; // Duración equilibrada: parpadeo inicial rápido + subida gradual y visible de menor a mayor brillo
+
+  // 3. Elevación y flotación sutil tras completarse el encendido total
+  const elevationDelay = fillStartDelay + fillIgnitionDuration + 0.15; // 4.55s
+
+  useEffect(() => {
+    setIsCompleted(false);
+    const timer = setTimeout(() => {
+      setIsCompleted(true);
+    }, elevationDelay * 1000);
+    return () => clearTimeout(timer);
+  }, [animationKey, elevationDelay]);
 
   if (prefersReducedMotion) {
     return (
@@ -109,16 +132,6 @@ export default function KineticTitle({
       </div>
     );
   }
-
-  // Constantes de coreografía simultánea:
-  // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente como cables/filamentos iluminados
-  const initialDelay = 0.25;
-  const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
-  const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s (Momento exacto en que los cables se conectan y cierran el circuito)
-
-  // 2. Encendido del foco: parpadeo rápido inicial de corriente seguido de una subida lenta de menor a mayor brillo
-  const fillStartDelay = totalStrokeEndTime + 0.10; // La corriente llega de inmediato al completarse la conexión del circuito
-  const fillIgnitionDuration = 1.65; // Duración equilibrada: parpadeo inicial rápido + subida gradual y visible de menor a mayor brillo
 
   return (
     <div
@@ -141,8 +154,38 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      <div className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible">
-        {wordsLayout.map((wordLayout, wordIdx) => {
+      {/* Contenedor con elevación cinemática tras completar toda la animación */}
+      <motion.div
+        animate={{ y: isCompleted ? -14 : 0 }}
+        transition={{
+          duration: 1.4,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible"
+      >
+        {/* Movimiento sutil de flotación continua tras elevarse */}
+        <motion.div
+          animate={
+            isCompleted
+              ? {
+                  y: [-3, 3],
+                }
+              : { y: 0 }
+          }
+          transition={
+            isCompleted
+              ? {
+                  duration: 3.5,
+                  repeat: Infinity,
+                  repeatType: 'reverse',
+                  ease: 'easeInOut',
+                  delay: 1.4,
+                }
+              : { duration: 0 }
+          }
+          className="w-full flex flex-col items-center justify-center gap-y-2 sm:gap-y-4 md:gap-y-6 overflow-visible"
+        >
+          {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
             ? 'w-full max-w-5xl h-auto drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]'
@@ -250,7 +293,8 @@ export default function KineticTitle({
             </svg>
           );
         })}
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
