@@ -116,9 +116,9 @@ export default function KineticTitle({
   const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
   const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s (Momento exacto en que los cables se conectan y cierran el circuito)
 
-  // 2. Encendido lento del foco (el color): parpadeo inicial al llegar la corriente y posterior iluminación lenta y progresiva
+  // 2. Encendido del foco: parpadeo rápido inicial de corriente seguido de una subida lenta de menor a mayor brillo
   const fillStartDelay = totalStrokeEndTime + 0.10; // La corriente llega de inmediato al completarse la conexión del circuito
-  const fillIgnitionDuration = 2.4; // Encendido lento del color (2.4s totales: parpadeo al inicio + subida lenta de intensidad)
+  const fillIgnitionDuration = 1.65; // Duración equilibrada: parpadeo inicial rápido + subida gradual y visible de menor a mayor brillo
 
   return (
     <div
@@ -212,7 +212,7 @@ export default function KineticTitle({
                       />
                     ))}
 
-                    {/* 2. ENCENDIDO LENTO DEL FOCO CON PARPADEO INICIAL DE CORRIENTE */}
+                    {/* 2. ENCENDIDO DEL FOCO: PARPADEO RÁPIDO DE CORRIENTE Y SUBIDA LENTA DE MENOR A MAYOR BRILLO */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
@@ -221,23 +221,23 @@ export default function KineticTitle({
                         filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
                       }}
                       animate={{
-                        opacity: [0, 0.55, 0.12, 0.70, 0.35, 0.55, 0.75, 0.90, 1],
+                        opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
                         filter: [
                           'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
-                          'drop-shadow(0 0 16px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.45))',
-                          'drop-shadow(0 0 3px rgba(255, 255, 255, 0.1))',
-                          'drop-shadow(0 0 20px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 38px rgba(186, 230, 253, 0.55))',
-                          'drop-shadow(0 0 6px rgba(255, 255, 255, 0.3))',
-                          'drop-shadow(0 0 10px rgba(255, 255, 255, 0.45)) drop-shadow(0 0 22px rgba(186, 230, 253, 0.25))',
-                          'drop-shadow(0 0 13px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 28px rgba(186, 230, 253, 0.3))',
-                          'drop-shadow(0 0 15px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 32px rgba(186, 230, 253, 0.35))',
+                          'drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(186, 230, 253, 0.7))',
+                          'drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))',
+                          'drop-shadow(0 0 24px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 45px rgba(186, 230, 253, 0.8))',
+                          'drop-shadow(0 0 3px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px rgba(186, 230, 253, 0.1))',
+                          'drop-shadow(0 0 7px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 16px rgba(186, 230, 253, 0.2))',
+                          'drop-shadow(0 0 11px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.3))',
+                          'drop-shadow(0 0 14px rgba(255, 255, 255, 0.72)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.35))',
                           'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
                         ],
                       }}
                       transition={{
                         duration: fillIgnitionDuration,
                         delay: fillDelay,
-                        times: [0, 0.09, 0.16, 0.26, 0.34, 0.52, 0.70, 0.86, 1],
+                        times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
                         ease: 'easeInOut',
                       }}
                       fill="#ffffff"
