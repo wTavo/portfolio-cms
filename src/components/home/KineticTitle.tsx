@@ -1,9 +1,9 @@
 /**
  * @file KineticTitle.tsx
- * @description Título Cinético: "Estelas de Cometas Reveladoras".
- * Cometas de luz blanca brillante cruzan el espacio sobre el fondo existente.
- * Conforme la estela de cada cometa barre las letras, el molde hueco se disuelve
- * y el título se revela en blanco sólido monumental y permanente.
+ * @description Título Cinético: "Cometas Cósmicos con Iluminación Fosforescente de Moldes".
+ * Cometas brillantes con estela de polvo estelar cruzan la pantalla desde los bordes.
+ * Al pasar sobre cada molde tipográfico, la energía del cometa enciende la letra en blanco brillante,
+ * desvaneciéndose suavemente tras el paso de la estela en ciclos continuos y elegantes.
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
@@ -13,16 +13,30 @@ interface KineticTitleProps {
   className?: string;
 }
 
-interface Comet {
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  alpha: number;
+  size: number;
+  life: number;
+  maxLife: number;
+}
+
+interface ActiveComet {
+  id: number;
+  x: number;
+  y: number;
   startX: number;
   startY: number;
   endX: number;
   endY: number;
-  startTime: number;
-  duration: number;
+  speed: number;
+  progress: number;
   headRadius: number;
   tailLength: number;
-  color: string;
+  particles: Particle[];
 }
 
 export default function KineticTitle({
@@ -33,8 +47,7 @@ export default function KineticTitle({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [revealedLetters, setRevealedLetters] = useState<{ [key: string]: number }>({});
-  const [isAllSettled, setIsAllSettled] = useState(false);
+  const [letterBrightness, setLetterBrightness] = useState<{ [key: string]: number }>({});
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
@@ -67,12 +80,11 @@ export default function KineticTitle({
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      const allDone: { [key: string]: number } = {};
+      const allBright: { [key: string]: number } = {};
       letterItems.forEach((item) => {
-        allDone[item.key] = 1;
+        allBright[item.key] = 1;
       });
-      setRevealedLetters(allDone);
-      setIsAllSettled(true);
+      setLetterBrightness(allBright);
       return;
     }
 
@@ -84,21 +96,32 @@ export default function KineticTitle({
     if (!ctx) return;
 
     let animId: number;
-    let isCancelled = false;
+    let isRunning = true;
+    let cometCounter = 0;
 
-    const updateSizeAndRun = () => {
+    let width = 0;
+    let height = 0;
+
+    const activeComets: ActiveComet[] = [];
+    const currentBrightness: { [key: string]: number } = {};
+    letterItems.forEach((item) => {
+      currentBrightness[item.key] = 0;
+    });
+
+    const letterPositions: { [key: string]: { x: number; y: number } } = {};
+
+    const resize = () => {
       const rect = container.getBoundingClientRect();
-      const w = rect.width;
-      const h = rect.height;
-      if (w === 0 || h === 0) return;
+      width = rect.width;
+      height = rect.height;
+      if (width === 0 || height === 0) return;
 
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.round(w * dpr);
-      canvas.height = Math.round(h * dpr);
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
       ctx.scale(dpr, dpr);
 
-      // Calcular posiciones de cada letra en coordenadas del contenedor
-      const letterPositions: { [key: string]: { x: number; y: number; w: number; h: number } } = {};
+      // Calcular posiciones de cada letra
       letterItems.forEach((item) => {
         const el = document.getElementById(`kinetic-char-${item.key}`);
         if (el) {
@@ -106,172 +129,226 @@ export default function KineticTitle({
           letterPositions[item.key] = {
             x: lRect.left - rect.left + lRect.width / 2,
             y: lRect.top - rect.top + lRect.height / 2,
-            w: lRect.width,
-            h: lRect.height,
           };
         }
       });
+    };
 
-      // Configuración de los cometas cósmicos
-      const comets: Comet[] = [
-        // Cometa 1: Cruza la palabra superior PORTAFOLIO de izquierda a derecha
-        {
-          startX: -150,
-          startY: h * 0.15,
-          endX: w + 200,
-          endY: h * 0.45,
-          startTime: 300,
-          duration: 1800,
-          headRadius: 7,
-          tailLength: 380,
-          color: '#ffffff',
-        },
-        // Cometa 2: Cruza la palabra inferior PROFESIONAL de izquierda-abajo a derecha
-        {
-          startX: -180,
-          startY: h * 0.85,
-          endX: w + 220,
-          endY: h * 0.65,
-          startTime: 750,
-          duration: 1900,
-          headRadius: 6,
-          tailLength: 350,
-          color: '#ffffff',
-        },
-        // Cometa 3: Cometa rápido de aceleración central que barre los centros
-        {
-          startX: -100,
-          startY: h * 0.48,
-          endX: w + 250,
-          endY: h * 0.52,
-          startTime: 1200,
-          duration: 1600,
-          headRadius: 5,
-          tailLength: 420,
-          color: '#ffffff',
-        },
-      ];
+    resize();
+    window.addEventListener('resize', resize);
 
-      const startTimestamp = performance.now();
-      const currentRevealed: { [key: string]: number } = {};
+    // Generador de cometas desde los bordes de la pantalla
+    const spawnComet = (type: number) => {
+      if (width === 0 || height === 0) return;
+
+      let startX = 0;
+      let startY = 0;
+      let endX = 0;
+      let endY = 0;
+      let speed = 0.007;
+
+      if (type === 0) {
+        // Diagonal superior: Cruza PORTAFOLIO de izquierda a derecha
+        startX = -180;
+        startY = height * 0.12 + (Math.random() * 40 - 20);
+        endX = width + 220;
+        endY = height * 0.45 + (Math.random() * 50 - 25);
+        speed = 0.0075 + Math.random() * 0.002;
+      } else if (type === 1) {
+        // Diagonal inferior: Cruza PROFESIONAL
+        startX = -200;
+        startY = height * 0.85 + (Math.random() * 40 - 20);
+        endX = width + 240;
+        endY = height * 0.58 + (Math.random() * 40 - 20);
+        speed = 0.0065 + Math.random() * 0.002;
+      } else {
+        // Diagonal rápida central en ángulo pronunciado
+        startX = width * 0.15 + (Math.random() * 100 - 50);
+        startY = -150;
+        endX = width * 0.85 + (Math.random() * 100 - 50);
+        endY = height + 180;
+        speed = 0.009 + Math.random() * 0.0025;
+      }
+
+      activeComets.push({
+        id: cometCounter++,
+        x: startX,
+        y: startY,
+        startX,
+        startY,
+        endX,
+        endY,
+        speed,
+        progress: 0,
+        headRadius: 7 + Math.random() * 3,
+        tailLength: 360 + Math.random() * 120,
+        particles: [],
+      });
+    };
+
+    // Spawn inicial de cometas
+    spawnComet(0);
+    setTimeout(() => spawnComet(1), 700);
+    setTimeout(() => spawnComet(2), 1600);
+
+    // Ciclo recurrente de cometas cósmicos
+    const interval = setInterval(() => {
+      if (activeComets.length < 3) {
+        spawnComet(Math.floor(Math.random() * 3));
+      }
+    }, 2400);
+
+    // Bucle de animación (60/120fps)
+    const renderLoop = () => {
+      if (!isRunning) return;
+
+      ctx.clearRect(0, 0, width, height);
+
+      // Decaimiento fosforescente suave de todas las letras (fade out gradual)
       letterItems.forEach((item) => {
-        currentRevealed[item.key] = 0;
+        currentBrightness[item.key] = Math.max(0, (currentBrightness[item.key] ?? 0) * 0.94);
       });
 
-      const loop = (now: number) => {
-        if (isCancelled) return;
-        const elapsed = now - startTimestamp;
+      // Actualizar y renderizar cada cometa
+      for (let c = activeComets.length - 1; c >= 0; c--) {
+        const comet = activeComets[c];
+        comet.progress += comet.speed;
 
-        ctx.clearRect(0, 0, w, h);
+        // Posición actual de la cabeza del cometa
+        const dx = comet.endX - comet.startX;
+        const dy = comet.endY - comet.startY;
+        comet.x = comet.startX + dx * comet.progress;
+        comet.y = comet.startY + dy * comet.progress;
 
-        let anyCometActive = false;
+        const angle = Math.atan2(dy, dx);
+        const tailX = comet.x - Math.cos(angle) * comet.tailLength;
+        const tailY = comet.y - Math.sin(angle) * comet.tailLength;
 
-        comets.forEach((comet) => {
-          if (elapsed >= comet.startTime) {
-            const cometElapsed = elapsed - comet.startTime;
-            const progress = Math.min(cometElapsed / comet.duration, 1);
+        // Emitir partículas de polvo estelar
+        if (Math.random() < 0.65) {
+          const spread = (Math.random() - 0.5) * 14;
+          const pAngle = angle + Math.PI + (Math.random() - 0.5) * 0.4;
+          const pSpeed = 1.2 + Math.random() * 2.5;
+          comet.particles.push({
+            x: comet.x + Math.sin(angle) * spread,
+            y: comet.y - Math.cos(angle) * spread,
+            vx: Math.cos(pAngle) * pSpeed,
+            vy: Math.sin(pAngle) * pSpeed,
+            alpha: 1,
+            size: 1.5 + Math.random() * 2.2,
+            life: 0,
+            maxLife: 20 + Math.random() * 25,
+          });
+        }
 
-            if (progress < 1) {
-              anyCometActive = true;
+        // DIBUJAR ESTELA LUMINOSA DEL COMETA
+        ctx.save();
+        const grad = ctx.createLinearGradient(comet.x, comet.y, tailX, tailY);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.12, 'rgba(255, 255, 255, 0.9)');
+        grad.addColorStop(0.45, 'rgba(226, 232, 240, 0.45)');
+        grad.addColorStop(0.8, 'rgba(148, 163, 184, 0.15)');
+        grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.beginPath();
+        const normal = angle + Math.PI / 2;
+        const spreadHead = comet.headRadius * 1.8;
+        ctx.moveTo(comet.x + Math.cos(normal) * spreadHead, comet.y + Math.sin(normal) * spreadHead);
+        ctx.lineTo(tailX, tailY);
+        ctx.lineTo(comet.x - Math.cos(normal) * spreadHead, comet.y - Math.sin(normal) * spreadHead);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // RENDERIZAR POLVO ESTELAR / CHISPAS
+        for (let p = comet.particles.length - 1; p >= 0; p--) {
+          const pt = comet.particles[p];
+          pt.x += pt.vx;
+          pt.y += pt.vy;
+          pt.life++;
+          pt.alpha = Math.max(0, 1 - pt.life / pt.maxLife);
+
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.size * pt.alpha, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 255, 255, ${pt.alpha * 0.9})`;
+          ctx.fill();
+
+          if (pt.life >= pt.maxLife) {
+            comet.particles.splice(p, 1);
+          }
+        }
+
+        // NÚCLEO INCANDESCENTE BRILLANTE DE LA CABEZA DEL COMETA
+        ctx.beginPath();
+        ctx.arc(comet.x, comet.y, comet.headRadius, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = 'rgba(255, 255, 255, 1)';
+        ctx.shadowBlur = 22;
+        ctx.fill();
+
+        // HALO EXTERIOR DE LUZ CÓSMICA
+        ctx.beginPath();
+        ctx.arc(comet.x, comet.y, comet.headRadius * 3, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.28)';
+        ctx.fill();
+
+        ctx.restore();
+
+        // FÍSICA DE ILUMINACIÓN DE MOLDES: Encendido al paso de la cabeza/estela
+        const beamRadius = 140;
+        letterItems.forEach((item) => {
+          const pos = letterPositions[item.key];
+          if (!pos) return;
+
+          // Distancia de la letra al núcleo del cometa
+          const distHead = Math.hypot(comet.x - pos.x, comet.y - pos.y);
+
+          // Distancia de la letra al segmento de la estela [tail -> head]
+          const segDx = comet.x - tailX;
+          const segDy = comet.y - tailY;
+          const segLenSq = segDx * segDx + segDy * segDy;
+          let t = 0;
+          if (segLenSq > 0) {
+            t = Math.max(0, Math.min(1, ((pos.x - tailX) * segDx + (pos.y - tailY) * segDy) / segLenSq));
+          }
+          const projX = tailX + t * segDx;
+          const projY = tailY + t * segDy;
+          const distTail = Math.hypot(pos.x - projX, pos.y - projY);
+
+          const effectiveDist = Math.min(distHead * 0.8, distTail);
+
+          if (effectiveDist < beamRadius) {
+            const intensity = Math.pow(1 - effectiveDist / beamRadius, 1.8);
+            if (intensity > (currentBrightness[item.key] ?? 0)) {
+              currentBrightness[item.key] = intensity;
             }
-
-            // Interpolación con aceleración elíptica suave
-            const easedProgress = Math.pow(progress, 1.2);
-            const currentHeadX = comet.startX + (comet.endX - comet.startX) * easedProgress;
-            const currentHeadY = comet.startY + (comet.endY - comet.startY) * easedProgress;
-
-            // Dirección del vector de movimiento
-            const dx = comet.endX - comet.startX;
-            const dy = comet.endY - comet.startY;
-            const angle = Math.atan2(dy, dx);
-
-            // Cola del cometa
-            const tailX = currentHeadX - Math.cos(angle) * comet.tailLength;
-            const tailY = currentHeadY - Math.sin(angle) * comet.tailLength;
-
-            // DIBUJAR ESTELA DEL COMETA
-            if (progress > 0 && progress < 1) {
-              ctx.save();
-              const grad = ctx.createLinearGradient(currentHeadX, currentHeadY, tailX, tailY);
-              grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
-              grad.addColorStop(0.15, 'rgba(255, 255, 255, 0.85)');
-              grad.addColorStop(0.5, 'rgba(226, 232, 240, 0.4)');
-              grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
-
-              ctx.beginPath();
-              // Cabeza ensanchada que se afina hacia la cola
-              const normalAngle = angle + Math.PI / 2;
-              const headSpread = comet.headRadius * 1.6;
-              ctx.moveTo(currentHeadX + Math.cos(normalAngle) * headSpread, currentHeadY + Math.sin(normalAngle) * headSpread);
-              ctx.lineTo(tailX, tailY);
-              ctx.lineTo(currentHeadX - Math.cos(normalAngle) * headSpread, currentHeadY - Math.sin(normalAngle) * headSpread);
-              ctx.closePath();
-              ctx.fillStyle = grad;
-              ctx.fill();
-
-              // NÚCLEO BRILLANTE DE LA CABEZA DEL COMETA
-              ctx.beginPath();
-              ctx.arc(currentHeadX, currentHeadY, comet.headRadius, 0, Math.PI * 2);
-              ctx.fillStyle = '#ffffff';
-              ctx.shadowColor = 'rgba(255, 255, 255, 1)';
-              ctx.shadowBlur = 18;
-              ctx.fill();
-
-              // Resplandor externo suave
-              ctx.beginPath();
-              ctx.arc(currentHeadX, currentHeadY, comet.headRadius * 2.5, 0, Math.PI * 2);
-              ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-              ctx.fill();
-
-              ctx.restore();
-            }
-
-            // REVELADO DE LETRAS: Conforme la estela o cabeza pasa sobre cada letra
-            letterItems.forEach((item) => {
-              const pos = letterPositions[item.key];
-              if (!pos) return;
-
-              // Si la cabeza del cometa ya pasó por delante de la posición X de la letra
-              if (currentHeadX >= pos.x - 30) {
-                // Cálculo de revelado progresivo basado en la estela
-                const distPast = currentHeadX - pos.x;
-                const revealAmt = Math.min(1, Math.max(0, distPast / 90));
-                if (revealAmt > (currentRevealed[item.key] ?? 0)) {
-                  currentRevealed[item.key] = revealAmt;
-                }
-              }
-            });
           }
         });
 
-        setRevealedLetters({ ...currentRevealed });
-
-        // Si todos los cometas terminaron y todas las letras están reveladas
-        const allLettersDone = letterItems.every((item) => (currentRevealed[item.key] ?? 0) >= 1);
-
-        if (!anyCometActive && allLettersDone && elapsed > 2800) {
-          ctx.clearRect(0, 0, w, h);
-          setIsAllSettled(true);
-        } else {
-          animId = requestAnimationFrame(loop);
+        // Eliminar cometa una vez completado el recorrido fuera de la pantalla
+        if (comet.progress >= 1.2 && comet.particles.length === 0) {
+          activeComets.splice(c, 1);
         }
-      };
+      }
 
-      animId = requestAnimationFrame(loop);
+      setLetterBrightness({ ...currentBrightness });
+
+      animId = requestAnimationFrame(renderLoop);
     };
 
-    const timer = setTimeout(updateSizeAndRun, 200);
+    animId = requestAnimationFrame(renderLoop);
 
     return () => {
-      isCancelled = true;
-      clearTimeout(timer);
+      isRunning = false;
+      window.removeEventListener('resize', resize);
+      clearInterval(interval);
       if (animId) cancelAnimationFrame(animId);
     };
   }, [letterItems, prefersReducedMotion]);
 
   if (prefersReducedMotion) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-y-2 sm:gap-y-3.5 md:gap-y-4 text-center select-none ${className}`}>
+      <div className={`flex flex-col items-center justify-center gap-y-6 sm:gap-y-8 md:gap-y-10 text-center select-none ${className}`}>
         <span className="text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider text-white leading-[1.0] uppercase">
           {words[0]}
         </span>
@@ -285,29 +362,25 @@ export default function KineticTitle({
   return (
     <div
       ref={containerRef}
-      className="relative w-full flex flex-col items-center justify-center min-h-[480px] sm:min-h-[540px] md:min-h-[620px] py-12 sm:py-16 select-none overflow-visible cursor-default"
+      className="relative w-full flex flex-col items-center justify-center min-h-[500px] sm:min-h-[560px] md:min-h-[640px] py-16 sm:py-20 select-none overflow-hidden cursor-default"
     >
       {/* Resplandor ambiental de estudio ultra suave */}
       <div
-        className={`absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none transition-opacity duration-1000 ease-out ${
-          isAllSettled ? 'opacity-40' : 'opacity-15'
-        }`}
+        className="absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none opacity-25"
         aria-hidden="true"
       />
 
-      {/* Capa de renderizado de los cometas y sus estelas luminosas */}
-      {!isAllSettled && (
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0 w-full h-full pointer-events-none z-20"
-        />
-      )}
+      {/* Capa de renderizado de los cometas cósmicos, núcleos y partículas */}
+      <canvas
+        ref={canvasRef}
+        className="absolute inset-0 w-full h-full pointer-events-none z-20"
+      />
 
-      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4 gap-y-2 sm:gap-y-3 md:gap-y-4 z-10">
+      <div className="relative flex flex-col items-center justify-center w-full max-w-6xl px-4 gap-y-6 sm:gap-y-8 md:gap-y-12 z-10">
         {words.map((word, wordIdx) => {
           const isFirstWord = wordIdx === 0;
 
-          // Jerarquía tipográfica monumental
+          // Jerarquía tipográfica monumental con espaciado vertical nítido
           const fontClasses = isFirstWord
             ? 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem] font-black tracking-wider'
             : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold tracking-[0.2em] sm:tracking-[0.28em] md:tracking-[0.32em]';
@@ -317,14 +390,13 @@ export default function KineticTitle({
           return (
             <div
               key={`word-row-${wordIdx}`}
-              className={`inline-flex items-center justify-center relative ${fontClasses} ${
+              className={`inline-flex items-center justify-center relative leading-none ${fontClasses} ${
                 isFirstWord ? 'gap-x-1 sm:gap-x-2 md:gap-x-3' : 'gap-x-1 sm:gap-x-1.5 md:gap-x-2.5'
               }`}
             >
               {word.split('').map((char, charIdx) => {
                 const key = `${wordIdx}-${charIdx}-${char}`;
-                const reveal = revealedLetters[key] ?? 0;
-                const isSolid = isAllSettled || reveal >= 1;
+                const brightness = letterBrightness[key] ?? 0;
 
                 return (
                   <div
@@ -333,34 +405,37 @@ export default function KineticTitle({
                     className="relative inline-flex items-center justify-center"
                     style={{ minWidth: slotMinWidth }}
                   >
-                    {/* 🔲 CAPA 1: MOLDE HUECO (SE DESVANECE CONFORME PASA LA ESTELA) */}
-                    {!isSolid && (
-                      <span
-                        className="select-none pointer-events-none uppercase leading-[1.0] transition-opacity duration-300"
-                        style={{
-                          opacity: Math.max(0, 1 - reveal * 1.2),
-                          WebkitTextStroke: '1.2px rgba(255, 255, 255, 0.24)',
-                          color: 'transparent',
-                        }}
-                        aria-hidden="true"
-                      >
-                        {char}
-                      </span>
-                    )}
-
-                    {/* ✨ CAPA 2: LETRA BLANCA REVELADA (SE ENCIENDE Y QUEDA SÓLIDA TRAS LA ESTELA) */}
-                    <div
-                      className="absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-opacity duration-300"
+                    {/* 🔲 CAPA 1: PAREDES Y SILUETA DEL MOLDE BASE */}
+                    <span
+                      className="select-none pointer-events-none uppercase leading-none transition-colors duration-200"
                       style={{
-                        opacity: isSolid ? 1 : reveal,
+                        WebkitTextStroke: brightness > 0.05
+                          ? `1.5px rgba(255, 255, 255, ${0.3 + brightness * 0.7})`
+                          : '1.2px rgba(255, 255, 255, 0.22)',
+                        color: 'transparent',
+                        textShadow: brightness > 0.1
+                          ? `0 0 16px rgba(255, 255, 255, ${brightness * 0.8})`
+                          : 'none',
+                      }}
+                      aria-hidden="true"
+                    >
+                      {char}
+                    </span>
+
+                    {/* ✨ CAPA 2: LUZ BLANCA QUE SE ENCIENDE AL PASO DEL COMETA Y SE APAGA SUAVEMENTE */}
+                    <div
+                      className="absolute inset-0 flex items-center justify-center pointer-events-none select-none transition-none"
+                      style={{
+                        opacity: brightness,
                       }}
                     >
                       <span
-                        className={`inline-block uppercase leading-[1.0] text-white transition-all ${
-                          !isSolid && reveal > 0 && reveal < 1
-                            ? 'drop-shadow-[0_0_20px_rgba(255,255,255,0.9)]'
-                            : ''
-                        }`}
+                        className="inline-block uppercase leading-none text-white transition-all"
+                        style={{
+                          textShadow: brightness > 0.3
+                            ? `0 0 24px rgba(255, 255, 255, ${brightness * 0.95}), 0 0 45px rgba(255, 255, 255, ${brightness * 0.6})`
+                            : 'none',
+                        }}
                       >
                         {char}
                       </span>
