@@ -167,7 +167,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               <button
                 type="button"
                 onClick={() => changeView('portfolios')}
-                className="absolute bottom-12 sm:bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 min-h-[76px] px-10 py-4 rounded-2xl bg-[var(--color-bg-surface)]/85 backdrop-blur-md text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:text-white hover:bg-[var(--color-bg-muted)] transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[0_0_28px_rgba(56,189,248,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
+                className="absolute bottom-12 sm:bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 min-h-[76px] px-10 py-4 rounded-2xl bg-white/[0.04] hover:bg-white/[0.10] backdrop-blur-xl text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:text-white transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-[0_8px_32px_rgba(0,0,0,0.35)] hover:shadow-[0_0_32px_rgba(56,189,248,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
                 aria-label={i18n.showcase.goToPortfolios}
               >
                 <span>{i18n.showcase.goToPortfolios}</span>
