@@ -12,7 +12,7 @@
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",
-    "docker:dev": "docker compose up",
+    "docker:dev": "docker compose up --build",
     "docker:build": "docker compose build",
     "generate-types": "wrangler types"
   },

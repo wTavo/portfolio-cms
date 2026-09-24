@@ -23,8 +23,8 @@ interface DualShowcaseProps {
   data: ShowcaseData;
 }
 
-/** Retorna el icono SVG vectorial según la especialidad del creador */
-function getCreatorIcon(slug: string, role: string) {
+/** Retorna el icono SVG vectorial con su paleta de color e interactividad según la especialidad */
+function getCreatorBadge(slug: string, role: string) {
   const normalized = `${slug} ${role}`.toLowerCase();
   if (
     normalized.includes('design') ||
@@ -33,7 +33,14 @@ function getCreatorIcon(slug: string, role: string) {
     normalized.includes('partner') ||
     normalized.includes('producto')
   ) {
-    return <PaletteIcon size={22} className="text-[var(--color-text-primary)]" />;
+    return {
+      icon: <PaletteIcon size={24} className="text-violet-600 dark:text-violet-400" />,
+      containerClass: 'bg-violet-50/90 dark:bg-violet-950/50 border-violet-200/80 dark:border-violet-800/60 shadow-xs',
+      hoverBorder: 'hover:border-violet-300/80 dark:hover:border-violet-700/80',
+      hoverText: 'group-hover:text-violet-600 dark:group-hover:text-violet-400',
+      hoverButton: 'group-hover:bg-violet-600 dark:group-hover:bg-violet-500 group-hover:text-white group-hover:border-violet-600 dark:group-hover:border-violet-500',
+      hoverShadow: 'hover:shadow-[0_8px_16px_-2px_rgba(139,92,246,0.08),0_20px_40px_-6px_rgba(139,92,246,0.14),0_40px_70px_-12px_rgba(139,92,246,0.2),inset_0_1px_0_rgba(255,255,255,1)] dark:hover:shadow-[0_30px_70px_-12px_rgba(139,92,246,0.3)]',
+    };
   }
   if (
     normalized.includes('gustavo') ||
@@ -42,9 +49,23 @@ function getCreatorIcon(slug: string, role: string) {
     normalized.includes('dev') ||
     normalized.includes('ingeniero')
   ) {
-    return <CodeIcon size={22} className="text-[var(--color-text-primary)]" />;
+    return {
+      icon: <CodeIcon size={24} className="text-blue-600 dark:text-blue-400" />,
+      containerClass: 'bg-blue-50/90 dark:bg-blue-950/50 border-blue-200/80 dark:border-blue-800/60 shadow-xs',
+      hoverBorder: 'hover:border-blue-300/80 dark:hover:border-blue-700/80',
+      hoverText: 'group-hover:text-blue-600 dark:group-hover:text-blue-400',
+      hoverButton: 'group-hover:bg-blue-600 dark:group-hover:bg-blue-500 group-hover:text-white group-hover:border-blue-600 dark:group-hover:border-blue-500',
+      hoverShadow: 'hover:shadow-[0_8px_16px_-2px_rgba(37,99,235,0.08),0_20px_40px_-6px_rgba(37,99,235,0.14),0_40px_70px_-12px_rgba(37,99,235,0.2),inset_0_1px_0_rgba(255,255,255,1)] dark:hover:shadow-[0_30px_70px_-12px_rgba(37,99,235,0.3)]',
+    };
   }
-  return <UserIcon size={22} className="text-[var(--color-text-primary)]" />;
+  return {
+    icon: <UserIcon size={24} className="text-[var(--color-brand-accent)]" />,
+    containerClass: 'bg-slate-100 dark:bg-zinc-800 border-slate-200 dark:border-zinc-700 shadow-xs',
+    hoverBorder: 'hover:border-slate-300 dark:hover:border-zinc-700',
+    hoverText: 'group-hover:text-[var(--color-brand-accent)]',
+    hoverButton: 'group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)]',
+    hoverShadow: 'hover:shadow-[0_8px_12px_-2px_rgba(0,0,0,0.04),0_16px_36px_-6px_rgba(15,23,42,0.1),0_40px_70px_-12px_rgba(15,23,42,0.18),inset_0_1px_0_rgba(255,255,255,1)] dark:hover:shadow-[0_30px_70px_-12px_rgba(0,0,0,0.95)]',
+  };
 }
 
 export default function DualShowcase({ data }: DualShowcaseProps) {
@@ -279,6 +300,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                   className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full max-w-4xl mx-auto"
                 >
                   {creators.map((creator) => {
+                    const badge = getCreatorBadge(creator.slug, creator.role);
+
                     return (
                       <motion.a
                         key={creator.id}
@@ -286,19 +309,19 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                         variants={fadeSlideUpVariants}
                         onHoverStart={() => setHoveredId(creator.id)}
                         onHoverEnd={() => setHoveredId(null)}
-                        whileHover={{ y: -6, scale: 1.012 }}
-                        transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
-                        className="group relative flex flex-col justify-between p-7 sm:p-8 rounded-[var(--radius-2xl)] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_20px_45px_-12px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.04)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.08)] hover:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.18)] dark:hover:shadow-[0_30px_70px_-12px_rgba(0,0,0,0.95)] hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-300 overflow-hidden cursor-pointer block"
+                        whileHover={{ y: -6 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
+                        className={`group relative flex flex-col justify-between p-7 sm:p-8 rounded-[var(--radius-2xl)] bg-gradient-to-b from-white via-white to-slate-50/80 dark:from-zinc-900/95 dark:via-zinc-900/90 dark:to-zinc-950/95 backdrop-blur-xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.03),0_12px_28px_-6px_rgba(15,23,42,0.08),0_30px_60px_-12px_rgba(15,23,42,0.12),inset_0_1px_0_rgba(255,255,255,1)] dark:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.08)] ${badge.hoverShadow} ${badge.hoverBorder} transition-[box-shadow,border-color] duration-150 overflow-hidden cursor-pointer block`}
                       >
-                        {/* Contenido de la Tarjeta */}
+                        {/* Contenido Superior de la Tarjeta */}
                         <div className="relative z-10 space-y-4">
-                          {/* Cabecera con Icono SVG vectorial y Slug */}
+                          {/* Cabecera con Icono SVG vectorial con color y Slug */}
                           <div className="flex items-center justify-between">
-                            <div className="w-12 h-12 rounded-[var(--radius-xl)] bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center group-hover:scale-105 group-hover:bg-slate-200/70 dark:group-hover:bg-zinc-700/70 transition-all">
-                              {getCreatorIcon(creator.slug, creator.role)}
+                            <div className={`w-12 h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}>
+                              {badge.icon}
                             </div>
 
-                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-700/50 text-xs font-mono text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
+                            <div className={`flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-300/80 dark:border-zinc-700 text-xs font-mono font-semibold text-slate-700 dark:text-zinc-200 shadow-xs ${badge.hoverText} transition-colors duration-150`}>
                               <span className="opacity-50">/</span>
                               <span>{creator.slug}</span>
                             </div>
@@ -306,7 +329,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
                           {/* Nombre y Especialidad */}
                           <div className="space-y-1 pt-1">
-                            <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                            <h2 className={`text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
                               {creator.name}
                             </h2>
                             <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
@@ -316,11 +339,11 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
                           {/* Etiquetas de tecnologías y habilidades */}
                           {creator.skills && creator.skills.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-1">
+                            <div className="flex flex-wrap gap-2 pt-1.5">
                               {creator.skills.slice(0, 3).map((skill) => (
                                 <span
                                   key={skill}
-                                  className="px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[11px] font-medium bg-slate-100/90 dark:bg-zinc-800/70 text-[var(--color-text-secondary)] border border-slate-200/60 dark:border-zinc-700/40"
+                                  className="px-3 py-1 rounded-[var(--radius-md)] text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-300/80 dark:border-zinc-700 shadow-xs"
                                 >
                                   {skill}
                                 </span>
@@ -329,13 +352,13 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                           )}
                         </div>
 
-                        {/* Pie Interactivo */}
-                        <div className="relative z-10 pt-5 mt-5 border-t border-slate-200/80 dark:border-zinc-800 flex items-center justify-between">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] group-hover:text-[var(--color-brand-accent)] transition-colors">
+                        {/* Zócalo de Acción Integrado (Línea divisoria y fondo con contraste definido) */}
+                        <div className="relative z-10 py-3.5 sm:py-4 px-7 sm:px-8 -mx-7 -mb-7 sm:-mx-8 sm:-mb-8 mt-6 bg-slate-100/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
+                          <span className={`text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
                             {i18n.showcase.explorePortfolio}
                           </span>
 
-                          <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 flex items-center justify-center text-[var(--color-text-primary)] group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)] group-hover:translate-x-1 transition-all">
+                          <div className={`w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-300/80 dark:border-zinc-700 shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-all duration-150`}>
                             <ArrowRightIcon size={14} />
                           </div>
                         </div>

@@ -23,5 +23,9 @@ services:
       - .:/app
       # Proteger la carpeta node_modules del contenedor para evitar colisiones con el host
       - /app/node_modules
-      - /app/.astro
+    init: true
+    # Mantener el proceso interactivo de la terminal de Astro abierto
+    tty: true
+    stdin_open: true
+    command: sh -c "rm -f .astro/dev.json .astro/dev.pid 2>/dev/null || true; npx astro dev --host 0.0.0.0 --force"
     restart: unless-stopped

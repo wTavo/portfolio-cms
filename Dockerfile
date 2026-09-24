@@ -2,9 +2,10 @@
 # Dockerfile — Entorno Local y Contenerización de Portfolio Builder (Astro + Cloudflare)
 # ==============================================================================
 
-# Etapa 1: Imagen Base (Debian Slim con soporte nativo de glibc para workerd de Cloudflare)
+# Etapa 1: Imagen Base (Debian Slim con soporte nativo de glibc y certificados CA para TLS/HTTPS)
 FROM node:22-slim AS base
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=development
 
 # Etapa 2: Instalación de Dependencias
@@ -20,7 +21,7 @@ COPY . .
 EXPOSE 4321
 ENV HOST=0.0.0.0
 ENV PORT=4321
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--force"]
+CMD ["sh", "-c", "rm -f .astro/dev.json .astro/dev.pid 2>/dev/null || true; npx astro dev --host 0.0.0.0 --force"]
 
 # Etapa 4: Compilación para Producción / Preview
 FROM base AS builder
