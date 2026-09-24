@@ -35,9 +35,9 @@ export default function TopographicBackground() {
 
     window.addEventListener('resize', handleResize);
 
-    // Configuración optimizada de las 8 curvas topográficas centrales (máximo rendimiento y foco en el título)
-    const lineCount = 8;
-    const segmentCount = 10;
+    // Configuración amplia y expansiva de las 14 curvas topográficas de nivel
+    const lineCount = 14;
+    const segmentCount = 12;
 
     const render = (time: number) => {
       if (!isRunning) return;
@@ -46,13 +46,13 @@ export default function TopographicBackground() {
 
       const t = prefersReduced ? 1000 : time * 0.0005;
 
-      // Dibujar cada línea topográfica de trayectoria concentrada en el área central
+      // Dibujar cada línea topográfica de trayectoria distribuida armónicamente en el espacio
       for (let i = 0; i < lineCount; i++) {
         const progress = i / (lineCount - 1);
-        const baseY = height * 0.26 + progress * (height * 0.40);
+        const baseY = height * 0.12 + progress * (height * 0.78);
 
         // Color de la curva con gradiente de transparencia en los bordes
-        const alpha = Math.sin(progress * Math.PI) * 0.22 + 0.05;
+        const alpha = Math.sin(progress * Math.PI) * 0.25 + 0.07;
         const strokeColor =
           i % 3 === 0
             ? `rgba(56, 189, 248, ${alpha * 1.2})` // Cian acento
@@ -119,11 +119,11 @@ export default function TopographicBackground() {
     >
       {/* 1. Halo Ambiental de Exhibición Central */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[650px] pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.12) 0%, rgba(99, 102, 241, 0.05) 45%, transparent 75%)',
-          filter: 'blur(50px)',
+            'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.14) 0%, rgba(99, 102, 241, 0.06) 50%, transparent 75%)',
+          filter: 'blur(60px)',
         }}
       />
 
@@ -133,9 +133,9 @@ export default function TopographicBackground() {
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
           maskImage:
-            'radial-gradient(ellipse 75% 50% at 50% 48%, #000 35%, rgba(0,0,0,0.4) 65%, transparent 92%)',
+            'radial-gradient(ellipse 90% 80% at 50% 50%, #000 45%, rgba(0,0,0,0.5) 75%, transparent 98%)',
           WebkitMaskImage:
-            'radial-gradient(ellipse 75% 50% at 50% 48%, #000 35%, rgba(0,0,0,0.4) 65%, transparent 92%)',
+            'radial-gradient(ellipse 90% 80% at 50% 50%, #000 45%, rgba(0,0,0,0.5) 75%, transparent 98%)',
         }}
       />
     </div>
