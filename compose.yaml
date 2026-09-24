@@ -1,0 +1,27 @@
+# ==============================================================================
+# Docker Compose — Orquestación de Desarrollo Local
+# ==============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: portfolio_builder_dev
+    ports:
+      - "4321:4321"
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PORT=4321
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      # Montaje del código fuente para hot-reloading en tiempo real
+      - .:/app
+      # Proteger la carpeta node_modules del contenedor para evitar colisiones con el host
+      - /app/node_modules
+      - /app/.astro
+    restart: unless-stopped
