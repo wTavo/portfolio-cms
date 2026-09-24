@@ -7,9 +7,11 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
-import { ArrowRightIcon, RocketIcon, ChevronDownIcon } from '../icons/Icons';
+import { ArrowRightIcon, RocketIcon, ChevronDownIcon, MailIcon } from '../icons/Icons';
 import KineticTitle from './KineticTitle';
 import TopographicBackground from './TopographicBackground';
+import ThemeToggle from '../ui/ThemeToggle';
+import ContactModal from './ContactModal';
 import {
   MOTION_DURATIONS,
   MOTION_EASINGS,
@@ -34,6 +36,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const [currentView, setCurrentView] = useState<'hero' | 'portfolios'>('hero');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [isContactOpen, setIsContactOpen] = useState(false);
   const [arrowScope, animateArrow] = useAnimate();
   const isTransitioningRef = useRef(false);
 
@@ -186,13 +189,27 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             </AnimatePresence>
           </div>
 
-          {/* Botón único de Acceso */}
-          <a
-            href="/login"
-            className="min-h-(--size-touch-target) px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)]/80 backdrop-blur-xs border border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] hover:border-[var(--color-brand-accent)] transition-all inline-flex items-center shadow-[var(--shadow-card)]"
-          >
-            <span>{i18n.showcase.login}</span>
-          </a>
+          {/* Acciones de la barra superior: Selector de tema, Contacto y Acceso */}
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <ThemeToggle />
+
+            <button
+              type="button"
+              onClick={() => setIsContactOpen(true)}
+              className="min-h-(--size-touch-target) px-3 sm:px-3.5 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)]/80 backdrop-blur-xs border border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] hover:border-[var(--color-brand-accent)] transition-all inline-flex items-center gap-1.5 shadow-[var(--shadow-card)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+              aria-label={i18n.showcase.contact}
+            >
+              <MailIcon size={14} className="text-[var(--color-brand-accent)]" />
+              <span className="hidden xs:inline sm:inline">{i18n.showcase.contact}</span>
+            </button>
+
+            <a
+              href="/login"
+              className="min-h-(--size-touch-target) px-3.5 sm:px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] hover:bg-[var(--color-brand-primary-hover)] text-xs font-semibold transition-all inline-flex items-center shadow-[var(--shadow-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+            >
+              <span>{i18n.showcase.login}</span>
+            </a>
+          </div>
         </div>
       </header>
 
@@ -314,6 +331,9 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           )}
         </AnimatePresence>
       </div>
+
+      {/* Modal de Contacto Accesible */}
+      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
     </div>
   );
 }

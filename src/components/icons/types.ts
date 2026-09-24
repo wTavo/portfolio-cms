@@ -33,6 +33,8 @@ export type IconName =
   | 'filter'
   | 'palette'
   | 'smartphone'
+  | 'sun'
+  | 'moon'
   | 'chevron-down';
 
 export interface IconProps {
