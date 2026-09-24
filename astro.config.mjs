@@ -15,7 +15,13 @@ export default defineConfig({
   vite: {
     plugins: [
       tailwindcss()
-    ]
+    ],
+    server: {
+      watch: {
+        usePolling: true,
+        interval: 100,
+      }
+    }
   },
 
   adapter: cloudflare({
