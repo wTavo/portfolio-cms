@@ -48,7 +48,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     }, 600);
   }, [currentView]);
 
-  // Animación continua y reactiva de la flecha sin saltos al alternar hover
+  // Animación continua y reactiva de la flecha con cadencia armónica idéntica al rebote
   useEffect(() => {
     if (!arrowScope.current || currentView !== 'hero') return;
 
@@ -57,15 +57,15 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       animateArrow(
         arrowScope.current,
         { y: 6 },
-        { duration: MOTION_DURATIONS.fast, ease: MOTION_EASINGS.decelerate }
+        { duration: 0.35, ease: 'easeOut' }
       );
     } else {
-      // Al salir de hover: regresa suavemente a su posición base (y: 0) y reanuda el rebote natural sin saltos
+      // Al salir de hover: regresa hacia arriba (y: 0) con la misma velocidad y curva del rebote (0.8s) y continúa el ciclo
       let isCancelled = false;
       animateArrow(
         arrowScope.current,
         { y: 0 },
-        { duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }
+        { duration: 0.8, ease: 'easeInOut' }
       ).then(() => {
         if (!isCancelled && arrowScope.current) {
           animateArrow(
