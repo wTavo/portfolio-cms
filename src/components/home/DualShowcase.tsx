@@ -82,11 +82,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     }
   }, [isButtonHovered, currentView, animateArrow, arrowScope]);
 
-  // Manejo de eventos de rueda de ratón, gestos táctiles y teclado sin conflicto de scrollbar
+  // Manejo de eventos de rueda de ratón, gestos táctiles y teclado sin conflicto de scrollbar ni de zoom
   useEffect(() => {
     let touchStartY = 0;
+    let isMultiTouch = false;
 
     const handleWheel = (e: WheelEvent) => {
+      // Ignorar eventos cuando el usuario hace zoom (Ctrl + rueda, Cmd + rueda o pellizco en trackpad)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (Math.abs(e.deltaY) < 15) return;
 
       if (e.deltaY > 0 && currentView === 'hero') {
@@ -97,6 +100,9 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignorar atajos con teclas modificadoras (ej. Ctrl + +, Ctrl + -, Ctrl + 0 para zoom)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
       if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentView === 'hero') {
         e.preventDefault();
         changeView('portfolios');
@@ -107,10 +113,16 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     };
 
     const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        isMultiTouch = true;
+        return;
+      }
+      isMultiTouch = false;
       touchStartY = e.touches[0].clientY;
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
+      if (isMultiTouch || e.touches.length > 0) return;
       const touchEndY = e.changedTouches[0].clientY;
       const diffY = touchStartY - touchEndY;
 
