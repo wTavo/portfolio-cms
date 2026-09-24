@@ -48,7 +48,6 @@ export default function KineticTitle({
     return true;
   });
   const alreadyPlayed = hasCompletedKineticIntro;
-  const [isCompleted, setIsCompleted] = useState(alreadyPlayed);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
@@ -138,23 +137,19 @@ export default function KineticTitle({
   const fillStartDelay = totalStrokeEndTime + 0.10; // La corriente llega de inmediato al completarse la conexión del circuito
   const fillIgnitionDuration = 1.65; // Duración equilibrada: parpadeo inicial rápido + subida gradual y visible de menor a mayor brillo
 
-  // 3. Elevación y flotación sutil tras completarse el encendido total
-  const elevationDelay = fillStartDelay + fillIgnitionDuration + 0.15; // 4.55s
-
   useEffect(() => {
     if (alreadyPlayed) return;
 
     const timer = setTimeout(() => {
       hasCompletedKineticIntro = true;
-      setIsCompleted(true);
-    }, elevationDelay * 1000);
+    }, (fillStartDelay + fillIgnitionDuration) * 1000);
 
     return () => {
       clearTimeout(timer);
       // Al salir de la vista o scrollear, marcar como reproducido para no re-ejecutar
       hasCompletedKineticIntro = true;
     };
-  }, [alreadyPlayed, elevationDelay]);
+  }, [alreadyPlayed, fillStartDelay, fillIgnitionDuration]);
 
   if (prefersReducedMotion) {
     return (
@@ -234,41 +229,8 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      {/* Contenedor con elevación cinemática tras completar toda la animación */}
-      <motion.div
-        animate={{ y: isCompleted ? -14 : 0 }}
-        transition={
-          alreadyPlayed
-            ? { duration: 0 }
-            : {
-                duration: 1.4,
-                ease: [0.16, 1, 0.3, 1],
-              }
-        }
-        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible"
-      >
-        {/* Movimiento sutil de flotación continua tras elevarse */}
-        <motion.div
-          animate={
-            isCompleted
-              ? {
-                  y: [-3, 3],
-                }
-              : { y: 0 }
-          }
-          transition={
-            isCompleted
-              ? {
-                  duration: 3.5,
-                  repeat: Infinity,
-                  repeatType: 'reverse',
-                  ease: 'easeInOut',
-                  delay: alreadyPlayed ? 0 : 1.4,
-                }
-              : { duration: 0 }
-          }
-          className="w-full flex flex-col items-center justify-center gap-y-2 sm:gap-y-4 md:gap-y-6 overflow-visible"
-        >
+      {/* Contenedor fijo y perfectamente centrado del título */}
+      <div className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible">
           {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
@@ -399,8 +361,7 @@ export default function KineticTitle({
             </svg>
           );
         })}
-        </motion.div>
-      </motion.div>
+      </div>
     </div>
   );
 }
