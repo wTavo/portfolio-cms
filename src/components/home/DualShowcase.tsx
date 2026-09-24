@@ -33,6 +33,7 @@ function getMonogram(name: string): string {
 export default function DualShowcase({ data }: DualShowcaseProps) {
   const [currentView, setCurrentView] = useState<'hero' | 'portfolios'>('hero');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const isTransitioningRef = useRef(false);
 
   const { creators } = data;
@@ -163,22 +164,34 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             >
               <KineticTitle text={i18n.showcase.title} />
 
-              {/* Botón de acceso a portafolios */}
-              <button
+              {/* Boton de acceso a portafolios */}
+              <motion.button
                 type="button"
                 onClick={() => changeView('portfolios')}
-                className="absolute bottom-10 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[72px] px-9 py-3.5 rounded-2xl bg-black/50 hover:bg-black/70 backdrop-blur-md text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:text-white transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-xl shadow-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
+                onMouseEnter={() => setIsButtonHovered(true)}
+                onMouseLeave={() => setIsButtonHovered(false)}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="absolute bottom-10 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[72px] px-9 py-3.5 rounded-2xl bg-black/50 hover:bg-black/70 backdrop-blur-md text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:text-white transition-colors flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-xl shadow-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group"
                 aria-label={i18n.showcase.goToPortfolios}
               >
                 <span>{i18n.showcase.goToPortfolios}</span>
                 <motion.div
-                  animate={{ y: [0, 5, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                  animate={
+                    isButtonHovered
+                      ? { y: [0, 8, 0], scale: [1, 1.2, 1] }
+                      : { y: [0, 5, 0], scale: 1 }
+                  }
+                  transition={
+                    isButtonHovered
+                      ? { repeat: Infinity, duration: 0.75, ease: 'easeInOut' }
+                      : { repeat: Infinity, duration: 2.0, ease: 'easeInOut' }
+                  }
                   className="text-[var(--color-brand-accent)] flex items-center justify-center"
                 >
                   <ChevronDownIcon size={30} className="w-7 h-7 sm:w-8 sm:h-8" />
                 </motion.div>
-              </button>
+              </motion.button>
             </motion.section>
           ) : (
             /* Vista 2: Portafolios Gateway */
