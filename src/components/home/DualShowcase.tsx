@@ -167,16 +167,16 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               <button
                 type="button"
                 onClick={() => changeView('portfolios')}
-                className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 min-h-[64px] px-8 py-3 rounded-2xl bg-[var(--color-bg-surface)]/85 backdrop-blur-md text-sm sm:text-base font-semibold tracking-wide text-[var(--color-text-primary)] hover:text-white hover:bg-[var(--color-bg-muted)] transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[0_0_24px_rgba(56,189,248,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
+                className="absolute bottom-12 sm:bottom-16 md:bottom-20 left-1/2 -translate-x-1/2 min-h-[76px] px-10 py-4 rounded-2xl bg-[var(--color-bg-surface)]/85 backdrop-blur-md text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:text-white hover:bg-[var(--color-bg-muted)] transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[0_0_28px_rgba(56,189,248,0.35)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
                 aria-label={i18n.showcase.goToPortfolios}
               >
                 <span>{i18n.showcase.goToPortfolios}</span>
                 <motion.div
-                  animate={{ y: [0, 4, 0] }}
+                  animate={{ y: [0, 5, 0] }}
                   transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
                   className="text-[var(--color-brand-accent)] flex items-center justify-center"
                 >
-                  <ChevronDownIcon size={26} className="w-6 h-6" />
+                  <ChevronDownIcon size={30} className="w-7 h-7 sm:w-8 sm:h-8" />
                 </motion.div>
               </button>
             </motion.section>
