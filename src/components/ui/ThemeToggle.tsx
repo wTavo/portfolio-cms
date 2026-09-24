@@ -8,21 +8,21 @@ import { SunIcon, MoonIcon } from '../icons/Icons';
 import { i18n } from '../../lib/i18n/es';
 
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [mounted, setMounted] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof document !== 'undefined') {
+      const current = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' | null;
+      if (current === 'light' || current === 'dark') return current;
+    }
+    return 'dark';
+  });
 
   useEffect(() => {
-    setMounted(true);
-    // Leer tema previo o preferencia del sistema
     const storedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
     if (storedTheme) {
       setTheme(storedTheme);
-      document.documentElement.setAttribute('data-theme', storedTheme);
     } else {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = prefersDark ? 'dark' : 'light';
-      setTheme(initialTheme);
-      document.documentElement.setAttribute('data-theme', initialTheme);
+      setTheme(prefersDark ? 'dark' : 'light');
     }
   }, []);
 
@@ -32,12 +32,6 @@ export default function ThemeToggle() {
     document.documentElement.setAttribute('data-theme', nextTheme);
     localStorage.setItem('theme', nextTheme);
   };
-
-  if (!mounted) {
-    return (
-      <div className="w-10 h-10 min-w-(--size-touch-target) min-h-(--size-touch-target) rounded-[var(--radius-md)] p-2" aria-hidden="true" />
-    );
-  }
 
   const isDark = theme === 'dark';
 

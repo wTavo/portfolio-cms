@@ -39,7 +39,14 @@ export default function KineticTitle({
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(true);
+  const [isDarkTheme, setIsDarkTheme] = useState(() => {
+    if (typeof document !== 'undefined') {
+      const current = document.documentElement.getAttribute('data-theme');
+      if (current === 'light') return false;
+      if (current === 'dark') return true;
+    }
+    return true;
+  });
   const alreadyPlayed = hasCompletedKineticIntro;
   const [isCompleted, setIsCompleted] = useState(alreadyPlayed);
 
