@@ -7,7 +7,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
-import { ArrowRightIcon, RocketIcon } from '../icons/Icons';
+import { ArrowRightIcon, RocketIcon, ChevronDownIcon } from '../icons/Icons';
 import KineticTitle from './KineticTitle';
 import TopographicBackground from './TopographicBackground';
 import {
@@ -163,23 +163,21 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             >
               <KineticTitle text={i18n.showcase.title} />
 
-              {/* Indicador interactivo de scroll */}
+              {/* Botón de acceso a portafolios */}
               <button
                 type="button"
                 onClick={() => changeView('portfolios')}
-                className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer group focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1"
-                aria-label="Ver portafolios"
+                className="absolute bottom-8 left-1/2 -translate-x-1/2 min-h-[44px] px-5 py-2.5 rounded-full bg-[var(--color-bg-surface)]/80 backdrop-blur-md border border-[var(--color-border-subtle)] hover:border-[var(--color-brand-accent)]/60 text-xs sm:text-sm font-medium tracking-wide text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] transition-all flex items-center gap-2 cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[0_0_20px_rgba(56,189,248,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group"
+                aria-label={i18n.showcase.viewPortfolios}
               >
-                <span className="text-[11px] font-mono uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-brand-accent)] transition-colors">
-                  Scroll
-                </span>
-                <div className="w-5 h-8 rounded-full border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)] flex items-start justify-center p-1 transition-colors">
-                  <motion.div
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ repeat: Infinity, duration: 1.6, ease: 'easeInOut' }}
-                    className="w-1 h-2 rounded-full bg-[var(--color-brand-accent)]"
-                  />
-                </div>
+                <span>{i18n.showcase.viewPortfolios}</span>
+                <motion.div
+                  animate={{ y: [0, 3, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
+                  className="text-[var(--color-brand-accent)] flex items-center justify-center"
+                >
+                  <ChevronDownIcon size={16} className="w-4 h-4" />
+                </motion.div>
               </button>
             </motion.section>
           ) : (

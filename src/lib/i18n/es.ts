@@ -60,6 +60,7 @@ export const i18n = {
     title: 'Portafolio Profesional',
     subtitle: 'Selecciona un portafolio para explorar proyectos y experiencia',
     explorePortfolio: 'Explorar portafolio',
+    viewPortfolios: 'Ver portafolios',
     login: 'Acceso',
   },
   errors: {

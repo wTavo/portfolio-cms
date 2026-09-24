@@ -500,3 +500,21 @@ const dimensionProps = size ? { width: size, height: size } : {};
     <path d="M12 18h.01" />
   </svg>
 )}
+
+{name === 'chevron-down' && (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    class={className}
+    aria-hidden={ariaLabel ? undefined : 'true'}
+    aria-label={ariaLabel}
+    {...dimensionProps}
+  >
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+)}
