@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
 import { ArrowRightIcon, RocketIcon, ChevronDownIcon } from '../icons/Icons';
@@ -34,6 +34,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const [currentView, setCurrentView] = useState<'hero' | 'portfolios'>('hero');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [isButtonHovered, setIsButtonHovered] = useState(false);
+  const [arrowScope, animateArrow] = useAnimate();
   const isTransitioningRef = useRef(false);
 
   const { creators } = data;
@@ -46,6 +47,40 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       isTransitioningRef.current = false;
     }, 600);
   }, [currentView]);
+
+  // Animación continua y reactiva de la flecha sin saltos al alternar hover
+  useEffect(() => {
+    if (!arrowScope.current || currentView !== 'hero') return;
+
+    if (isButtonHovered) {
+      // Al entrar en hover: se traslada suavemente hacia abajo (y: 6) y se mantiene fija
+      animateArrow(
+        arrowScope.current,
+        { y: 6 },
+        { duration: MOTION_DURATIONS.fast, ease: MOTION_EASINGS.decelerate }
+      );
+    } else {
+      // Al salir de hover: regresa suavemente a su posición base (y: 0) y reanuda el rebote natural sin saltos
+      let isCancelled = false;
+      animateArrow(
+        arrowScope.current,
+        { y: 0 },
+        { duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }
+      ).then(() => {
+        if (!isCancelled && arrowScope.current) {
+          animateArrow(
+            arrowScope.current,
+            { y: [0, 6, 0] },
+            { repeat: Infinity, duration: 1.6, ease: 'easeInOut' }
+          );
+        }
+      });
+
+      return () => {
+        isCancelled = true;
+      };
+    }
+  }, [isButtonHovered, currentView, animateArrow, arrowScope]);
 
   // Manejo de eventos de rueda de ratón, gestos táctiles y teclado sin conflicto de scrollbar
   useEffect(() => {
@@ -174,21 +209,12 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                 aria-label={i18n.showcase.goToPortfolios}
               >
                 <span>{i18n.showcase.goToPortfolios}</span>
-                <motion.div
-                  animate={
-                    isButtonHovered
-                      ? { y: 6 }
-                      : { y: [0, 7, 0] }
-                  }
-                  transition={
-                    isButtonHovered
-                      ? { duration: 0.2, ease: 'easeOut' }
-                      : { repeat: Infinity, duration: 1.5, ease: 'easeInOut' }
-                  }
+                <div
+                  ref={arrowScope}
                   className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-1"
                 >
                   <ChevronDownIcon size={30} className="w-7 h-7 sm:w-8 sm:h-8" />
-                </motion.div>
+                </div>
               </button>
             </motion.section>
           ) : (
