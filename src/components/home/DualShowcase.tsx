@@ -17,17 +17,18 @@ import {
   fadeSlideUpVariants,
 } from '../../lib/motion';
 
-/** Variantes de animación limpia para la flecha del botón hero */
+/** Variantes de animación para la flecha: rebote suave en reposo y traslación firme hacia abajo en hover */
 const heroArrowVariants = {
   rest: {
-    y: 0,
+    y: [0, 5, 0],
     transition: {
-      duration: MOTION_DURATIONS.normal,
-      ease: MOTION_EASINGS.decelerate,
+      repeat: Infinity,
+      duration: 1.8,
+      ease: 'easeInOut',
     },
   },
   hover: {
-    y: -4,
+    y: 6,
     transition: {
       duration: MOTION_DURATIONS.fast,
       ease: MOTION_EASINGS.decelerate,
