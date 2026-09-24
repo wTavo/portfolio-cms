@@ -229,8 +229,18 @@ export default function KineticTitle({
         aria-hidden="true"
       />
 
-      {/* Contenedor fijo y perfectamente centrado del título */}
-      <div className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible">
+      {/* Contenedor central con sutil flotación orgánica continua sin saltos */}
+      <motion.div
+        animate={{
+          y: [0, -5, 0, 5, 0],
+        }}
+        transition={{
+          duration: 6.5,
+          repeat: Infinity,
+          ease: 'easeInOut',
+        }}
+        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible"
+      >
           {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
@@ -361,7 +371,7 @@ export default function KineticTitle({
             </svg>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }
