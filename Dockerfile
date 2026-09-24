@@ -1,11 +1,10 @@
 # ==============================================================================
-# Dockerfile — Entorno Local y Contenerización de Portfolio Builder (Astro)
+# Dockerfile — Entorno Local y Contenerización de Portfolio Builder (Astro + Cloudflare)
 # ==============================================================================
 
-# Etapa 1: Imagen Base
-FROM node:22-alpine AS base
+# Etapa 1: Imagen Base (Debian Slim con soporte nativo de glibc para workerd de Cloudflare)
+FROM node:22-slim AS base
 WORKDIR /app
-RUN apk add --no-cache libc6-compat
 ENV NODE_ENV=development
 
 # Etapa 2: Instalación de Dependencias
