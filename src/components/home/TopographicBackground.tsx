@@ -35,9 +35,9 @@ export default function TopographicBackground() {
 
     window.addEventListener('resize', handleResize);
 
-    // Configuración de las 16 curvas topográficas de nivel
-    const lineCount = 16;
-    const segmentCount = 12;
+    // Configuración optimizada de las 8 curvas topográficas centrales (máximo rendimiento y foco en el título)
+    const lineCount = 8;
+    const segmentCount = 10;
 
     const render = (time: number) => {
       if (!isRunning) return;
@@ -46,10 +46,10 @@ export default function TopographicBackground() {
 
       const t = prefersReduced ? 1000 : time * 0.0005;
 
-      // Dibujar cada línea topográfica de trayectoria
+      // Dibujar cada línea topográfica de trayectoria concentrada en el área central
       for (let i = 0; i < lineCount; i++) {
         const progress = i / (lineCount - 1);
-        const baseY = height * 0.15 + progress * (height * 0.75);
+        const baseY = height * 0.26 + progress * (height * 0.40);
 
         // Color de la curva con gradiente de transparencia en los bordes
         const alpha = Math.sin(progress * Math.PI) * 0.22 + 0.05;
@@ -133,9 +133,9 @@ export default function TopographicBackground() {
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
           maskImage:
-            'radial-gradient(ellipse 80% 70% at 50% 50%, #000 45%, rgba(0,0,0,0.5) 75%, transparent 98%)',
+            'radial-gradient(ellipse 75% 50% at 50% 48%, #000 35%, rgba(0,0,0,0.4) 65%, transparent 92%)',
           WebkitMaskImage:
-            'radial-gradient(ellipse 80% 70% at 50% 50%, #000 45%, rgba(0,0,0,0.5) 75%, transparent 98%)',
+            'radial-gradient(ellipse 75% 50% at 50% 48%, #000 35%, rgba(0,0,0,0.4) 65%, transparent 92%)',
         }}
       />
     </div>
