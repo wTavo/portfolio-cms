@@ -47,18 +47,28 @@ export default function TopographicBackground() {
       const t = prefersReduced ? 1000 : time * 0.0005;
 
       // Dibujar cada linea topografica con distribucion sutilmente mas amplia en el horizonte
+      const isDark =
+        document.documentElement.getAttribute('data-theme') !== 'light' &&
+        (document.documentElement.getAttribute('data-theme') === 'dark' ||
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+
       for (let i = 0; i < lineCount; i++) {
         const progress = i / (lineCount - 1);
         const baseY = height * 0.15 + progress * (height * 0.63);
 
         // Color de la curva con gradiente de transparencia en los bordes
-        const alpha = Math.sin(progress * Math.PI) * 0.25 + 0.06;
-        const strokeColor =
-          i % 3 === 0
+        const alpha = Math.sin(progress * Math.PI) * (isDark ? 0.25 : 0.35) + (isDark ? 0.06 : 0.12);
+        const strokeColor = isDark
+          ? i % 3 === 0
             ? `rgba(56, 189, 248, ${alpha * 1.2})` // Cian acento
             : i % 3 === 1
             ? `rgba(99, 102, 241, ${alpha * 0.9})` // Indigo
-            : `rgba(224, 242, 254, ${alpha * 0.7})`; // Blanco suave
+            : `rgba(224, 242, 254, ${alpha * 0.7})` // Blanco suave
+          : i % 3 === 0
+            ? `rgba(37, 99, 235, ${alpha * 1.3})` // Azul vibrante
+            : i % 3 === 1
+            ? `rgba(79, 70, 229, ${alpha * 1.1})` // Índigo
+            : `rgba(100, 116, 139, ${alpha * 0.85})`; // Pizarra
 
         ctx.beginPath();
 
@@ -89,7 +99,7 @@ export default function TopographicBackground() {
         ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
 
         ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = i % 4 === 0 ? 1.4 : 0.85;
+        ctx.lineWidth = i % 4 === 0 ? (isDark ? 1.4 : 1.6) : (isDark ? 0.85 : 1.1);
         ctx.lineCap = 'round';
         ctx.stroke();
       }
@@ -114,16 +124,17 @@ export default function TopographicBackground() {
 
   return (
     <div
-      className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden select-none bg-[var(--color-bg-base)]"
+      className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden select-none bg-[var(--color-bg-base)] transition-colors duration-300"
       aria-hidden="true"
     >
       {/* 1. Halo Ambiental de Exhibicion Central */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[600px] pointer-events-none"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[600px] pointer-events-none opacity-80"
         style={{
           background:
-            'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.13) 0%, rgba(99, 102, 241, 0.05) 48%, transparent 75%)',
-          filter: 'blur(55px)',
+            'radial-gradient(ellipse at center, var(--color-brand-accent) 0%, rgba(99, 102, 241, 0.06) 48%, transparent 75%)',
+          filter: 'blur(60px)',
+          opacity: 0.12,
         }}
       />
 

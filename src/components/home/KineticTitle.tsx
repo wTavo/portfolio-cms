@@ -39,6 +39,7 @@ export default function KineticTitle({
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [isDarkTheme, setIsDarkTheme] = useState(true);
   const alreadyPlayed = hasCompletedKineticIntro;
   const [isCompleted, setIsCompleted] = useState(alreadyPlayed);
 
@@ -46,11 +47,41 @@ export default function KineticTitle({
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery.matches);
-    const listener = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', listener);
-    return () => mediaQuery.removeEventListener('change', listener);
+    const updateTheme = () => {
+      const dataTheme = document.documentElement.getAttribute('data-theme');
+      if (dataTheme) {
+        setIsDarkTheme(dataTheme === 'dark');
+      } else {
+        setIsDarkTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      }
+    };
+
+    updateTheme();
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+          updateTheme();
+        }
+      }
+    });
+
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const mediaListener = () => updateTheme();
+    mediaQuery.addEventListener('change', mediaListener);
+
+    const motionMediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(motionMediaQuery.matches);
+    const motionListener = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    motionMediaQuery.addEventListener('change', motionListener);
+
+    return () => {
+      observer.disconnect();
+      mediaQuery.removeEventListener('change', mediaListener);
+      motionMediaQuery.removeEventListener('change', motionListener);
+    };
   }, []);
 
   // Calcular la disposición geométrica precisa de cada palabra y letra con índice global secuencial
@@ -124,7 +155,7 @@ export default function KineticTitle({
         {words.map((word, idx) => (
           <span
             key={`reduced-word-${idx}`}
-            className={`font-black tracking-wider text-white uppercase leading-none ${
+            className={`font-black tracking-wider text-[var(--color-text-primary)] uppercase leading-none ${
               idx === 0
                 ? 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem]'
                 : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl tracking-[0.25em]'
@@ -137,13 +168,62 @@ export default function KineticTitle({
     );
   }
 
+  // Configuración de paleta visual adaptativa (Modo Oscuro / Modo Claro)
+  const colors = isDarkTheme
+    ? {
+        primary: '#fafafa',
+        stroke: '#ffffff',
+        moldShadow: 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
+        fillShadow: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+        moldShadowKeyframes: [
+          'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+          'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+          'drop-shadow(0 0 18px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.9))',
+          'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
+        ],
+        fillShadowKeyframes: [
+          'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+          'drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(186, 230, 253, 0.7))',
+          'drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))',
+          'drop-shadow(0 0 24px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 45px rgba(186, 230, 253, 0.8))',
+          'drop-shadow(0 0 3px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px rgba(186, 230, 253, 0.1))',
+          'drop-shadow(0 0 7px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 16px rgba(186, 230, 253, 0.2))',
+          'drop-shadow(0 0 11px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.3))',
+          'drop-shadow(0 0 14px rgba(255, 255, 255, 0.72)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.35))',
+          'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+        ],
+      }
+    : {
+        primary: '#09090b',
+        stroke: '#18181b',
+        moldShadow: 'drop-shadow(0 0 10px rgba(37, 99, 235, 0.5)) drop-shadow(0 0 20px rgba(99, 102, 241, 0.3))',
+        fillShadow: 'drop-shadow(0 0 8px rgba(37, 99, 235, 0.2)) drop-shadow(0 0 18px rgba(99, 102, 241, 0.1))',
+        moldShadowKeyframes: [
+          'drop-shadow(0 0 6px rgba(37, 99, 235, 0.4)) drop-shadow(0 0 14px rgba(99, 102, 241, 0.2))',
+          'drop-shadow(0 0 6px rgba(37, 99, 235, 0.4)) drop-shadow(0 0 14px rgba(99, 102, 241, 0.2))',
+          'drop-shadow(0 0 14px rgba(37, 99, 235, 0.8)) drop-shadow(0 0 28px rgba(99, 102, 241, 0.5))',
+          'drop-shadow(0 0 10px rgba(37, 99, 235, 0.5)) drop-shadow(0 0 20px rgba(99, 102, 241, 0.3))',
+        ],
+        fillShadowKeyframes: [
+          'drop-shadow(0 0 0px rgba(37, 99, 235, 0))',
+          'drop-shadow(0 0 16px rgba(37, 99, 235, 0.6)) drop-shadow(0 0 30px rgba(99, 102, 241, 0.4))',
+          'drop-shadow(0 0 2px rgba(37, 99, 235, 0.1))',
+          'drop-shadow(0 0 18px rgba(37, 99, 235, 0.7)) drop-shadow(0 0 36px rgba(99, 102, 241, 0.45))',
+          'drop-shadow(0 0 2px rgba(37, 99, 235, 0.1)) drop-shadow(0 0 6px rgba(99, 102, 241, 0.05))',
+          'drop-shadow(0 0 4px rgba(37, 99, 235, 0.15)) drop-shadow(0 0 10px rgba(99, 102, 241, 0.08))',
+          'drop-shadow(0 0 6px rgba(37, 99, 235, 0.18)) drop-shadow(0 0 14px rgba(99, 102, 241, 0.09))',
+          'drop-shadow(0 0 7px rgba(37, 99, 235, 0.2)) drop-shadow(0 0 16px rgba(99, 102, 241, 0.1))',
+          'drop-shadow(0 0 8px rgba(37, 99, 235, 0.2)) drop-shadow(0 0 18px rgba(99, 102, 241, 0.1))',
+        ],
+      };
+
   return (
     <div
       className={`relative w-full flex flex-col items-center justify-center min-h-[440px] sm:min-h-[500px] md:min-h-[580px] py-12 sm:py-16 select-none overflow-visible ${className}`}
     >
       {/* Resplandor ambiental de estudio ultra suave */}
       <div
-        className="absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none opacity-20"
+        className="absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none opacity-20 dark:opacity-20"
         aria-hidden="true"
       />
 
@@ -185,8 +265,12 @@ export default function KineticTitle({
           {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
-            ? 'w-full max-w-5xl h-auto drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]'
-            : 'w-[90%] max-w-4xl h-auto drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]';
+            ? isDarkTheme
+              ? 'w-full max-w-5xl h-auto drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]'
+              : 'w-full max-w-5xl h-auto drop-shadow-[0_8px_20px_rgba(0,0,0,0.08)]'
+            : isDarkTheme
+              ? 'w-[90%] max-w-4xl h-auto drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]'
+              : 'w-[90%] max-w-4xl h-auto drop-shadow-[0_6px_16px_rgba(0,0,0,0.06)]';
 
           return (
             <svg
@@ -216,28 +300,23 @@ export default function KineticTitle({
                             ? {
                                 pathLength: 1,
                                 opacity: 1,
-                                stroke: '#ffffff',
-                                filter: 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
+                                stroke: colors.stroke,
+                                filter: colors.moldShadow,
                               }
                             : {
                                 pathLength: 0,
                                 opacity: 0,
-                                stroke: '#ffffff',
-                                filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+                                stroke: colors.stroke,
+                                filter: colors.moldShadowKeyframes[0],
                               }
                         }
                         animate={{
                           pathLength: 1,
                           opacity: 1,
-                          stroke: '#ffffff',
+                          stroke: colors.stroke,
                           filter: alreadyPlayed
-                            ? 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))'
-                            : [
-                                'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
-                                'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
-                                'drop-shadow(0 0 18px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.9))',
-                                'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
-                              ],
+                            ? colors.moldShadow
+                            : colors.moldShadowKeyframes,
                         }}
                         transition={
                           alreadyPlayed
@@ -275,32 +354,22 @@ export default function KineticTitle({
                         alreadyPlayed
                           ? {
                               opacity: 1,
-                              filter: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                              filter: colors.fillShadow,
                             }
                           : {
                               opacity: 0,
-                              filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                              filter: 'drop-shadow(0 0 0px rgba(0, 0, 0, 0))',
                             }
                       }
                       animate={
                         alreadyPlayed
                           ? {
                               opacity: 1,
-                              filter: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                              filter: colors.fillShadow,
                             }
                           : {
                               opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
-                              filter: [
-                                'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
-                                'drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(186, 230, 253, 0.7))',
-                                'drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))',
-                                'drop-shadow(0 0 24px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 45px rgba(186, 230, 253, 0.8))',
-                                'drop-shadow(0 0 3px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px rgba(186, 230, 253, 0.1))',
-                                'drop-shadow(0 0 7px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 16px rgba(186, 230, 253, 0.2))',
-                                'drop-shadow(0 0 11px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.3))',
-                                'drop-shadow(0 0 14px rgba(255, 255, 255, 0.72)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.35))',
-                                'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
-                              ],
+                              filter: colors.fillShadowKeyframes,
                             }
                       }
                       transition={
@@ -313,8 +382,8 @@ export default function KineticTitle({
                               ease: 'easeInOut',
                             }
                       }
-                      fill="#ffffff"
-                      stroke="#ffffff"
+                      fill={colors.primary}
+                      stroke={colors.primary}
                       strokeWidth={1}
                     />
                   </g>
