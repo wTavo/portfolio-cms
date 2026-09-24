@@ -26,11 +26,60 @@ export default function ThemeToggle() {
     }
   }, []);
 
-  const toggleTheme = () => {
+  const toggleTheme = (event: React.MouseEvent<HTMLButtonElement>) => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    localStorage.setItem('theme', nextTheme);
+
+    // Obtener las coordenadas del centro del botón o punto de clic para el origen radial
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    const x = event.clientX || buttonRect.left + buttonRect.width / 2;
+    const y = event.clientY || buttonRect.top + buttonRect.height / 2;
+
+    // Calcular el radio máximo necesario para cubrir la pantalla completa
+    const endRadius = Math.hypot(
+      Math.max(x, window.innerWidth - x),
+      Math.max(y, window.innerHeight - y)
+    );
+
+    const applyThemeChange = () => {
+      setTheme(nextTheme);
+      document.documentElement.setAttribute('data-theme', nextTheme);
+      localStorage.setItem('theme', nextTheme);
+    };
+
+    // Verificar si el navegador soporta View Transitions API y si no prefiere movimiento reducido
+    const isAppearanceTransition =
+      typeof document !== 'undefined' &&
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Boolean((document as any).startViewTransition) &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (!isAppearanceTransition) {
+      applyThemeChange();
+      return;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transition = (document as any).startViewTransition(() => {
+      applyThemeChange();
+    });
+
+    transition.ready.then(() => {
+      const clipPath = [
+        `circle(0px at ${x}px ${y}px)`,
+        `circle(${endRadius}px at ${x}px ${y}px)`,
+      ];
+
+      document.documentElement.animate(
+        {
+          clipPath,
+        },
+        {
+          duration: 500,
+          easing: 'cubic-bezier(0.2, 0, 0, 1)',
+          pseudoElement: '::view-transition-new(root)',
+        }
+      );
+    });
   };
 
   const isDark = theme === 'dark';
