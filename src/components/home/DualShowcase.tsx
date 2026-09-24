@@ -17,25 +17,6 @@ import {
   fadeSlideUpVariants,
 } from '../../lib/motion';
 
-/** Variantes de animación para la flecha: rebote suave en reposo y traslación firme hacia abajo en hover */
-const heroArrowVariants = {
-  rest: {
-    y: [0, 5, 0],
-    transition: {
-      repeat: Infinity,
-      duration: 1.8,
-      ease: 'easeInOut',
-    },
-  },
-  hover: {
-    y: 6,
-    transition: {
-      duration: MOTION_DURATIONS.fast,
-      ease: MOTION_EASINGS.decelerate,
-    },
-  },
-};
-
 interface DualShowcaseProps {
   data: ShowcaseData;
 }
@@ -52,6 +33,7 @@ function getMonogram(name: string): string {
 export default function DualShowcase({ data }: DualShowcaseProps) {
   const [currentView, setCurrentView] = useState<'hero' | 'portfolios'>('hero');
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const isTransitioningRef = useRef(false);
 
   const { creators } = data;
@@ -183,23 +165,31 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               <KineticTitle text={i18n.showcase.title} />
 
               {/* Botón de acceso a portafolios */}
-              <motion.button
+              <button
                 type="button"
                 onClick={() => changeView('portfolios')}
-                initial="rest"
-                whileHover="hover"
-                whileTap={{ scale: 0.98 }}
-                className="absolute bottom-10 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[66px] px-9 py-3 rounded-2xl bg-black/50 hover:bg-black/70 backdrop-blur-md text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:text-white transition-colors flex flex-col items-center justify-center gap-0.5 cursor-pointer shadow-xl shadow-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group"
+                onMouseEnter={() => setIsButtonHovered(true)}
+                onMouseLeave={() => setIsButtonHovered(false)}
+                className="absolute bottom-10 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[66px] px-9 py-3 rounded-2xl bg-black/50 hover:bg-black/70 backdrop-blur-md text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:text-white transition-colors flex flex-col items-center justify-center gap-0.5 cursor-pointer shadow-xl shadow-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
                 aria-label={i18n.showcase.goToPortfolios}
               >
                 <span>{i18n.showcase.goToPortfolios}</span>
                 <motion.div
-                  variants={heroArrowVariants}
+                  animate={
+                    isButtonHovered
+                      ? { y: 6 }
+                      : { y: [0, 7, 0] }
+                  }
+                  transition={
+                    isButtonHovered
+                      ? { duration: 0.2, ease: 'easeOut' }
+                      : { repeat: Infinity, duration: 1.5, ease: 'easeInOut' }
+                  }
                   className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-1"
                 >
                   <ChevronDownIcon size={30} className="w-7 h-7 sm:w-8 sm:h-8" />
                 </motion.div>
-              </motion.button>
+              </button>
             </motion.section>
           ) : (
             /* Vista 2: Portafolios Gateway */
