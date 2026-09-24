@@ -167,16 +167,16 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               <button
                 type="button"
                 onClick={() => changeView('portfolios')}
-                className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 min-h-[52px] px-6 py-2.5 rounded-2xl bg-[var(--color-bg-surface)]/80 backdrop-blur-md border border-[var(--color-border-subtle)] hover:border-[var(--color-brand-accent)]/60 text-xs sm:text-sm font-medium tracking-wide text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] transition-all flex flex-col items-center justify-center gap-1 cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[0_0_20px_rgba(56,189,248,0.25)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group"
-                aria-label={i18n.showcase.viewPortfolios}
+                className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2 min-h-[64px] px-8 py-3 rounded-2xl bg-[var(--color-bg-surface)]/85 backdrop-blur-md border border-[var(--color-border-subtle)] hover:border-[var(--color-brand-accent)]/70 text-sm sm:text-base font-semibold tracking-wide text-[var(--color-text-primary)] hover:text-white hover:bg-[var(--color-bg-muted)] transition-all flex flex-col items-center justify-center gap-1.5 cursor-pointer shadow-[var(--shadow-card)] hover:shadow-[0_0_24px_rgba(56,189,248,0.3)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
+                aria-label={i18n.showcase.goToPortfolios}
               >
-                <span>{i18n.showcase.viewPortfolios}</span>
+                <span>{i18n.showcase.goToPortfolios}</span>
                 <motion.div
                   animate={{ y: [0, 4, 0] }}
                   transition={{ repeat: Infinity, duration: 1.8, ease: 'easeInOut' }}
                   className="text-[var(--color-brand-accent)] flex items-center justify-center"
                 >
-                  <ChevronDownIcon size={22} className="w-5.5 h-5.5" />
+                  <ChevronDownIcon size={26} className="w-6 h-6" />
                 </motion.div>
               </button>
             </motion.section>
