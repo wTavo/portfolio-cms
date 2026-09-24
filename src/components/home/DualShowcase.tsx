@@ -23,7 +23,7 @@ interface DualShowcaseProps {
   data: ShowcaseData;
 }
 
-/** Retorna el icono SVG vectorial temático según la especialidad del creador */
+/** Retorna el icono SVG vectorial según la especialidad del creador */
 function getCreatorIcon(slug: string, role: string) {
   const normalized = `${slug} ${role}`.toLowerCase();
   if (
@@ -33,7 +33,7 @@ function getCreatorIcon(slug: string, role: string) {
     normalized.includes('partner') ||
     normalized.includes('producto')
   ) {
-    return <PaletteIcon size={24} className="text-violet-600 dark:text-violet-400" />;
+    return <PaletteIcon size={22} className="text-[var(--color-text-primary)]" />;
   }
   if (
     normalized.includes('gustavo') ||
@@ -42,9 +42,9 @@ function getCreatorIcon(slug: string, role: string) {
     normalized.includes('dev') ||
     normalized.includes('ingeniero')
   ) {
-    return <CodeIcon size={24} className="text-blue-600 dark:text-blue-400" />;
+    return <CodeIcon size={22} className="text-[var(--color-text-primary)]" />;
   }
-  return <UserIcon size={24} className="text-[var(--color-brand-accent)]" />;
+  return <UserIcon size={22} className="text-[var(--color-text-primary)]" />;
 }
 
 export default function DualShowcase({ data }: DualShowcaseProps) {
@@ -288,26 +288,17 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                         onHoverEnd={() => setHoveredId(null)}
                         whileHover={{ y: -6, scale: 1.012 }}
                         transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
-                        className="group relative flex flex-col justify-between p-7 sm:p-8 rounded-[var(--radius-2xl)] bg-white/95 dark:bg-[#141417]/95 backdrop-blur-xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_14px_34px_-8px_rgba(0,0,0,0.1),0_4px_14px_-2px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.7)] hover:shadow-[0_24px_48px_-10px_rgba(37,99,235,0.18)] dark:hover:shadow-[0_24px_50px_-10px_rgba(56,189,248,0.22)] hover:border-blue-500/50 dark:hover:border-blue-400/50 transition-all duration-300 overflow-hidden cursor-pointer block"
+                        className="group relative flex flex-col justify-between p-7 sm:p-8 rounded-[var(--radius-2xl)] bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl border border-slate-200/90 dark:border-zinc-800 shadow-[0_20px_45px_-12px_rgba(0,0,0,0.12),0_0_0_1px_rgba(0,0,0,0.04)] dark:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),0_0_0_1px_rgba(255,255,255,0.08)] hover:shadow-[0_28px_60px_-12px_rgba(0,0,0,0.18)] dark:hover:shadow-[0_30px_70px_-12px_rgba(0,0,0,0.95)] hover:border-slate-300 dark:hover:border-zinc-700 transition-all duration-300 overflow-hidden cursor-pointer block"
                       >
-                        {/* Barra superior de acento con degradado */}
-                        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-600 via-indigo-500 to-cyan-400 opacity-80 group-hover:opacity-100 transition-opacity" />
-
-                        {/* Resplandor ambiental reactivo al cursor */}
-                        <div
-                          className="absolute -inset-px opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none rounded-[var(--radius-2xl)] bg-radial from-[var(--color-brand-accent)]/10 via-transparent to-transparent"
-                          aria-hidden="true"
-                        />
-
                         {/* Contenido de la Tarjeta */}
                         <div className="relative z-10 space-y-4">
-                          {/* Cabecera con Icono SVG vectorial temático y Slug */}
+                          {/* Cabecera con Icono SVG vectorial y Slug */}
                           <div className="flex items-center justify-between">
-                            <div className="w-12 h-12 rounded-[var(--radius-xl)] bg-slate-100 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 shadow-xs flex items-center justify-center group-hover:scale-105 group-hover:bg-white dark:group-hover:bg-zinc-800 group-hover:border-[var(--color-brand-accent)] transition-all">
+                            <div className="w-12 h-12 rounded-[var(--radius-xl)] bg-slate-100/90 dark:bg-zinc-800/90 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-center group-hover:scale-105 group-hover:bg-slate-200/70 dark:group-hover:bg-zinc-700/70 transition-all">
                               {getCreatorIcon(creator.slug, creator.role)}
                             </div>
 
-                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-700/50 text-xs font-mono text-[var(--color-text-secondary)] group-hover:text-[var(--color-brand-accent)] group-hover:border-[var(--color-brand-accent)]/30 transition-colors">
+                            <div className="flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100/90 dark:bg-zinc-800/80 border border-slate-200/60 dark:border-zinc-700/50 text-xs font-mono text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">
                               <span className="opacity-50">/</span>
                               <span>{creator.slug}</span>
                             </div>
@@ -329,7 +320,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                               {creator.skills.slice(0, 3).map((skill) => (
                                 <span
                                   key={skill}
-                                  className="px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[11px] font-medium bg-slate-100/80 dark:bg-zinc-800/60 text-[var(--color-text-secondary)] border border-slate-200/60 dark:border-zinc-700/40"
+                                  className="px-2.5 py-0.5 rounded-[var(--radius-sm)] text-[11px] font-medium bg-slate-100/90 dark:bg-zinc-800/70 text-[var(--color-text-secondary)] border border-slate-200/60 dark:border-zinc-700/40"
                                 >
                                   {skill}
                                 </span>
