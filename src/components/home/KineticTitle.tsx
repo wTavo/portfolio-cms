@@ -31,12 +31,16 @@ interface WordLayout {
   totalWidth: number;
 }
 
+/** Variable en tiempo de ejecución para recordar que la animación introductoria ya se ejecutó y no repetirla al scrollear */
+let hasCompletedKineticIntro = false;
+
 export default function KineticTitle({
   text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
+  const alreadyPlayed = hasCompletedKineticIntro;
+  const [isCompleted, setIsCompleted] = useState(alreadyPlayed);
 
   const uppercaseText = useMemo(() => text.toUpperCase(), [text]);
   const words = useMemo(() => uppercaseText.split(' '), [uppercaseText]);
@@ -100,11 +104,19 @@ export default function KineticTitle({
   const elevationDelay = fillStartDelay + fillIgnitionDuration + 0.15; // 4.55s
 
   useEffect(() => {
+    if (alreadyPlayed) return;
+
     const timer = setTimeout(() => {
+      hasCompletedKineticIntro = true;
       setIsCompleted(true);
     }, elevationDelay * 1000);
-    return () => clearTimeout(timer);
-  }, [elevationDelay]);
+
+    return () => {
+      clearTimeout(timer);
+      // Al salir de la vista o scrollear, marcar como reproducido para no re-ejecutar
+      hasCompletedKineticIntro = true;
+    };
+  }, [alreadyPlayed, elevationDelay]);
 
   if (prefersReducedMotion) {
     return (
@@ -138,10 +150,14 @@ export default function KineticTitle({
       {/* Contenedor con elevación cinemática tras completar toda la animación */}
       <motion.div
         animate={{ y: isCompleted ? -14 : 0 }}
-        transition={{
-          duration: 1.4,
-          ease: [0.16, 1, 0.3, 1],
-        }}
+        transition={
+          alreadyPlayed
+            ? { duration: 0 }
+            : {
+                duration: 1.4,
+                ease: [0.16, 1, 0.3, 1],
+              }
+        }
         className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible"
       >
         {/* Movimiento sutil de flotación continua tras elevarse */}
@@ -160,7 +176,7 @@ export default function KineticTitle({
                   repeat: Infinity,
                   repeatType: 'reverse',
                   ease: 'easeInOut',
-                  delay: 1.4,
+                  delay: alreadyPlayed ? 0 : 1.4,
                 }
               : { duration: 0 }
           }
@@ -195,40 +211,55 @@ export default function KineticTitle({
                       <motion.path
                         key={`mold-stroke-${subIdx}`}
                         d={subD}
-                        initial={{
-                          pathLength: 0,
-                          opacity: 0,
-                          stroke: '#ffffff',
-                          filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
-                        }}
+                        initial={
+                          alreadyPlayed
+                            ? {
+                                pathLength: 1,
+                                opacity: 1,
+                                stroke: '#ffffff',
+                                filter: 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
+                              }
+                            : {
+                                pathLength: 0,
+                                opacity: 0,
+                                stroke: '#ffffff',
+                                filter: 'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+                              }
+                        }
                         animate={{
                           pathLength: 1,
                           opacity: 1,
                           stroke: '#ffffff',
-                          filter: [
-                            'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
-                            'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
-                            'drop-shadow(0 0 18px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.9))',
-                            'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
-                          ],
+                          filter: alreadyPlayed
+                            ? 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))'
+                            : [
+                                'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+                                'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
+                                'drop-shadow(0 0 18px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.9))',
+                                'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
+                              ],
                         }}
-                        transition={{
-                          pathLength: {
-                            duration: strokeDuration,
-                            delay: strokeDelay,
-                            ease: 'linear',
-                          },
-                          opacity: {
-                            duration: 0.05,
-                            delay: strokeDelay,
-                          },
-                          filter: {
-                            duration: strokeDuration + 0.35,
-                            delay: strokeDelay,
-                            times: [0, 0.94, 0.98, 1],
-                            ease: [0.16, 1, 0.3, 1],
-                          },
-                        }}
+                        transition={
+                          alreadyPlayed
+                            ? { duration: 0 }
+                            : {
+                                pathLength: {
+                                  duration: strokeDuration,
+                                  delay: strokeDelay,
+                                  ease: 'linear',
+                                },
+                                opacity: {
+                                  duration: 0.05,
+                                  delay: strokeDelay,
+                                },
+                                filter: {
+                                  duration: strokeDuration + 0.35,
+                                  delay: strokeDelay,
+                                  times: [0, 0.94, 0.98, 1],
+                                  ease: [0.16, 1, 0.3, 1],
+                                },
+                              }
+                        }
                         strokeWidth={3}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -240,30 +271,48 @@ export default function KineticTitle({
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
-                      initial={{
-                        opacity: 0,
-                        filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
-                      }}
-                      animate={{
-                        opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
-                        filter: [
-                          'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
-                          'drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(186, 230, 253, 0.7))',
-                          'drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))',
-                          'drop-shadow(0 0 24px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 45px rgba(186, 230, 253, 0.8))',
-                          'drop-shadow(0 0 3px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px rgba(186, 230, 253, 0.1))',
-                          'drop-shadow(0 0 7px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 16px rgba(186, 230, 253, 0.2))',
-                          'drop-shadow(0 0 11px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.3))',
-                          'drop-shadow(0 0 14px rgba(255, 255, 255, 0.72)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.35))',
-                          'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
-                        ],
-                      }}
-                      transition={{
-                        duration: fillIgnitionDuration,
-                        delay: fillDelay,
-                        times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
-                        ease: 'easeInOut',
-                      }}
+                      initial={
+                        alreadyPlayed
+                          ? {
+                              opacity: 1,
+                              filter: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                            }
+                          : {
+                              opacity: 0,
+                              filter: 'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                            }
+                      }
+                      animate={
+                        alreadyPlayed
+                          ? {
+                              opacity: 1,
+                              filter: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                            }
+                          : {
+                              opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
+                              filter: [
+                                'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
+                                'drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(186, 230, 253, 0.7))',
+                                'drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))',
+                                'drop-shadow(0 0 24px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 45px rgba(186, 230, 253, 0.8))',
+                                'drop-shadow(0 0 3px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px rgba(186, 230, 253, 0.1))',
+                                'drop-shadow(0 0 7px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 16px rgba(186, 230, 253, 0.2))',
+                                'drop-shadow(0 0 11px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.3))',
+                                'drop-shadow(0 0 14px rgba(255, 255, 255, 0.72)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.35))',
+                                'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
+                              ],
+                            }
+                      }
+                      transition={
+                        alreadyPlayed
+                          ? { duration: 0 }
+                          : {
+                              duration: fillIgnitionDuration,
+                              delay: fillDelay,
+                              times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
+                              ease: 'easeInOut',
+                            }
+                      }
                       fill="#ffffff"
                       stroke="#ffffff"
                       strokeWidth={1}
