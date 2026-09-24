@@ -234,7 +234,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                 onClick={() => changeView('portfolios')}
                 onMouseEnter={() => setIsButtonHovered(true)}
                 onMouseLeave={() => setIsButtonHovered(false)}
-                className="absolute bottom-10 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[66px] px-9 py-3 rounded-2xl bg-[var(--color-bg-surface)]/80 hover:bg-[var(--color-bg-surface)] backdrop-blur-md border border-[var(--color-border-default)] text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] transition-all flex flex-col items-center justify-center gap-0.5 cursor-pointer shadow-xl shadow-black/5 dark:shadow-black/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] hover:border-[var(--color-brand-accent)] group active:scale-[0.98]"
+                className="absolute bottom-10 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[66px] px-9 py-3 rounded-2xl bg-white/40 hover:bg-white/60 dark:bg-black/40 dark:hover:bg-black/60 backdrop-blur-md text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] transition-colors flex flex-col items-center justify-center gap-0.5 cursor-pointer shadow-lg shadow-black/5 dark:shadow-black/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] group active:scale-[0.98]"
                 aria-label={i18n.showcase.goToPortfolios}
               >
                 <span>{i18n.showcase.goToPortfolios}</span>
