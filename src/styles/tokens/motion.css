@@ -78,6 +78,9 @@
   -webkit-text-fill-color: transparent;
   animation: textShine 6.5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
   display: inline-block;
+  transform: translateZ(0);
+  contain: paint;
+  will-change: background-position;
 }
 
 [data-theme='light'] .text-shine {
