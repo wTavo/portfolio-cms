@@ -170,7 +170,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const isPortfolios = currentView === 'portfolios';
 
   return (
-    <div className="relative w-full h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+    <div className="relative w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
       {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional */}
       <TopographicBackground />
 
@@ -239,14 +239,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       {/* Contenedor de Scroll-Snap Nativo Fluido a 120 FPS */}
       <div
         ref={containerRef}
-        className="w-full h-[100dvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth relative z-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth relative z-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {/* Sección 1: Portada Cinemática con Título Cinético */}
         <section
           id="hero"
           ref={heroRef}
           aria-hidden={isPortfolios}
-          className="w-full h-[100dvh] min-h-[100dvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
+          className="w-full h-full min-h-[100dvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
         >
           <KineticTitle text={i18n.showcase.title} />
 
