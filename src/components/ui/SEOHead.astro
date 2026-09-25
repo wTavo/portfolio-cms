@@ -46,16 +46,19 @@ const {
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
+<!-- Control de Color Scheme para evitar interferencia del modo oscuro del SO móvil -->
+<meta name="color-scheme" content="only dark" />
+
 <!-- Inicialización síncrona del tema antes de pintar pantalla (Prevención de FOUC) -->
 <script is:inline>
   (function () {
     try {
       var storedTheme = localStorage.getItem('theme');
-      if (storedTheme === 'dark' || storedTheme === 'light') {
-        document.documentElement.setAttribute('data-theme', storedTheme);
-      } else {
-        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+      var finalTheme = storedTheme === 'light' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', finalTheme);
+      var metaScheme = document.querySelector('meta[name="color-scheme"]');
+      if (metaScheme) {
+        metaScheme.setAttribute('content', finalTheme === 'light' ? 'only light' : 'only dark');
       }
     } catch (_) {
       document.documentElement.setAttribute('data-theme', 'dark');

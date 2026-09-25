@@ -8,7 +8,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: development
-    container_name: portfolio_builder_dev
+    container_name: portafolio_builder_dev
     ports:
       - "4321:4321"
     environment:

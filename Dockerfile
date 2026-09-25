@@ -1,5 +1,5 @@
 # ==============================================================================
-# Dockerfile — Entorno Local y Contenerización de Portfolio Builder (Astro + Cloudflare)
+# Dockerfile — Entorno Local y Contenerización de Portafolio Builder (Astro + Cloudflare)
 # ==============================================================================
 
 # Etapa 1: Imagen Base (Debian Slim con soporte nativo de glibc y certificados CA para TLS/HTTPS)

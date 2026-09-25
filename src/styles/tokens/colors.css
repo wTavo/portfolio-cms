@@ -2,9 +2,54 @@
    Design Tokens: Colors & Theming (Light / Dark)
    ========================================================================== */
 
+:root {
+  color-scheme: only dark;
+}
+
+/* Tema Oscuro (Predeterminado de la Plataforma) */
 :root,
+[data-theme="dark"] {
+  color-scheme: only dark;
+
+  /* Neutral Palette */
+  --color-bg-base: #09090b;
+  --color-bg-surface: #121215;
+  --color-bg-surface-elevated: #18181b;
+  --color-bg-subtle: #1c1c20;
+  --color-bg-muted: #27272a;
+
+  --color-text-primary: #fafafa;
+  --color-text-secondary: #a1a1aa;
+  --color-text-muted: #71717a;
+  --color-text-inverted: #09090b;
+
+  --color-border-subtle: rgba(255, 255, 255, 0.08);
+  --color-border-default: rgba(255, 255, 255, 0.14);
+  --color-border-strong: rgba(255, 255, 255, 0.22);
+
+  /* Brand / Accent Tokens */
+  --color-brand-primary: #f4f4f5;
+  --color-brand-primary-hover: #e4e4e7;
+  --color-brand-on-primary: #09090b;
+  --color-brand-accent: #3b82f6;
+  --color-brand-accent-hover: #60a5fa;
+
+  /* Semantic Feedback Tokens */
+  --color-status-success: #16a34a;
+  --color-status-success-bg: rgba(22, 163, 74, 0.12);
+  --color-status-error: #dc2626;
+  --color-status-error-bg: rgba(220, 38, 38, 0.12);
+  --color-status-warning: #d97706;
+  --color-status-warning-bg: rgba(217, 119, 6, 0.12);
+  --color-status-info: #0284c7;
+  --color-status-info-bg: rgba(2, 132, 199, 0.12);
+}
+
+/* Tema Claro (Activado explícitamente vía data-theme="light") */
 [data-theme="light"] {
-  /* Neutral Palette (Light Mode Default) */
+  color-scheme: only light;
+
+  /* Neutral Palette */
   --color-bg-base: #fafafa;
   --color-bg-surface: #ffffff;
   --color-bg-surface-elevated: #ffffff;
@@ -36,64 +81,4 @@
   --color-status-warning-bg: #fffbeb;
   --color-status-info: #0284c7;
   --color-status-info-bg: #f0f9ff;
-}
-
-/* Dark Scheme Overrides (Default por preferencia del sistema si no hay override explícito de light) */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --color-bg-base: #09090b;
-    --color-bg-surface: #121215;
-    --color-bg-surface-elevated: #18181b;
-    --color-bg-subtle: #1c1c20;
-    --color-bg-muted: #27272a;
-
-    --color-text-primary: #fafafa;
-    --color-text-secondary: #a1a1aa;
-    --color-text-muted: #71717a;
-    --color-text-inverted: #09090b;
-
-    --color-border-subtle: rgba(255, 255, 255, 0.08);
-    --color-border-default: rgba(255, 255, 255, 0.14);
-    --color-border-strong: rgba(255, 255, 255, 0.22);
-
-    --color-brand-primary: #f4f4f5;
-    --color-brand-primary-hover: #e4e4e7;
-    --color-brand-on-primary: #09090b;
-    --color-brand-accent: #3b82f6;
-    --color-brand-accent-hover: #60a5fa;
-
-    --color-status-success-bg: rgba(22, 163, 74, 0.12);
-    --color-status-error-bg: rgba(220, 38, 38, 0.12);
-    --color-status-warning-bg: rgba(217, 119, 6, 0.12);
-    --color-status-info-bg: rgba(2, 132, 199, 0.12);
-  }
-}
-
-/* Dark Scheme Override Explícito vía data-theme="dark" */
-[data-theme="dark"] {
-  --color-bg-base: #09090b;
-  --color-bg-surface: #121215;
-  --color-bg-surface-elevated: #18181b;
-  --color-bg-subtle: #1c1c20;
-  --color-bg-muted: #27272a;
-
-  --color-text-primary: #fafafa;
-  --color-text-secondary: #a1a1aa;
-  --color-text-muted: #71717a;
-  --color-text-inverted: #09090b;
-
-  --color-border-subtle: rgba(255, 255, 255, 0.08);
-  --color-border-default: rgba(255, 255, 255, 0.14);
-  --color-border-strong: rgba(255, 255, 255, 0.22);
-
-  --color-brand-primary: #f4f4f5;
-  --color-brand-primary-hover: #e4e4e7;
-  --color-brand-on-primary: #09090b;
-  --color-brand-accent: #3b82f6;
-  --color-brand-accent-hover: #60a5fa;
-
-  --color-status-success-bg: rgba(22, 163, 74, 0.12);
-  --color-status-error-bg: rgba(220, 38, 38, 0.12);
-  --color-status-warning-bg: rgba(217, 119, 6, 0.12);
-  --color-status-info-bg: rgba(2, 132, 199, 0.12);
 }
