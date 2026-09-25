@@ -12,6 +12,7 @@ import KineticTitle from './KineticTitle';
 import TopographicBackground from './TopographicBackground';
 import ThemeToggle from '../ui/ThemeToggle';
 import ContactModal from './ContactModal';
+import LoginModal from './LoginModal';
 import { MOTION_DURATIONS, MOTION_EASINGS } from '../../lib/motion';
 
 interface DualShowcaseProps {
@@ -67,6 +68,9 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const [currentView, setCurrentView] = useState<'hero' | 'portfolios'>('hero');
   const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const [isLoginOpen, setIsLoginOpen] = useState(false);
+  const [loginRedirect, setLoginRedirect] = useState('');
+  const [loginInitialError, setLoginInitialError] = useState('');
   const [arrowScope, animateArrow] = useAnimate();
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -81,6 +85,22 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   const scrollToPortfolios = useCallback(() => {
     portfoliosRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  // Detección de apertura de modal por URL (?login=true o ?error=...)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('login') === 'true' || params.has('error')) {
+        setIsLoginOpen(true);
+        if (params.get('redirect')) {
+          setLoginRedirect(params.get('redirect') || '');
+        }
+        if (params.get('error')) {
+          setLoginInitialError(params.get('error') || '');
+        }
+      }
+    }
   }, []);
 
   // Animación continua y reactiva de la flecha con cadencia armónica idéntica al rebote
@@ -226,12 +246,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               <span className="hidden xs:inline sm:inline">{i18n.showcase.contact}</span>
             </button>
 
-            <a
-              href="/login"
-              className="min-h-(--size-touch-target) px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] hover:bg-[var(--color-brand-primary-hover)] text-xs font-semibold transition-[background-color] duration-150 inline-flex items-center shadow-[var(--shadow-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+            <button
+              type="button"
+              onClick={() => setIsLoginOpen(true)}
+              className="min-h-(--size-touch-target) px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] hover:bg-[var(--color-brand-primary-hover)] text-xs font-semibold transition-[background-color] duration-150 inline-flex items-center shadow-[var(--shadow-card)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+              aria-label={i18n.showcase.login}
             >
               <span>{i18n.showcase.login}</span>
-            </a>
+            </button>
           </div>
         </div>
       </header>
@@ -349,8 +371,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </section>
       </div>
 
-      {/* Modal de Contacto Accesible */}
+      {/* Modales Accesibles de Contacto e Inicio de Sesión */}
       <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+      <LoginModal
+        isOpen={isLoginOpen}
+        onClose={() => setIsLoginOpen(false)}
+        redirectUrl={loginRedirect}
+        initialError={loginInitialError}
+      />
     </div>
   );
 }

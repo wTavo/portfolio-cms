@@ -44,10 +44,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 3. Protección de rutas administrativas (/admin/* -> Solo superadmin)
   if (pathname.startsWith('/admin')) {
     if (!currentUser) {
-      return redirect(`/login?redirect=${encodeURIComponent(pathname)}`);
+      return redirect(`/?login=true&redirect=${encodeURIComponent(pathname)}`);
     }
     if (!currentUser.isActive) {
-      return redirect('/login?error=account_suspended');
+      return redirect('/?login=true&error=account_suspended');
     }
     if (currentUser.role !== ROLES.SUPERADMIN) {
       return redirect('/403');
@@ -57,10 +57,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 4. Protección del panel de usuario (/dashboard/* -> Solo owner)
   if (pathname.startsWith('/dashboard')) {
     if (!currentUser) {
-      return redirect(`/login?redirect=${encodeURIComponent(pathname)}`);
+      return redirect(`/?login=true&redirect=${encodeURIComponent(pathname)}`);
     }
     if (!currentUser.isActive) {
-      return redirect('/login?error=account_suspended');
+      return redirect('/?login=true&error=account_suspended');
     }
     if (currentUser.role !== ROLES.OWNER) {
       return redirect('/403');
