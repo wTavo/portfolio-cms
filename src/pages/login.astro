@@ -36,7 +36,7 @@ const redirectParam = Astro.url.searchParams.get('redirect') || '';
         <div class="flex items-center justify-between mb-6">
           <a
             href="/"
-            class="group inline-flex items-center gap-2 px-3 py-1.5 rounded-[var(--radius-md)] bg-[var(--color-bg-muted)]/80 hover:bg-[var(--color-bg-muted)] border border-[var(--color-border-subtle)] hover:border-[var(--color-border-default)] text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-all cursor-pointer"
+            class="group inline-flex items-center gap-2 px-3.5 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] hover:border-[var(--color-brand-accent)] text-xs font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-[color,border-color] shadow-[var(--shadow-card)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
             aria-label="Volver al inicio"
           >
             <Icon name="arrow-left" class="w-3.5 h-3.5 text-[var(--color-brand-accent)] group-hover:-translate-x-0.5 transition-transform" />
@@ -48,7 +48,7 @@ const redirectParam = Astro.url.searchParams.get('redirect') || '';
 
         {/* Cabecera de la Tarjeta */}
         <div class="text-center mb-6 sm:mb-8">
-          <div class="w-12 h-12 rounded-[var(--radius-xl)] bg-[var(--color-bg-muted)] border border-[var(--color-border-default)] flex items-center justify-center mx-auto mb-4 shadow-[var(--shadow-card)] text-[var(--color-brand-accent)]">
+          <div class="w-12 h-12 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] flex items-center justify-center mx-auto mb-4 shadow-[var(--shadow-card)] text-[var(--color-brand-accent)]">
             <Icon name="brand-logo" class="w-6 h-6" />
           </div>
 
