@@ -12,6 +12,37 @@ export interface BaseSvgProps extends React.SVGProps<SVGSVGElement> {
   ariaLabel?: string;
 }
 
+/**
+ * Logotipo oficial de la plataforma: Monograma abstracto minimalista «Dual Facet».
+ * Representa la unión entre Ingeniería de Software (pilar de código) y Diseño Creativo (bucle cian).
+ * 100% original, geométrico y libre de derechos de terceros.
+ */
+export function BrandLogoIcon({ size = 24, className = 'w-6 h-6', ariaLabel, ...props }: BaseSvgProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 32 32"
+      fill="none"
+      width={size}
+      height={size}
+      className={className}
+      aria-hidden={ariaLabel ? undefined : 'true'}
+      aria-label={ariaLabel}
+      {...props}
+    >
+      {/* Pilar Izquierdo (Arquitectura, Código y Estructura) */}
+      <rect x="6" y="5" width="5.5" height="22" rx="2.75" fill="currentColor" />
+      {/* Bucle Superior Flotante (Diseño Creativo y Experiencia Digital) */}
+      <path
+        d="M14.5 5H19.5C23.6421 5 27 8.35786 27 12.5C27 16.6421 23.6421 20 19.5 20H14.5C13.6716 20 13 19.3284 13 18.5V6.5C13 5.67157 13.6716 5 14.5 5Z"
+        fill="var(--color-brand-accent, #38bdf8)"
+      />
+      {/* Núcleo de apertura en negativo / punto focal */}
+      <circle cx="20" cy="12.5" r="3.25" fill="var(--color-bg-surface, #18181b)" />
+    </svg>
+  );
+}
+
 export function RocketIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
   return (
     <svg
@@ -579,6 +610,8 @@ export function MoonIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props
 
 export function Icon({ name, ...props }: IconProps) {
   switch (name) {
+    case 'brand-logo':
+      return <BrandLogoIcon {...props} />;
     case 'rocket':
       return <RocketIcon {...props} />;
     case 'map-pin':

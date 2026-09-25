@@ -4,6 +4,7 @@
  */
 
 export type IconName =
+  | 'brand-logo'
   | 'rocket'
   | 'map-pin'
   | 'arrow-left'

@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
 import type { ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
-import { ArrowRightIcon, RocketIcon, ChevronDownIcon, MailIcon, CodeIcon, PaletteIcon, UserIcon } from '../icons/Icons';
+import { ArrowRightIcon, BrandLogoIcon, ChevronDownIcon, MailIcon, CodeIcon, PaletteIcon, UserIcon } from '../icons/Icons';
 import KineticTitle from './KineticTitle';
 import TopographicBackground from './TopographicBackground';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -184,7 +184,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       >
         <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Título en la barra superior: Solo visible y animado en la vista de portafolios */}
-          <div className="min-w-[180px] flex items-center">
+          <div className="flex items-center">
             <AnimatePresence mode="wait">
               {isPortfolios && (
                 <motion.button
@@ -195,13 +195,28 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
-                  className="flex items-center gap-2.5 font-bold text-sm sm:text-base tracking-tight text-[var(--color-text-primary)] hover:opacity-90 transition-opacity cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-sm)] p-0.5"
+                  className="group flex items-center gap-3 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1 -ml-1 transition-opacity"
                   aria-label="Volver al inicio"
                 >
-                  <div className="p-1.5 rounded-[var(--radius-sm)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)]">
-                    <RocketIcon size={14} className="text-[var(--color-brand-accent)]" />
+                  {/* Caja de Logotipo con Resplandor Sutil */}
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)]/60 shadow-[var(--shadow-card)] flex items-center justify-center transition-[border-color,box-shadow,transform] duration-150 group-hover:scale-105">
+                    <BrandLogoIcon size={20} className="w-5 h-5 text-[var(--color-text-primary)]" />
                   </div>
-                  <span>{i18n.showcase.title}</span>
+
+                  {/* Jerarquía Tipográfica de la Marca */}
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base sm:text-lg font-extrabold tracking-tight text-[var(--color-text-primary)] leading-tight">
+                        Portafolio
+                      </span>
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--color-brand-accent)]/10 text-[var(--color-brand-accent)] border border-[var(--color-brand-accent)]/25 leading-none">
+                        Studio
+                      </span>
+                    </div>
+                    <span className="text-[10px] sm:text-[11px] font-medium text-[var(--color-text-muted)] tracking-wide uppercase leading-tight hidden xs:block">
+                      Dúo Profesional • Dev & Design
+                    </span>
+                  </div>
                 </motion.button>
               )}
             </AnimatePresence>
