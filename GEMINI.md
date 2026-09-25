@@ -240,3 +240,17 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 - **PROHIBIDO el uso de emojis** en toda la interfaz de usuario, paneles administrativos, dashboards, páginas públicas, badges, botones, formularios y textos del sistema.
 - **OBLIGATORIO** utilizar exclusivamente iconos y elementos gráficos vectoriales en formato **SVG**, optimizados, accesibles (`aria-hidden="true"` en iconos decorativos o con etiquetas accesibles en controles interactivos) y estilizables con `currentColor` y clases del tema.
 - **OBLIGATORIO** declarar y centralizar todos los diseños SVG reutilizables en `src/components/icons/` (`Icon.astro` para componentes Astro e `Icons.tsx` para componentes React), prohibiendo duplicación de vectores inline y garantizando coherencia visual en toda la plataforma.
+
+---
+
+## 32. Responsividad Universal y Entornos Multi-Dispositivo (Orientación y Altura Adaptable)
+- **PROHIBIDO** diseñar asumiendo únicamente móviles en orientación vertical (portrait) o pantallas de escritorio estándar. Toda interfaz debe adaptarse con calidad profesional a:
+  1. Móviles en orientación vertical (portrait).
+  2. Móviles en orientación horizontal (landscape / pantallas con altura reducida `height < 540px` o `@media (max-height: 540px)`).
+  3. Tablets y dispositivos plegables (foldables).
+  4. Laptops y monitores ultrawide.
+- **OBLIGATORIO** en entornos de altura reducida (landscape móvil):
+  - Limitar la altura de elementos tipográficos y gráficos heroicos (`max-h-[...dvh]`) para evitar colisiones con cabeceras y controles de acción.
+  - Ajustar dinámicamente el espaciado y anclaje de botones para que nunca se superpongan con el contenido central ni queden cortados por barras de navegación.
+  - Reducir paddings de cabeceras fijas (`py-2` en landscape) y asegurar targets táctiles accesibles.
+  - Habilitar scroll controlado (`overflow-y-auto`) en vistas modales o compuestas cuando el contenido supere la altura visible.

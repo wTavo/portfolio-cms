@@ -85,16 +85,17 @@ export default function TopographicBackground() {
 
       ctx.clearRect(0, 0, width, height);
 
-      const isMobile = width < 768;
-      const lineCount = isMobile ? 5 : 7;
-      const segmentCount = isMobile ? 10 : 16;
+      // Entorno compacto: móvil vertical (width < 768) o móvil/pantallas cortas en horizontal (height < 540)
+      const isCompact = width < 768 || height < 540;
+      const lineCount = isCompact ? 5 : 7;
+      const segmentCount = isCompact ? 10 : 16;
       const t = prefersReduced ? 1000 : time * 0.0006;
 
       // Amplitud de ondas y dispersión vertical estrictamente simétricas y proporcionales
-      const amp1 = isMobile ? 12 : 28;
-      const amp2 = isMobile ? 6 : 14;
-      const amp3 = isMobile ? 8 : 18;
-      const spread = isMobile ? Math.min(height * 0.22, 160) : height * 0.44;
+      const amp1 = isCompact ? 10 : 28;
+      const amp2 = isCompact ? 5 : 14;
+      const amp3 = isCompact ? 7 : 18;
+      const spread = isCompact ? Math.min(height * 0.20, 130) : height * 0.44;
 
       for (let i = 0; i < lineCount; i++) {
         const progress = i / (lineCount - 1);
@@ -172,7 +173,7 @@ export default function TopographicBackground() {
     >
       {/* 1. Halo Ambiental Central con gradiente radial difuso perfectamente centrado detrás del título */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] sm:w-[850px] md:w-[1100px] h-[26dvh] sm:h-[450px] md:h-[550px] pointer-events-none opacity-30 dark:opacity-20"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(92vw,950px)] h-[min(26dvh,340px)] pointer-events-none opacity-30 dark:opacity-20"
         style={{
           background:
             'radial-gradient(ellipse at center, var(--color-brand-accent) 0%, rgba(99, 102, 241, 0.12) 35%, rgba(56, 189, 248, 0.03) 60%, transparent 80%)',

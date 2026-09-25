@@ -190,8 +190,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-[background-color,border-color,padding,box-shadow] duration-300 ${
           isPortfolios
-            ? 'bg-[var(--color-bg-base)]/95 border-b border-[var(--color-border-subtle)] py-3 shadow-[var(--shadow-card)]'
-            : 'bg-transparent border-b border-transparent py-5'
+            ? 'bg-[var(--color-bg-base)]/95 border-b border-[var(--color-border-subtle)] py-2 sm:py-3 shadow-[var(--shadow-card)]'
+            : 'bg-transparent border-b border-transparent py-2 sm:py-3.5 md:py-5'
         }`}
       >
         <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -226,7 +226,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             <button
               type="button"
               onClick={() => setIsContactOpen(true)}
-              className="min-h-(--size-touch-target) px-3 sm:px-3.5 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] hover:border-[var(--color-brand-accent)] transition-[background-color,border-color] duration-150 inline-flex items-center gap-1.5 shadow-[var(--shadow-card)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+              className="min-h-(--size-touch-target) px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-primary)] hover:bg-[var(--color-bg-muted)] hover:border-[var(--color-brand-accent)] transition-[background-color,border-color] duration-150 inline-flex items-center gap-1.5 shadow-[var(--shadow-card)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
               aria-label={i18n.showcase.contact}
             >
               <MailIcon size={14} className="text-[var(--color-brand-accent)]" />
@@ -235,7 +235,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
             <a
               href="/login"
-              className="min-h-(--size-touch-target) px-3.5 sm:px-4 py-2 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] hover:bg-[var(--color-brand-primary-hover)] text-xs font-semibold transition-[background-color] duration-150 inline-flex items-center shadow-[var(--shadow-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+              className="min-h-(--size-touch-target) px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] hover:bg-[var(--color-brand-primary-hover)] text-xs font-semibold transition-[background-color] duration-150 inline-flex items-center shadow-[var(--shadow-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
             >
               <span>{i18n.showcase.login}</span>
             </a>
@@ -256,13 +256,13 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         >
           <KineticTitle text={i18n.showcase.title} />
 
-          {/* Botón de acceso a portafolios */}
+          {/* Botón de acceso a portafolios adaptable para móvil vertical, horizontal y escritorio */}
           <button
             type="button"
             onClick={() => changeView('portfolios')}
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
-            className="absolute bottom-5 sm:bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[52px] sm:min-h-[66px] px-6 sm:px-8 py-2 sm:py-3 bg-transparent text-sm sm:text-base md:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+            className="absolute bottom-2 sm:bottom-4 md:bottom-12 left-1/2 -translate-x-1/2 min-h-[44px] sm:min-h-[50px] md:min-h-[64px] px-5 sm:px-7 py-1 sm:py-2 bg-transparent text-xs sm:text-sm md:text-base font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
             aria-label={i18n.showcase.goToPortfolios}
           >
             <span>{i18n.showcase.goToPortfolios}</span>
@@ -270,15 +270,15 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               ref={arrowScope}
               className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5"
             >
-              <ChevronDownIcon size={26} className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
+              <ChevronDownIcon size={22} className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
             </div>
           </button>
         </section>
 
-        {/* Vista 2: Portafolios Gateway */}
+        {/* Vista 2: Portafolios Gateway con soporte para scroll seguro en landscape */}
         <section
           aria-hidden={!isPortfolios}
-          className={`absolute inset-0 w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 sm:pt-24 pb-6 transition-all duration-300 ease-out transform-gpu will-change-transform ${
+          className={`absolute inset-0 w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-6 overflow-y-auto transition-all duration-300 ease-out transform-gpu will-change-transform ${
             isPortfolios
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 translate-y-8 pointer-events-none'

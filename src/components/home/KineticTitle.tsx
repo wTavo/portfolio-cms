@@ -236,13 +236,13 @@ export default function KineticTitle({
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible transform-gpu will-change-transform"
+        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1.5 sm:gap-y-3 md:gap-y-6 z-10 overflow-visible transform-gpu will-change-transform"
       >
         {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
-            ? 'w-full max-w-5xl h-auto'
-            : 'w-[90%] max-w-4xl h-auto';
+            ? 'w-full max-w-5xl max-h-[14dvh] sm:max-h-[18dvh] md:max-h-[135px] lg:max-h-[160px] h-auto'
+            : 'w-[90%] max-w-4xl max-h-[12dvh] sm:max-h-[16dvh] md:max-h-[115px] lg:max-h-[140px] h-auto';
 
           return (
             <svg
