@@ -137,17 +137,20 @@ export default function KineticTitle({
   const fillStartDelay = totalStrokeEndTime + 0.10; // La corriente llega de inmediato al completarse la conexión del circuito
   const fillIgnitionDuration = 1.65; // Duración equilibrada: parpadeo inicial rápido + subida gradual y visible de menor a mayor brillo
 
+  const [isIntroComplete, setIsIntroComplete] = useState(alreadyPlayed);
+
   useEffect(() => {
     if (alreadyPlayed) return;
 
     const timer = setTimeout(() => {
       hasCompletedKineticIntro = true;
+      setIsIntroComplete(true);
     }, (fillStartDelay + fillIgnitionDuration) * 1000);
 
     return () => {
       clearTimeout(timer);
-      // Al salir de la vista o scrollear, marcar como reproducido para no re-ejecutar
       hasCompletedKineticIntro = true;
+      setIsIntroComplete(true);
     };
   }, [alreadyPlayed, fillStartDelay, fillIgnitionDuration]);
 
@@ -223,33 +226,23 @@ export default function KineticTitle({
     <div
       className={`relative w-full flex flex-col items-center justify-center min-h-[440px] sm:min-h-[500px] md:min-h-[580px] py-12 sm:py-16 select-none overflow-visible ${className}`}
     >
-      {/* Resplandor ambiental de estudio ultra suave */}
-      <div
-        className="absolute inset-0 w-full h-full bg-radial from-white/10 via-slate-500/5 to-transparent blur-3xl pointer-events-none opacity-20 dark:opacity-20"
-        aria-hidden="true"
-      />
-
-      {/* Contenedor central con sutil flotación orgánica continua sin saltos */}
+      {/* Contenedor central con sutil flotación orgánica acelerada por hardware */}
       <motion.div
         animate={{
-          y: [0, -5, 0, 5, 0],
+          y: [0, -4, 0, 4, 0],
         }}
         transition={{
           duration: 6.5,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible"
+        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-2 sm:gap-y-4 md:gap-y-6 z-10 overflow-visible transform-gpu will-change-transform"
       >
-          {wordsLayout.map((wordLayout, wordIdx) => {
+        {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
-            ? isDarkTheme
-              ? 'w-full max-w-5xl h-auto drop-shadow-[0_10px_25px_rgba(0,0,0,0.5)]'
-              : 'w-full max-w-5xl h-auto drop-shadow-[0_8px_20px_rgba(0,0,0,0.08)]'
-            : isDarkTheme
-              ? 'w-[90%] max-w-4xl h-auto drop-shadow-[0_8px_20px_rgba(0,0,0,0.45)]'
-              : 'w-[90%] max-w-4xl h-auto drop-shadow-[0_6px_16px_rgba(0,0,0,0.06)]';
+            ? 'w-full max-w-5xl h-auto'
+            : 'w-[90%] max-w-4xl h-auto';
 
           return (
             <svg
@@ -259,7 +252,25 @@ export default function KineticTitle({
               aria-label={wordLayout.word}
             >
               {wordLayout.letters.map((letter) => {
-                // Todas las letras inician y terminan el trazado exactamente al mismo tiempo
+                // Si la animación introductoria ya finalizó, renderizado vectorial estático limpio y de ultra alto rendimiento
+                if (isIntroComplete) {
+                  return (
+                    <g
+                      key={`letter-group-${wordIdx}-${letter.charIndex}-${letter.char}`}
+                      transform={`translate(${letter.x}, 0)`}
+                    >
+                      <path
+                        d={letter.d}
+                        fillRule="nonzero"
+                        fill={colors.primary}
+                        stroke={colors.primary}
+                        strokeWidth={1}
+                      />
+                    </g>
+                  );
+                }
+
+                // Fase de animación inicial: trazado simultáneo y encendido de foco con parpadeo
                 const strokeDelay = initialDelay;
                 const fillDelay = fillStartDelay;
 
@@ -269,55 +280,40 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA DEL MOLDE (SIEMPRE ILUMINADA: CON RESPLANDOR DESDE EL INICIO DEL TRAZADO) */}
+                    {/* 1. SILUETA DEL MOLDE */}
                     {letter.subpaths.map((subD, subIdx) => (
                       <motion.path
                         key={`mold-stroke-${subIdx}`}
                         d={subD}
-                        initial={
-                          alreadyPlayed
-                            ? {
-                                pathLength: 1,
-                                opacity: 1,
-                                stroke: colors.stroke,
-                                filter: colors.moldShadow,
-                              }
-                            : {
-                                pathLength: 0,
-                                opacity: 0,
-                                stroke: colors.stroke,
-                                filter: colors.moldShadowKeyframes[0],
-                              }
-                        }
+                        initial={{
+                          pathLength: 0,
+                          opacity: 0,
+                          stroke: colors.stroke,
+                          filter: colors.moldShadowKeyframes[0],
+                        }}
                         animate={{
                           pathLength: 1,
                           opacity: 1,
                           stroke: colors.stroke,
-                          filter: alreadyPlayed
-                            ? colors.moldShadow
-                            : colors.moldShadowKeyframes,
+                          filter: colors.moldShadowKeyframes,
                         }}
-                        transition={
-                          alreadyPlayed
-                            ? { duration: 0 }
-                            : {
-                                pathLength: {
-                                  duration: strokeDuration,
-                                  delay: strokeDelay,
-                                  ease: 'linear',
-                                },
-                                opacity: {
-                                  duration: 0.05,
-                                  delay: strokeDelay,
-                                },
-                                filter: {
-                                  duration: strokeDuration + 0.35,
-                                  delay: strokeDelay,
-                                  times: [0, 0.94, 0.98, 1],
-                                  ease: [0.16, 1, 0.3, 1],
-                                },
-                              }
-                        }
+                        transition={{
+                          pathLength: {
+                            duration: strokeDuration,
+                            delay: strokeDelay,
+                            ease: 'linear',
+                          },
+                          opacity: {
+                            duration: 0.05,
+                            delay: strokeDelay,
+                          },
+                          filter: {
+                            duration: strokeDuration + 0.35,
+                            delay: strokeDelay,
+                            times: [0, 0.94, 0.98, 1],
+                            ease: [0.16, 1, 0.3, 1],
+                          },
+                        }}
                         strokeWidth={3}
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -325,42 +321,24 @@ export default function KineticTitle({
                       />
                     ))}
 
-                    {/* 2. ENCENDIDO DEL FOCO: PARPADEO RÁPIDO DE CORRIENTE Y SUBIDA LENTA DE MENOR A MAYOR BRILLO */}
+                    {/* 2. ENCENDIDO DEL FOCO: PARPADEO RÁPIDO DE CORRIENTE */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
-                      initial={
-                        alreadyPlayed
-                          ? {
-                              opacity: 1,
-                              filter: colors.fillShadow,
-                            }
-                          : {
-                              opacity: 0,
-                              filter: 'drop-shadow(0 0 0px rgba(0, 0, 0, 0))',
-                            }
-                      }
-                      animate={
-                        alreadyPlayed
-                          ? {
-                              opacity: 1,
-                              filter: colors.fillShadow,
-                            }
-                          : {
-                              opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
-                              filter: colors.fillShadowKeyframes,
-                            }
-                      }
-                      transition={
-                        alreadyPlayed
-                          ? { duration: 0 }
-                          : {
-                              duration: fillIgnitionDuration,
-                              delay: fillDelay,
-                              times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
-                              ease: 'easeInOut',
-                            }
-                      }
+                      initial={{
+                        opacity: 0,
+                        filter: 'drop-shadow(0 0 0px rgba(0, 0, 0, 0))',
+                      }}
+                      animate={{
+                        opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
+                        filter: colors.fillShadowKeyframes,
+                      }}
+                      transition={{
+                        duration: fillIgnitionDuration,
+                        delay: fillDelay,
+                        times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
+                        ease: 'easeInOut',
+                      }}
                       fill={colors.primary}
                       stroke={colors.primary}
                       strokeWidth={1}

@@ -29,57 +29,73 @@ export default function ThemeToggle() {
   const toggleTheme = (event: React.MouseEvent<HTMLButtonElement>) => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
 
-    // Obtener las coordenadas del centro del botón o punto de clic para el origen radial
-    const buttonRect = event.currentTarget.getBoundingClientRect();
-    const x = event.clientX || buttonRect.left + buttonRect.width / 2;
-    const y = event.clientY || buttonRect.top + buttonRect.height / 2;
-
-    // Calcular el radio máximo necesario para cubrir la pantalla completa
-    const endRadius = Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y)
-    );
-
     const applyThemeChange = () => {
       setTheme(nextTheme);
       document.documentElement.setAttribute('data-theme', nextTheme);
-      localStorage.setItem('theme', nextTheme);
+      try {
+        localStorage.setItem('theme', nextTheme);
+      } catch {
+        // Ignorar si el almacenamiento local está bloqueado
+      }
     };
 
-    // Verificar si el navegador soporta View Transitions API y si no prefiere movimiento reducido
-    const isAppearanceTransition =
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+    // En móviles o si el navegador no soporta view transitions, aplicar inmediatamente
+    const canUseViewTransition =
+      !isMobile &&
       typeof document !== 'undefined' &&
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Boolean((document as any).startViewTransition) &&
+      'startViewTransition' in document &&
       !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (!isAppearanceTransition) {
+    if (!canUseViewTransition) {
       applyThemeChange();
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const transition = (document as any).startViewTransition(() => {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const transition = (document as any).startViewTransition(() => {
+        applyThemeChange();
+      });
+
+      if (transition && transition.ready) {
+        transition.ready
+          .then(() => {
+            try {
+              const buttonRect = event.currentTarget.getBoundingClientRect();
+              const x = event.clientX || buttonRect.left + buttonRect.width / 2;
+              const y = event.clientY || buttonRect.top + buttonRect.height / 2;
+
+              const endRadius = Math.hypot(
+                Math.max(x, window.innerWidth - x),
+                Math.max(y, window.innerHeight - y)
+              );
+
+              document.documentElement.animate(
+                {
+                  clipPath: [
+                    `circle(0px at ${x}px ${y}px)`,
+                    `circle(${endRadius}px at ${x}px ${y}px)`,
+                  ],
+                },
+                {
+                  duration: 400,
+                  easing: 'cubic-bezier(0.2, 0, 0, 1)',
+                  pseudoElement: '::view-transition-new(root)',
+                }
+              );
+            } catch {
+              // Fallback si la animación de pseudo-elemento no está soportada
+            }
+          })
+          .catch(() => {
+            // Ignorar rechazo si la transición se cancela
+          });
+      }
+    } catch {
       applyThemeChange();
-    });
-
-    transition.ready.then(() => {
-      const clipPath = [
-        `circle(0px at ${x}px ${y}px)`,
-        `circle(${endRadius}px at ${x}px ${y}px)`,
-      ];
-
-      document.documentElement.animate(
-        {
-          clipPath,
-        },
-        {
-          duration: 500,
-          easing: 'cubic-bezier(0.2, 0, 0, 1)',
-          pseudoElement: '::view-transition-new(root)',
-        }
-      );
-    });
+    }
   };
 
   const isDark = theme === 'dark';
@@ -88,7 +104,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggleTheme}
-      className="min-w-(--size-touch-target) min-h-(--size-touch-target) p-2.5 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)]/80 backdrop-blur-xs border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:text-[var(--color-brand-accent)] hover:border-[var(--color-brand-accent)] transition-all flex items-center justify-center shadow-[var(--shadow-card)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+      className="min-w-(--size-touch-target) min-h-(--size-touch-target) p-2.5 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] text-[var(--color-text-secondary)] hover:text-[var(--color-brand-accent)] hover:border-[var(--color-brand-accent)] transition-[color,border-color] duration-150 flex items-center justify-center shadow-[var(--shadow-card)] cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
       aria-label={isDark ? i18n.theme.light : i18n.theme.dark}
       title={isDark ? i18n.theme.light : i18n.theme.dark}
     >

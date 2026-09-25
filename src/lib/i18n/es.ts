@@ -64,6 +64,17 @@ export const i18n = {
     login: 'Acceso',
     contact: 'Contacto',
   },
+  directory: {
+    title: 'Directorio de portafolios',
+    subtitle: 'Explora perfiles de creadores, desarrolladores y diseñadores en la plataforma',
+    searchPlaceholder: 'Buscar por nombre, rol o tecnología...',
+    noResultsTitle: 'No se encontraron perfiles',
+    noResultsDesc: 'Prueba modificando los términos de búsqueda o seleccionando otra categoría.',
+    quickPreview: 'Vista rápida',
+    skills: 'Habilidades principales',
+    projects: 'Proyectos',
+    viewFullPortfolio: 'Ver portafolio completo',
+  },
   theme: {
     toggle: 'Alternar tema',
     light: 'Modo claro',

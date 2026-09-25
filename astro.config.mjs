@@ -6,6 +6,10 @@ import react from '@astrojs/react';
 import cloudflare from '@astrojs/cloudflare';
 
 export default defineConfig({
+  server: {
+    host: true,
+    port: 4321
+  },
   output: 'server',
 
   integrations: [
@@ -26,9 +30,5 @@ export default defineConfig({
 
   adapter: cloudflare({
     imageService: 'passthrough',
-    platformProxy: {
-      enabled: true,
-      configPath: 'wrangler.jsonc'
-    }
   })
 });

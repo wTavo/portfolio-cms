@@ -24,9 +24,10 @@ const showcaseData = await getShowcaseData();
     />
   </head>
   <body class="h-full bg-[var(--color-bg-base)] text-[var(--color-text-primary)] antialiased relative overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
-    <!-- Gradiente ambiental sutil de iluminación de fondo -->
+    <!-- Gradiente ambiental sutil de iluminación de fondo (sin filtro blur, cero costo GPU) -->
     <div
-      class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-radial from-[var(--color-brand-accent)]/10 via-[var(--color-brand-primary)]/5 to-transparent blur-3xl pointer-events-none z-0"
+      class="fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] pointer-events-none z-0 opacity-60 dark:opacity-40"
+      style="background: radial-gradient(ellipse at center, var(--color-brand-accent) 0%, rgba(99, 102, 241, 0.06) 40%, transparent 70%);"
       aria-hidden="true"
     ></div>
 
