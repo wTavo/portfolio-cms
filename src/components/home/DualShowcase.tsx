@@ -182,7 +182,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const isPortfolios = currentView === 'portfolios';
 
   return (
-    <div className="w-full h-full relative overflow-hidden flex flex-col justify-between selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+    <div className="w-full h-full min-h-[100dvh] max-h-[100dvh] relative overflow-hidden flex flex-col justify-between selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
       {/* Fondo Topográfico de Curvas de Trayectoria y Relieve Profesional */}
       <TopographicBackground />
 
@@ -244,11 +244,11 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       </header>
 
       {/* Escenario de Contenido Principal con Transiciones Cinemáticas de Ultra Alto Rendimiento */}
-      <div className="flex-1 w-full h-full relative overflow-hidden">
+      <div className="flex-1 w-full h-full min-h-[100dvh] relative overflow-hidden">
         {/* Vista 1: Pantalla de Bienvenida (Título Cinético Grande) */}
         <section
           aria-hidden={isPortfolios}
-          className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center text-center px-2 sm:px-6 max-w-7xl mx-auto select-none transition-all duration-300 ease-out transform-gpu will-change-transform ${
+          className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none transition-all duration-300 ease-out transform-gpu will-change-transform ${
             !isPortfolios
               ? 'opacity-100 translate-y-0 pointer-events-auto'
               : 'opacity-0 -translate-y-8 pointer-events-none'
@@ -262,15 +262,15 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             onClick={() => changeView('portfolios')}
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
-            className="absolute bottom-10 sm:bottom-14 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[66px] px-8 py-3 bg-transparent text-base sm:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98]"
+            className="absolute bottom-5 sm:bottom-12 md:bottom-16 left-1/2 -translate-x-1/2 min-h-[52px] sm:min-h-[66px] px-6 sm:px-8 py-2 sm:py-3 bg-transparent text-sm sm:text-base md:text-lg font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.5rem,env(safe-area-inset-bottom))]"
             aria-label={i18n.showcase.goToPortfolios}
           >
             <span>{i18n.showcase.goToPortfolios}</span>
             <div
               ref={arrowScope}
-              className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-1"
+              className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5"
             >
-              <ChevronDownIcon size={30} className="w-7 h-7 sm:w-8 sm:h-8" />
+              <ChevronDownIcon size={26} className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8" />
             </div>
           </button>
         </section>

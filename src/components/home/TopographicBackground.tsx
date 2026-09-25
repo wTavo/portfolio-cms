@@ -27,8 +27,15 @@ export default function TopographicBackground() {
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    let width = (canvas.width = window.innerWidth);
-    let height = (canvas.height = window.innerHeight);
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.scale(dpr, dpr);
 
     // Estado reactivo del tema sin consultar el DOM en cada fotograma
     let isDark =
@@ -44,8 +51,13 @@ export default function TopographicBackground() {
 
     const handleResize = () => {
       if (!canvas) return;
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      ctx.scale(dpr, dpr);
     };
 
     window.addEventListener('resize', handleResize, { passive: true });
@@ -60,10 +72,6 @@ export default function TopographicBackground() {
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    const isMobile = width < 768;
-    const lineCount = isMobile ? 5 : 7;
-    const segmentCount = isMobile ? 10 : 16;
-
     const render = (time: number) => {
       if (!isRunning) return;
 
@@ -77,12 +85,21 @@ export default function TopographicBackground() {
 
       ctx.clearRect(0, 0, width, height);
 
+      const isMobile = width < 768;
+      const lineCount = isMobile ? 5 : 7;
+      const segmentCount = isMobile ? 10 : 16;
       const t = prefersReduced ? 1000 : time * 0.0006;
+
+      // Amplitud de ondas y dispersión vertical estrictamente simétricas y proporcionales
+      const amp1 = isMobile ? 12 : 28;
+      const amp2 = isMobile ? 6 : 14;
+      const amp3 = isMobile ? 8 : 18;
+      const spread = isMobile ? Math.min(height * 0.22, 160) : height * 0.44;
 
       for (let i = 0; i < lineCount; i++) {
         const progress = i / (lineCount - 1);
-        // Franja vertical central contenida (evita invadir el encabezado y el pie de página)
-        const baseY = height * 0.28 + progress * (height * 0.44);
+        // Franja vertical central rigurosamente simétrica respecto al centro exacto del viewport
+        const baseY = height * 0.5 + (progress - 0.5) * spread;
 
         // Color y transparencia de la curva
         const alpha = Math.sin(progress * Math.PI) * (isDark ? 0.28 : 0.38) + (isDark ? 0.08 : 0.14);
@@ -107,9 +124,9 @@ export default function TopographicBackground() {
           const x = segProgress * width;
 
           // Ondulación armónica topográfica fluida y elegante
-          const wave1 = Math.sin(segProgress * Math.PI * 2.5 + t + i * 0.4) * 28;
-          const wave2 = Math.cos(segProgress * Math.PI * 4 - t * 0.8 + i * 0.25) * 14;
-          const wave3 = Math.sin(segProgress * Math.PI * 1.2 + t * 0.5) * 18;
+          const wave1 = Math.sin(segProgress * Math.PI * 2.5 + t + i * 0.4) * amp1;
+          const wave2 = Math.cos(segProgress * Math.PI * 4 - t * 0.8 + i * 0.25) * amp2;
+          const wave3 = Math.sin(segProgress * Math.PI * 1.2 + t * 0.5) * amp3;
 
           const y = baseY + wave1 + wave2 + wave3;
           points.push({ x, y });
@@ -150,15 +167,15 @@ export default function TopographicBackground() {
 
   return (
     <div
-      className="fixed inset-0 w-full h-full pointer-events-none z-0 overflow-hidden select-none bg-[var(--color-bg-base)] transition-colors duration-300"
+      className="fixed inset-0 w-full h-[100dvh] pointer-events-none z-0 overflow-hidden select-none bg-[var(--color-bg-base)] transition-colors duration-300"
       aria-hidden="true"
     >
-      {/* 1. Halo Ambiental Central con gradiente radial difuso nativo */}
+      {/* 1. Halo Ambiental Central con gradiente radial difuso perfectamente centrado detrás del título */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1100px] h-[650px] pointer-events-none opacity-25 dark:opacity-20"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] sm:w-[850px] md:w-[1100px] h-[26dvh] sm:h-[450px] md:h-[550px] pointer-events-none opacity-30 dark:opacity-20"
         style={{
           background:
-            'radial-gradient(ellipse at center, var(--color-brand-accent) 0%, rgba(99, 102, 241, 0.1) 35%, rgba(56, 189, 248, 0.03) 60%, transparent 80%)',
+            'radial-gradient(ellipse at center, var(--color-brand-accent) 0%, rgba(99, 102, 241, 0.12) 35%, rgba(56, 189, 248, 0.03) 60%, transparent 80%)',
         }}
       />
 

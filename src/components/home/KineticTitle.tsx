@@ -224,7 +224,7 @@ export default function KineticTitle({
 
   return (
     <div
-      className={`relative w-full flex flex-col items-center justify-center min-h-[440px] sm:min-h-[500px] md:min-h-[580px] py-12 sm:py-16 select-none overflow-visible ${className}`}
+      className={`relative w-full flex flex-col items-center justify-center select-none overflow-visible ${className}`}
     >
       {/* Contenedor central con sutil flotación orgánica acelerada por hardware */}
       <motion.div
