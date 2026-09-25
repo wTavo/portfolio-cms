@@ -26,6 +26,8 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 
 ## 3. Sistema Centralizado de Animaciones y Movimiento
 - **PROHIBIDO** quemar duraciones mágicas (`duration-300`, `delay-[750ms]`), curvas de aceleración sueltas o keyframes arbitrarios en los componentes.
+- **PROHIBIDO** animar propiedades de alto costo de rasterizado/pintado (`filter: drop-shadow()`, `filter: blur()`, `box-shadow`) dinámicamente en múltiples keyframes concurrentes por software.
+- **OBLIGATORIO** implementar la técnica de capas de opacidad (*Layered Glow Technique*): definir capas de resplandor pre-rasterizadas en GPU y animar exclusivamente `opacity` y `transform` (GPU Compositor), garantizando 60/120 FPS fijos sin degradación de rendimiento.
 - **OBLIGATORIO** consumir las duraciones, curvas y presets de animación centralizados en `src/styles/tokens/motion.css` y/o `src/lib/motion.ts`:
   - `--motion-duration-fast`: 150ms — microinteracciones, hover, focus.
   - `--motion-duration-normal`: 250ms — transiciones de contenido, modales.
@@ -133,7 +135,9 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 ## 13. Rendimiento Web y Pipeline de Rendering
 - **PROHIBIDO** enviar JavaScript innecesario al cliente. Usar `.astro` para contenido estático.
 - **PROHIBIDO** cargar imágenes de golpe. Lazy loading obligatorio.
+- **PROHIBIDO** bloquear el desplazamiento de pantalla completa con `overflow: hidden` e intercepciones de gestos táctiles rígidos que impidan la retroalimentación táctil inmediata.
 - **OBLIGATORIO** animaciones CSS con `transform` y `opacity` (aceleradas por GPU).
+- **OBLIGATORIO** transiciones entre secciones de pantalla completa usando desplazamiento nativo del compositor y `scroll-snap-type: y mandatory`, garantizando respuesta táctil instantánea con física inercial sin bloquear el hilo principal.
 - **OBLIGATORIO** islas React con `client:visible` o `client:idle`.
 - **OBLIGATORIO** imágenes en WebP/AVIF con `srcset` responsive y `loading="lazy"`.
 

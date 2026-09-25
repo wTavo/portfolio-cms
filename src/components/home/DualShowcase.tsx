@@ -1,11 +1,11 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo con animación cinemática fluida basada en estados y título con física cinética.
+ * @description Portal interactivo con animación cinemática fluida basada en scroll-snap nativo por hardware (120 FPS) y título con física cinética.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence, useAnimate } from 'motion/react';
-import type { CreatorProfile, ShowcaseData } from '../../lib/types/showcase';
+import type { ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
 import { ArrowRightIcon, RocketIcon, ChevronDownIcon, MailIcon, CodeIcon, PaletteIcon, UserIcon } from '../icons/Icons';
 import KineticTitle from './KineticTitle';
@@ -68,32 +68,32 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [arrowScope, animateArrow] = useAnimate();
-  const isTransitioningRef = useRef(false);
+
+  const containerRef = useRef<HTMLDivElement>(null);
+  const heroRef = useRef<HTMLElement>(null);
+  const portfoliosRef = useRef<HTMLElement>(null);
 
   const { creators } = data;
 
-  const changeView = useCallback((nextView: 'hero' | 'portfolios') => {
-    if (isTransitioningRef.current || currentView === nextView) return;
-    isTransitioningRef.current = true;
-    setCurrentView(nextView);
-    setTimeout(() => {
-      isTransitioningRef.current = false;
-    }, 350);
-  }, [currentView]);
+  const scrollToHero = useCallback(() => {
+    heroRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  const scrollToPortfolios = useCallback(() => {
+    portfoliosRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   // Animación continua y reactiva de la flecha con cadencia armónica idéntica al rebote
   useEffect(() => {
     if (!arrowScope.current || currentView !== 'hero') return;
 
     if (isButtonHovered) {
-      // Al entrar en hover: se traslada suavemente hacia abajo (y: 6) y se mantiene fija
       animateArrow(
         arrowScope.current,
         { y: 6 },
         { duration: 0.35, ease: 'easeOut' }
       );
     } else {
-      // Al salir de hover: regresa hacia arriba (y: 0) con la misma velocidad y curva del rebote (0.8s) y continúa el ciclo
       let isCancelled = false;
       animateArrow(
         arrowScope.current,
@@ -115,82 +115,70 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     }
   }, [isButtonHovered, currentView, animateArrow, arrowScope]);
 
-  // Manejo de eventos de rueda de ratón, gestos táctiles y teclado sin conflicto de scrollbar ni de zoom
+  // Detección bidireccional por IntersectionObserver de alto rendimiento en GPU compositor
   useEffect(() => {
-    let touchStartY = 0;
-    let isMultiTouch = false;
+    const portfolioElem = portfoliosRef.current;
+    const heroElem = heroRef.current;
+    const scrollContainer = containerRef.current;
+    if (!portfolioElem || !heroElem) return;
 
-    const handleWheel = (e: WheelEvent) => {
-      // Ignorar eventos cuando el usuario hace zoom (Ctrl + rueda, Cmd + rueda o pellizco en trackpad)
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if (Math.abs(e.deltaY) < 15) return;
-
-      if (e.deltaY > 0 && currentView === 'hero') {
-        changeView('portfolios');
-      } else if (e.deltaY < 0 && currentView === 'portfolios') {
-        changeView('hero');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.target === portfolioElem && entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+            setCurrentView('portfolios');
+          } else if (entry.target === heroElem && entry.isIntersecting && entry.intersectionRatio >= 0.4) {
+            setCurrentView('hero');
+          }
+        }
+      },
+      {
+        root: scrollContainer,
+        threshold: [0.2, 0.4, 0.7],
       }
-    };
+    );
 
+    observer.observe(heroElem);
+    observer.observe(portfolioElem);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  // Navegación por teclado accesible sin interferir con modificadores
+  useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignorar atajos con teclas modificadoras (ej. Ctrl + +, Ctrl + -, Ctrl + 0 para zoom)
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
       if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentView === 'hero') {
         e.preventDefault();
-        changeView('portfolios');
+        scrollToPortfolios();
       } else if (['ArrowUp', 'PageUp'].includes(e.key) && currentView === 'portfolios') {
-        e.preventDefault();
-        changeView('hero');
+        const container = containerRef.current;
+        if (container && container.scrollTop <= 20) {
+          e.preventDefault();
+          scrollToHero();
+        }
       }
     };
 
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length > 1) {
-        isMultiTouch = true;
-        return;
-      }
-      isMultiTouch = false;
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (isMultiTouch || e.touches.length > 0) return;
-      const touchEndY = e.changedTouches[0].clientY;
-      const diffY = touchStartY - touchEndY;
-
-      if (diffY > 45 && currentView === 'hero') {
-        changeView('portfolios');
-      } else if (diffY < -45 && currentView === 'portfolios') {
-        changeView('hero');
-      }
-    };
-
-    window.addEventListener('wheel', handleWheel, { passive: true });
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [currentView, changeView]);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentView, scrollToHero, scrollToPortfolios]);
 
   const isPortfolios = currentView === 'portfolios';
 
   return (
-    <div className="w-full h-full min-h-[100dvh] max-h-[100dvh] relative overflow-hidden flex flex-col justify-between selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
-      {/* Fondo Topográfico de Curvas de Trayectoria y Relieve Profesional */}
+    <div className="relative w-full h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+      {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional */}
       <TopographicBackground />
 
       {/* Barra de Navegación Superior Fija */}
       <header
         className={`fixed top-0 left-0 right-0 z-40 transition-[background-color,border-color,padding,box-shadow] duration-300 ${
           isPortfolios
-            ? 'bg-[var(--color-bg-base)]/95 border-b border-[var(--color-border-subtle)] py-2 sm:py-3 shadow-[var(--shadow-card)]'
+            ? 'bg-[var(--color-bg-base)]/95 backdrop-blur-md border-b border-[var(--color-border-subtle)] py-2 sm:py-3 shadow-[var(--shadow-card)]'
             : 'bg-transparent border-b border-transparent py-2 sm:py-3.5 md:py-5'
         }`}
       >
@@ -202,7 +190,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                 <motion.button
                   key="header-brand"
                   type="button"
-                  onClick={() => changeView('hero')}
+                  onClick={scrollToHero}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
@@ -243,23 +231,24 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </div>
       </header>
 
-      {/* Escenario de Contenido Principal con Transiciones Cinemáticas de Ultra Alto Rendimiento */}
-      <div className="flex-1 w-full h-full min-h-[100dvh] relative overflow-hidden">
-        {/* Vista 1: Pantalla de Bienvenida (Título Cinético Grande) */}
+      {/* Contenedor de Scroll-Snap Nativo Fluido a 120 FPS */}
+      <div
+        ref={containerRef}
+        className="w-full h-[100dvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth relative z-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {/* Sección 1: Portada Cinemática con Título Cinético */}
         <section
+          id="hero"
+          ref={heroRef}
           aria-hidden={isPortfolios}
-          className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none transition-all duration-300 ease-out transform-gpu will-change-transform ${
-            !isPortfolios
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 -translate-y-8 pointer-events-none'
-          }`}
+          className="w-full h-[100dvh] min-h-[100dvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
         >
           <KineticTitle text={i18n.showcase.title} />
 
           {/* Botón de acceso a portafolios adaptable para móvil vertical, horizontal y escritorio */}
           <button
             type="button"
-            onClick={() => changeView('portfolios')}
+            onClick={scrollToPortfolios}
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
             className="absolute bottom-2 sm:bottom-4 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-[40px] sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
@@ -275,14 +264,12 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           </button>
         </section>
 
-        {/* Vista 2: Portafolios Gateway con soporte para scroll seguro en landscape */}
+        {/* Sección 2: Portafolios Gateway con Scroll Snap y Soporte Responsive Universal */}
         <section
+          id="portafolios"
+          ref={portfoliosRef}
           aria-hidden={!isPortfolios}
-          className={`absolute inset-0 w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-6 overflow-y-auto transition-all duration-300 ease-out transform-gpu will-change-transform ${
-            isPortfolios
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 translate-y-8 pointer-events-none'
-          }`}
+          className="w-full min-h-[100dvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-6 [@media(max-height:540px)]:pt-14 [@media(max-height:540px)]:pb-4"
         >
           <div className="flex-1 flex flex-col justify-center">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full max-w-4xl mx-auto">
@@ -293,13 +280,13 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                   <a
                     key={creator.id}
                     href={`/${creator.slug}`}
-                    className={`group relative flex flex-col justify-between p-7 sm:p-8 rounded-[var(--radius-2xl)] bg-gradient-to-b from-white via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-950 border border-slate-200/90 dark:border-zinc-800 shadow-md hover:shadow-xl dark:shadow-zinc-950/50 ${badge.hoverShadow} ${badge.hoverBorder} transition-all duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
+                    className={`group relative flex flex-col justify-between p-6 sm:p-7 md:p-8 [@media(max-height:540px)]:p-4 rounded-[var(--radius-2xl)] bg-gradient-to-b from-white via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-950 border border-slate-200/90 dark:border-zinc-800 shadow-md hover:shadow-xl dark:shadow-zinc-950/50 ${badge.hoverShadow} ${badge.hoverBorder} transition-all duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
                   >
                     {/* Contenido Superior de la Tarjeta */}
-                    <div className="relative z-10 space-y-4">
+                    <div className="relative z-10 space-y-3 sm:space-y-4 [@media(max-height:540px)]:space-y-2">
                       {/* Cabecera con Icono SVG vectorial con color y Slug */}
                       <div className="flex items-center justify-between">
-                        <div className={`w-12 h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}>
+                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}>
                           {badge.icon}
                         </div>
 
@@ -334,8 +321,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                       )}
                     </div>
 
-                    {/* Zócalo de Acción Integrado (Línea divisoria y fondo con contraste definido) */}
-                    <div className="relative z-10 py-3.5 sm:py-4 px-7 sm:px-8 -mx-7 -mb-7 sm:-mx-8 sm:-mb-8 mt-6 bg-slate-100/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
+                    {/* Zócalo de Acción Integrado */}
+                    <div className="relative z-10 py-3 sm:py-3.5 md:py-4 px-6 sm:px-7 md:px-8 -mx-6 -mb-6 sm:-mx-7 sm:-mb-7 md:-mx-8 md:-mb-8 mt-5 sm:mt-6 [@media(max-height:540px)]:mt-3 bg-slate-100/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
                       <span className={`text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
                         {i18n.showcase.explorePortfolio}
                       </span>

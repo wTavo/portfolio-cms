@@ -5,7 +5,7 @@
  * la corriente eléctrica fluye y el color interior se enciende con un parpadeo de foco antes de quedar fijo.
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'motion/react';
 import { GLYPH_PATHS } from '../../lib/typography/glyphPaths';
 
@@ -23,12 +23,6 @@ interface LetterLayout {
   globalIndex: number;
   wordIndex: number;
   charIndex: number;
-}
-
-interface WordLayout {
-  word: string;
-  letters: LetterLayout[];
-  totalWidth: number;
 }
 
 /** Variable en tiempo de ejecución para recordar que la animación introductoria ya se ejecutó y no repetirla al scrollear */
@@ -91,7 +85,7 @@ export default function KineticTitle({
   }, []);
 
   // Calcular la disposición geométrica precisa de cada palabra y letra con índice global secuencial
-  const { wordsLayout, totalLetterCount } = useMemo(() => {
+  const { wordsLayout } = useMemo(() => {
     let globalCounter = 0;
     const layouts = words.map((word, wordIndex) => {
       // Espaciado entre letras equilibrado
@@ -124,7 +118,7 @@ export default function KineticTitle({
       };
     });
 
-    return { wordsLayout: layouts, totalLetterCount: globalCounter };
+    return { wordsLayout: layouts };
   }, [words]);
 
   // Constantes de coreografía simultánea:
@@ -178,48 +172,16 @@ export default function KineticTitle({
     ? {
         primary: '#fafafa',
         stroke: '#ffffff',
-        moldShadow: 'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
-        fillShadow: 'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
-        moldShadowKeyframes: [
-          'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
-          'drop-shadow(0 0 8px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 20px rgba(186, 230, 253, 0.55))',
-          'drop-shadow(0 0 18px rgba(255, 255, 255, 1)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.9))',
-          'drop-shadow(0 0 12px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.55))',
-        ],
-        fillShadowKeyframes: [
-          'drop-shadow(0 0 0px rgba(255, 255, 255, 0))',
-          'drop-shadow(0 0 20px rgba(255, 255, 255, 0.9)) drop-shadow(0 0 40px rgba(186, 230, 253, 0.7))',
-          'drop-shadow(0 0 2px rgba(255, 255, 255, 0.1))',
-          'drop-shadow(0 0 24px rgba(255, 255, 255, 0.95)) drop-shadow(0 0 45px rgba(186, 230, 253, 0.8))',
-          'drop-shadow(0 0 3px rgba(255, 255, 255, 0.2)) drop-shadow(0 0 8px rgba(186, 230, 253, 0.1))',
-          'drop-shadow(0 0 7px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 16px rgba(186, 230, 253, 0.2))',
-          'drop-shadow(0 0 11px rgba(255, 255, 255, 0.6)) drop-shadow(0 0 24px rgba(186, 230, 253, 0.3))',
-          'drop-shadow(0 0 14px rgba(255, 255, 255, 0.72)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.35))',
-          'drop-shadow(0 0 16px rgba(255, 255, 255, 0.75)) drop-shadow(0 0 35px rgba(186, 230, 253, 0.35))',
-        ],
+        glowColor: 'rgba(186, 230, 253, 0.85)',
+        staticMoldGlow: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 14px rgba(186, 230, 253, 0.45))',
+        staticBulbGlow: 'drop-shadow(0 0 14px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.5))',
       }
     : {
         primary: '#09090b',
         stroke: '#18181b',
-        moldShadow: 'drop-shadow(0 0 10px rgba(37, 99, 235, 0.5)) drop-shadow(0 0 20px rgba(99, 102, 241, 0.3))',
-        fillShadow: 'drop-shadow(0 0 8px rgba(37, 99, 235, 0.2)) drop-shadow(0 0 18px rgba(99, 102, 241, 0.1))',
-        moldShadowKeyframes: [
-          'drop-shadow(0 0 6px rgba(37, 99, 235, 0.4)) drop-shadow(0 0 14px rgba(99, 102, 241, 0.2))',
-          'drop-shadow(0 0 6px rgba(37, 99, 235, 0.4)) drop-shadow(0 0 14px rgba(99, 102, 241, 0.2))',
-          'drop-shadow(0 0 14px rgba(37, 99, 235, 0.8)) drop-shadow(0 0 28px rgba(99, 102, 241, 0.5))',
-          'drop-shadow(0 0 10px rgba(37, 99, 235, 0.5)) drop-shadow(0 0 20px rgba(99, 102, 241, 0.3))',
-        ],
-        fillShadowKeyframes: [
-          'drop-shadow(0 0 0px rgba(37, 99, 235, 0))',
-          'drop-shadow(0 0 16px rgba(37, 99, 235, 0.6)) drop-shadow(0 0 30px rgba(99, 102, 241, 0.4))',
-          'drop-shadow(0 0 2px rgba(37, 99, 235, 0.1))',
-          'drop-shadow(0 0 18px rgba(37, 99, 235, 0.7)) drop-shadow(0 0 36px rgba(99, 102, 241, 0.45))',
-          'drop-shadow(0 0 2px rgba(37, 99, 235, 0.1)) drop-shadow(0 0 6px rgba(99, 102, 241, 0.05))',
-          'drop-shadow(0 0 4px rgba(37, 99, 235, 0.15)) drop-shadow(0 0 10px rgba(99, 102, 241, 0.08))',
-          'drop-shadow(0 0 6px rgba(37, 99, 235, 0.18)) drop-shadow(0 0 14px rgba(99, 102, 241, 0.09))',
-          'drop-shadow(0 0 7px rgba(37, 99, 235, 0.2)) drop-shadow(0 0 16px rgba(99, 102, 241, 0.1))',
-          'drop-shadow(0 0 8px rgba(37, 99, 235, 0.2)) drop-shadow(0 0 18px rgba(99, 102, 241, 0.1))',
-        ],
+        glowColor: 'rgba(37, 99, 235, 0.65)',
+        staticMoldGlow: 'drop-shadow(0 0 5px rgba(37, 99, 235, 0.45)) drop-shadow(0 0 12px rgba(99, 102, 241, 0.25))',
+        staticBulbGlow: 'drop-shadow(0 0 10px rgba(37, 99, 235, 0.45)) drop-shadow(0 0 22px rgba(99, 102, 241, 0.25))',
       };
 
   return (
@@ -281,7 +243,26 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. SILUETA DEL MOLDE */}
+                    {/* 1. RESPLANDOR DEL FOCO (Layered Glow Technique: filtro estático en GPU con animación pura de opacidad) */}
+                    <motion.path
+                      d={letter.d}
+                      fillRule="nonzero"
+                      fill={colors.glowColor}
+                      initial={{ opacity: 0 }}
+                      animate={{
+                        opacity: [0, 0.95, 0.05, 0.95, 0.12, 0.35, 0.62, 0.88, 1],
+                      }}
+                      transition={{
+                        duration: fillIgnitionDuration,
+                        delay: fillDelay,
+                        times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
+                        ease: 'easeInOut',
+                      }}
+                      style={{ filter: colors.staticBulbGlow }}
+                      className="pointer-events-none"
+                    />
+
+                    {/* 2. SILUETA DEL MOLDE (Trazado de cables y filamentos) */}
                     {letter.subpaths.map((subD, subIdx) => (
                       <motion.path
                         key={`mold-stroke-${subIdx}`}
@@ -289,14 +270,10 @@ export default function KineticTitle({
                         initial={{
                           pathLength: 0,
                           opacity: 0,
-                          stroke: colors.stroke,
-                          filter: colors.moldShadowKeyframes[0],
                         }}
                         animate={{
                           pathLength: 1,
                           opacity: 1,
-                          stroke: colors.stroke,
-                          filter: colors.moldShadowKeyframes,
                         }}
                         transition={{
                           pathLength: {
@@ -308,31 +285,23 @@ export default function KineticTitle({
                             duration: 0.05,
                             delay: strokeDelay,
                           },
-                          filter: {
-                            duration: strokeDuration + 0.35,
-                            delay: strokeDelay,
-                            times: [0, 0.94, 0.98, 1],
-                            ease: [0.16, 1, 0.3, 1],
-                          },
                         }}
+                        stroke={colors.stroke}
                         strokeWidth={3}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         fill="transparent"
+                        style={{ filter: colors.staticMoldGlow }}
                       />
                     ))}
 
-                    {/* 2. ENCENDIDO DEL FOCO: PARPADEO RÁPIDO DE CORRIENTE */}
+                    {/* 3. RELLENO SÓLIDO NÍTIDO (Parpadeo eléctrico y corriente con opacidad en GPU) */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
-                      initial={{
-                        opacity: 0,
-                        filter: 'drop-shadow(0 0 0px rgba(0, 0, 0, 0))',
-                      }}
+                      initial={{ opacity: 0 }}
                       animate={{
                         opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
-                        filter: colors.fillShadowKeyframes,
                       }}
                       transition={{
                         duration: fillIgnitionDuration,
