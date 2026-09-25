@@ -50,47 +50,54 @@
 /* Brillo y barrido de luz metálico (Shine) de alto rendimiento */
 @keyframes textShine {
   0% {
-    background-position: 200% 0;
+    background-position: 100% 0;
   }
-  100% {
-    background-position: -200% 0;
+  28% {
+    background-position: 0% 0;
+  }
+  28.01%, 100% {
+    background-position: 100% 0;
   }
 }
 
 .text-shine {
   background: linear-gradient(
-    110deg,
+    115deg,
     var(--color-text-primary) 0%,
     var(--color-text-primary) 38%,
-    var(--color-brand-accent) 48%,
-    #ffffff 52%,
-    var(--color-brand-accent) 56%,
-    var(--color-text-primary) 66%,
+    var(--color-brand-accent) 46%,
+    #ffffff 50%,
+    var(--color-brand-accent) 54%,
+    var(--color-text-primary) 62%,
     var(--color-text-primary) 100%
   );
-  background-size: 250% 100%;
+  background-size: 280% 100%;
+  background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: textShine 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: textShine 6.5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  display: inline-block;
 }
 
 [data-theme='light'] .text-shine {
   background: linear-gradient(
-    110deg,
+    115deg,
     var(--color-text-primary) 0%,
     var(--color-text-primary) 38%,
-    #0284c7 48%,
-    #38bdf8 52%,
-    #0284c7 56%,
-    var(--color-text-primary) 66%,
+    #0284c7 46%,
+    #38bdf8 50%,
+    #0284c7 54%,
+    var(--color-text-primary) 62%,
     var(--color-text-primary) 100%
   );
-  background-size: 250% 100%;
+  background-size: 280% 100%;
+  background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: textShine 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: textShine 6.5s cubic-bezier(0.25, 1, 0.5, 1) infinite;
+  display: inline-block;
 }
 
 @media (prefers-reduced-motion: reduce) {
