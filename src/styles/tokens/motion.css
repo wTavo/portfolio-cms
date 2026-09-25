@@ -47,10 +47,58 @@
   z-index: 9999;
 }
 
+/* Brillo y barrido de luz metálico (Shine) de alto rendimiento */
+@keyframes textShine {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.text-shine {
+  background: linear-gradient(
+    110deg,
+    var(--color-text-primary) 0%,
+    var(--color-text-primary) 38%,
+    var(--color-brand-accent) 48%,
+    #ffffff 52%,
+    var(--color-brand-accent) 56%,
+    var(--color-text-primary) 66%,
+    var(--color-text-primary) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShine 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+[data-theme='light'] .text-shine {
+  background: linear-gradient(
+    110deg,
+    var(--color-text-primary) 0%,
+    var(--color-text-primary) 38%,
+    #0284c7 48%,
+    #38bdf8 52%,
+    #0284c7 56%,
+    var(--color-text-primary) 66%,
+    var(--color-text-primary) 100%
+  );
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: textShine 5.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
+  .text-shine {
     animation: none !important;
+    background: none !important;
+    -webkit-text-fill-color: var(--color-text-primary) !important;
+    color: var(--color-text-primary) !important;
   }
 }
 

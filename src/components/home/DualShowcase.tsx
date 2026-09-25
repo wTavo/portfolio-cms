@@ -203,20 +203,10 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                     <BrandLogoIcon size={20} className="w-5 h-5 text-[var(--color-text-primary)]" />
                   </div>
 
-                  {/* Jerarquía Tipográfica de la Marca */}
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-2">
-                      <span className="text-base sm:text-lg font-extrabold tracking-tight text-[var(--color-text-primary)] leading-tight">
-                        Portafolio
-                      </span>
-                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-[var(--radius-sm)] bg-[var(--color-brand-accent)]/10 text-[var(--color-brand-accent)] border border-[var(--color-brand-accent)]/25 leading-none">
-                        Studio
-                      </span>
-                    </div>
-                    <span className="text-[10px] sm:text-[11px] font-medium text-[var(--color-text-muted)] tracking-wide uppercase leading-tight hidden xs:block">
-                      Dúo Profesional • Dev & Design
-                    </span>
-                  </div>
+                  {/* Título de Marca con Efecto Shine de Alto Impacto */}
+                  <span className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-shine leading-none select-none">
+                    {i18n.showcase.title}
+                  </span>
                 </motion.button>
               )}
             </AnimatePresence>
