@@ -156,14 +156,14 @@ export default function KineticTitle({
 
   if (prefersReducedMotion) {
     return (
-      <div className={`flex flex-col items-center justify-center gap-y-3 sm:gap-y-4 md:gap-y-6 text-center select-none ${className}`}>
+      <div className={`flex flex-col items-center justify-center gap-y-1.5 sm:gap-y-3 md:gap-y-6 [@media(max-height:540px)]:gap-y-1 text-center select-none ${className}`}>
         {words.map((word, idx) => (
           <span
             key={`reduced-word-${idx}`}
             className={`font-black tracking-wider text-[var(--color-text-primary)] uppercase leading-none ${
               idx === 0
-                ? 'text-5xl sm:text-7xl md:text-8xl lg:text-9xl xl:text-[9.5rem]'
-                : 'text-2xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl tracking-[0.25em]'
+                ? 'text-4xl sm:text-6xl md:text-8xl lg:text-9xl [@media(max-height:540px)]:text-2xl'
+                : 'text-xl sm:text-3xl md:text-5xl lg:text-6xl tracking-[0.25em] [@media(max-height:540px)]:text-base'
             }`}
           >
             {word}
@@ -236,18 +236,19 @@ export default function KineticTitle({
           repeat: Infinity,
           ease: 'easeInOut',
         }}
-        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1.5 sm:gap-y-3 md:gap-y-6 z-10 overflow-visible transform-gpu will-change-transform"
+        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1 sm:gap-y-2 md:gap-y-4 [@media(max-height:540px)]:gap-y-1 z-10 overflow-visible transform-gpu will-change-transform"
       >
         {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
-            ? 'w-full max-w-5xl max-h-[14dvh] sm:max-h-[18dvh] md:max-h-[135px] lg:max-h-[160px] h-auto'
-            : 'w-[90%] max-w-4xl max-h-[12dvh] sm:max-h-[16dvh] md:max-h-[115px] lg:max-h-[140px] h-auto';
+            ? 'w-full max-w-5xl max-h-[min(15dvh,160px)] [@media(max-height:540px)]:max-h-[46px] h-auto object-contain'
+            : 'w-[90%] max-w-4xl max-h-[min(13dvh,140px)] [@media(max-height:540px)]:max-h-[38px] h-auto object-contain';
 
           return (
             <svg
               key={`word-svg-${wordLayout.word}-${wordIdx}`}
               viewBox={`0 75 ${wordLayout.totalWidth} 750`}
+              preserveAspectRatio="xMidYMid meet"
               className={`overflow-visible select-none ${containerClasses}`}
               aria-label={wordLayout.word}
             >

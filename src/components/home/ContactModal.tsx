@@ -79,7 +79,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6"
           role="dialog"
           aria-modal="true"
           aria-labelledby="contact-modal-title"
@@ -102,22 +102,22 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
             transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
-            className="relative w-full max-w-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-xl)] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] z-10"
+            className="relative w-full max-w-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-xl)] shadow-2xl overflow-hidden flex flex-col max-h-[94dvh] z-10"
           >
             {/* 1. Cabecera Fija */}
-            <header className="px-6 py-4.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)]">
+            <header className="px-4 sm:px-6 py-2.5 sm:py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)]">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-[var(--radius-md)] bg-[var(--color-brand-accent)]/10 text-[var(--color-brand-accent)]">
+                <div className="p-1.5 sm:p-2 rounded-[var(--radius-md)] bg-[var(--color-brand-accent)]/10 text-[var(--color-brand-accent)]">
                   <MailIcon size={18} />
                 </div>
                 <div>
                   <h2
                     id="contact-modal-title"
-                    className="text-base font-bold text-[var(--color-text-primary)]"
+                    className="text-sm sm:text-base font-bold text-[var(--color-text-primary)]"
                   >
                     {i18n.contact.title}
                   </h2>
-                  <p className="text-xs text-[var(--color-text-secondary)]">
+                  <p className="text-[11px] sm:text-xs text-[var(--color-text-secondary)]">
                     {i18n.contact.description}
                   </p>
                 </div>
@@ -134,7 +134,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
             </header>
 
             {/* 2. Cuerpo */}
-            <div className="p-6 overflow-y-auto flex-1 space-y-4">
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-3 sm:space-y-4">
               {status === 'success' ? (
                 <div className="py-8 flex flex-col items-center justify-center text-center space-y-3">
                   <div className="w-12 h-12 rounded-full bg-[var(--color-status-success-bg)] text-[var(--color-status-success)] flex items-center justify-center border border-[var(--color-status-success)]/20">

@@ -262,7 +262,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             onClick={() => changeView('portfolios')}
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
-            className="absolute bottom-2 sm:bottom-4 md:bottom-12 left-1/2 -translate-x-1/2 min-h-[44px] sm:min-h-[50px] md:min-h-[64px] px-5 sm:px-7 py-1 sm:py-2 bg-transparent text-xs sm:text-sm md:text-base font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
+            className="absolute bottom-2 sm:bottom-4 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-[40px] sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
             aria-label={i18n.showcase.goToPortfolios}
           >
             <span>{i18n.showcase.goToPortfolios}</span>
@@ -270,7 +270,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               ref={arrowScope}
               className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5"
             >
-              <ChevronDownIcon size={22} className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+              <ChevronDownIcon size={20} className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 [@media(max-height:540px)]:w-3.5 [@media(max-height:540px)]:h-3.5" />
             </div>
           </button>
         </section>
