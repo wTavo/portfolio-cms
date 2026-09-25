@@ -274,10 +274,10 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           id="portafolios"
           ref={portfoliosRef}
           aria-hidden={!isPortfolios}
-          className="w-full min-h-[100dvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-6 [@media(max-height:540px)]:pt-14 [@media(max-height:540px)]:pb-4"
+          className="w-full min-h-[100dvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 md:pt-24 pb-8 sm:pb-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-4"
         >
-          <div className="flex-1 flex flex-col justify-center">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 w-full max-w-4xl mx-auto">
+          <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
               {creators.map((creator) => {
                 const badge = getCreatorBadge(creator.slug, creator.role);
 
@@ -285,25 +285,25 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                   <a
                     key={creator.id}
                     href={`/${creator.slug}`}
-                    className={`group relative flex flex-col justify-between p-6 sm:p-7 md:p-8 [@media(max-height:540px)]:p-4 rounded-[var(--radius-2xl)] bg-gradient-to-b from-white via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-950 border border-slate-200/90 dark:border-zinc-800 shadow-md hover:shadow-xl dark:shadow-zinc-950/50 ${badge.hoverShadow} ${badge.hoverBorder} transition-all duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
+                    className={`group relative flex flex-col justify-between p-4.5 sm:p-6 md:p-8 [@media(max-height:540px)]:p-3.5 rounded-[var(--radius-2xl)] bg-gradient-to-b from-white via-white to-slate-50 dark:from-zinc-900 dark:via-zinc-900/95 dark:to-zinc-950 border border-slate-200/90 dark:border-zinc-800 shadow-md hover:shadow-xl dark:shadow-zinc-950/50 ${badge.hoverShadow} ${badge.hoverBorder} transition-all duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
                   >
                     {/* Contenido Superior de la Tarjeta */}
-                    <div className="relative z-10 space-y-3 sm:space-y-4 [@media(max-height:540px)]:space-y-2">
+                    <div className="relative z-10 space-y-2.5 sm:space-y-4 [@media(max-height:540px)]:space-y-1.5">
                       {/* Cabecera con Icono SVG vectorial con color y Slug */}
                       <div className="flex items-center justify-between">
-                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}>
+                        <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}>
                           {badge.icon}
                         </div>
 
-                        <div className={`flex items-center gap-1 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-300/80 dark:border-zinc-700 text-xs font-mono font-semibold text-slate-700 dark:text-zinc-200 shadow-xs ${badge.hoverText} transition-colors duration-150`}>
+                        <div className={`flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-slate-100 dark:bg-zinc-800 border border-slate-300/80 dark:border-zinc-700 text-[11px] sm:text-xs font-mono font-semibold text-slate-700 dark:text-zinc-200 shadow-xs ${badge.hoverText} transition-colors duration-150`}>
                           <span className="opacity-50">/</span>
                           <span>{creator.slug}</span>
                         </div>
                       </div>
 
                       {/* Nombre y Especialidad */}
-                      <div className="space-y-1 pt-1">
-                        <h2 className={`text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
+                      <div className="space-y-0.5 sm:space-y-1 pt-0.5">
+                        <h2 className={`text-lg sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
                           {creator.name}
                         </h2>
                         <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
@@ -313,11 +313,11 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
                       {/* Etiquetas de tecnologías y habilidades */}
                       {creator.skills && creator.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-2 pt-1.5">
+                        <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
                           {creator.skills.slice(0, 3).map((skill) => (
                             <span
                               key={skill}
-                              className="px-3 py-1 rounded-[var(--radius-md)] text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-300/80 dark:border-zinc-700 shadow-xs"
+                              className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-[var(--radius-md)] text-[11px] sm:text-xs font-semibold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-200 border border-slate-300/80 dark:border-zinc-700 shadow-xs"
                             >
                               {skill}
                             </span>
@@ -327,13 +327,13 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                     </div>
 
                     {/* Zócalo de Acción Integrado */}
-                    <div className="relative z-10 py-3 sm:py-3.5 md:py-4 px-6 sm:px-7 md:px-8 -mx-6 -mb-6 sm:-mx-7 sm:-mb-7 md:-mx-8 md:-mb-8 mt-5 sm:mt-6 [@media(max-height:540px)]:mt-3 bg-slate-100/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
+                    <div className="relative z-10 py-2.5 sm:py-3.5 md:py-4 px-4.5 sm:px-7 md:px-8 -mx-4.5 -mb-4.5 sm:-mx-7 sm:-mb-7 md:-mx-8 md:-mb-8 mt-4 sm:mt-6 [@media(max-height:540px)]:mt-2.5 bg-slate-100/80 dark:bg-zinc-950/60 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
                       <span className={`text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
                         {i18n.showcase.explorePortfolio}
                       </span>
 
-                      <div className={`w-8 h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-300/80 dark:border-zinc-700 shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-all duration-150`}>
-                        <ArrowRightIcon size={14} />
+                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white dark:bg-zinc-800 border border-slate-300/80 dark:border-zinc-700 shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-all duration-150`}>
+                        <ArrowRightIcon size={13} />
                       </div>
                     </div>
                   </a>
@@ -342,8 +342,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             </div>
           </div>
 
-          {/* Pie de Página */}
-          <footer className="pt-4 text-center text-[11px] text-[var(--color-text-muted)] opacity-70">
+          {/* Pie de Página con Espaciado de Respiro Completo */}
+          <footer className="pt-3 pb-1 text-center text-[11px] text-[var(--color-text-muted)] opacity-70">
             <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
           </footer>
         </section>
