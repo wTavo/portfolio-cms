@@ -56,21 +56,14 @@ export function useBodyScrollLock(isOpen: boolean): void {
   useEffect(() => {
     if (!isOpen || typeof document === 'undefined') return;
 
-    const originalOverflow = document.body.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalHtmlOverflow = document.documentElement.style.overflow;
     document.body.style.overflow = 'hidden';
-
-    // Asegurar que la ventana permanezca en su posición original
-    const handleScroll = () => {
-      if (window.scrollY !== 0) {
-        window.scrollTo(0, 0);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    document.documentElement.style.overflow = 'hidden';
 
     return () => {
-      document.body.style.overflow = originalOverflow;
-      window.removeEventListener('scroll', handleScroll);
+      document.body.style.overflow = originalBodyOverflow;
+      document.documentElement.style.overflow = originalHtmlOverflow;
     };
   }, [isOpen]);
 }

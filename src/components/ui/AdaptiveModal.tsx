@@ -4,12 +4,12 @@
  * Proporciona renderizado unificado, elegante y flotante tanto en móviles como en escritorio (Directivas 5, 12, 14, 31, 32).
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOTION_DURATIONS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
-import { useBodyScrollLock } from '../../lib/hooks/useKeyboardOffset';
+import { useBodyScrollLock, useKeyboardHeight } from '../../lib/hooks/useKeyboardOffset';
 
 export interface AdaptiveModalProps {
   /** Estado de visibilidad del modal */
@@ -53,48 +53,12 @@ export default function AdaptiveModal({
 }: AdaptiveModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Bloqueo limpio del scroll de la página de fondo sin desalinear layout
+  // Bloqueo estricto del scroll del documento de fondo
   useBodyScrollLock(isOpen);
 
-  // Monitoreo del área libre disponible (Visual Viewport) cuando el teclado virtual está activo
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!isOpen || typeof window === 'undefined' || !window.visualViewport) return;
-
-    const vv = window.visualViewport;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    const updateHeight = () => {
-      const keyboardActive = window.innerHeight - vv.height > 100;
-      if (keyboardActive) {
-        if (timer) {
-          clearTimeout(timer);
-          timer = null;
-        }
-        setViewportHeight(vv.height);
-      } else {
-        // Ventana de tolerancia de 150ms al alternar campos para evitar parpadeos
-        if (!timer) {
-          timer = setTimeout(() => {
-            setViewportHeight(null);
-            timer = null;
-          }, 150);
-        }
-      }
-    };
-
-    vv.addEventListener('resize', updateHeight);
-    vv.addEventListener('scroll', updateHeight);
-    updateHeight();
-
-    return () => {
-      vv.removeEventListener('resize', updateHeight);
-      vv.removeEventListener('scroll', updateHeight);
-      if (timer) clearTimeout(timer);
-      setViewportHeight(null);
-    };
-  }, [isOpen]);
+  // Detección de presencia de teclado virtual para habilitar pista de scroll vertical (estilo Figma)
+  const keyboardHeight = useKeyboardHeight(isOpen);
+  const isKeyboardActive = keyboardHeight > 100;
 
   // Cierre accesible con tecla Escape
   useEffect(() => {
@@ -114,89 +78,101 @@ export default function AdaptiveModal({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3.5 sm:p-4 overscroll-contain"
+          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
           role="dialog"
           aria-modal="true"
           aria-labelledby={ariaLabelledBy}
-          style={
-            viewportHeight
-              ? {
-                  height: `${viewportHeight}px`,
-                  top: `${window.visualViewport?.offsetTop ?? 0}px`,
-                }
-              : undefined
-          }
+          style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          {/* Backdrop con desenfoque suave acelerado por GPU */}
+          {/* Backdrop con desenfoque suave acelerado por GPU en capa fija detrás del contenido */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: MOTION_DURATIONS.fast }}
-            className="fixed inset-0 bg-black/65 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 bg-black/65 backdrop-blur-sm -z-10"
             onClick={onClose}
             aria-hidden="true"
           />
 
-          {/* Tarjeta Modal Centrada Flotante (Enfoque 3 - Estándar Vercel/GitHub) */}
-          <motion.div
-            ref={modalRef}
-            initial={{ opacity: 0, scale: 0.95, y: 0 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 0 }}
-            transition={{
-              duration: MOTION_DURATIONS.fast,
-              ease: [0.2, 0, 0, 1],
+          {/* Contenedor de la capa que centra el modal en reposo y permite scroll manual libre con teclado activo */}
+          <div
+            className="flex min-h-full flex-col items-center p-3.5 sm:p-4 text-center"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                onClose();
+              }
             }}
-            className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col max-h-[85vh] z-10`}
           >
-            {/* 1. Cabecera Fija */}
-            <header className="px-5 sm:px-6 py-3 sm:py-3.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
-              <div className="flex items-center gap-3 min-w-0">
-                {icon && (
-                  <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] text-[var(--color-brand-accent)] flex items-center justify-center shadow-[var(--shadow-card)] shrink-0">
-                    {icon}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <h2
-                    id={ariaLabelledBy}
-                    className="text-base font-bold text-[var(--color-text-primary)] tracking-tight truncate"
-                  >
-                    {title}
-                  </h2>
-                  {subtitle && (
-                    <p className="text-xs text-[var(--color-text-secondary)] truncate">
-                      {subtitle}
-                    </p>
+            {/* Tarjeta Modal Centrada con my-auto (sin saltos automáticos, solo desplazamiento manual) */}
+            <motion.div
+              ref={modalRef}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{
+                duration: MOTION_DURATIONS.fast,
+                ease: [0.2, 0, 0, 1],
+              }}
+              className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left my-auto max-h-[85vh] shrink-0`}
+            >
+              {/* 1. Cabecera Fija */}
+              <header className="px-5 sm:px-6 py-3 sm:py-3.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
+                <div className="flex items-center gap-3 min-w-0">
+                  {icon && (
+                    <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] text-[var(--color-brand-accent)] flex items-center justify-center shadow-[var(--shadow-card)] shrink-0">
+                      {icon}
+                    </div>
                   )}
+                  <div className="min-w-0">
+                    <h2
+                      id={ariaLabelledBy}
+                      className="text-base font-bold text-[var(--color-text-primary)] tracking-tight truncate"
+                    >
+                      {title}
+                    </h2>
+                    {subtitle && (
+                      <p className="text-xs text-[var(--color-text-secondary)] truncate">
+                        {subtitle}
+                      </p>
+                    )}
+                  </div>
                 </div>
+
+                {showCloseButton && (
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="min-w-(--size-touch-target) min-h-(--size-touch-target) flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-subtle)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] cursor-pointer shrink-0"
+                    aria-label={i18n.common.close}
+                  >
+                    <XIcon size={18} />
+                  </button>
+                )}
+              </header>
+
+              {/* 2. Cuerpo Scrolleable */}
+              <div className={`flex-1 overflow-y-auto ${contentClassName}`}>
+                {children}
               </div>
 
-              {showCloseButton && (
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="min-w-(--size-touch-target) min-h-(--size-touch-target) flex items-center justify-center rounded-[var(--radius-md)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-subtle)] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] cursor-pointer shrink-0"
-                  aria-label={i18n.common.close}
-                >
-                  <XIcon size={18} />
-                </button>
+              {/* 3. Pie Fijo con Botones de Acción (Directiva 12) */}
+              {footer && (
+                <footer className="px-5 sm:px-6 py-3 sm:py-3.5 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface-elevated)] shrink-0">
+                  {footer}
+                </footer>
               )}
-            </header>
+            </motion.div>
 
-            {/* 2. Cuerpo Scrolleable */}
-            <div className={`flex-1 overflow-y-auto ${contentClassName}`}>
-              {children}
-            </div>
-
-            {/* 3. Pie Fijo con Botones de Acción (Directiva 12) */}
-            {footer && (
-              <footer className="px-5 sm:px-6 py-3 sm:py-3.5 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface-elevated)] shrink-0">
-                {footer}
-              </footer>
+            {/* Pista de scroll inferior activa cuando el teclado virtual está desplegado (estilo Figma) */}
+            {isKeyboardActive && (
+              <div
+                style={{ height: `${Math.max(keyboardHeight, 350)}px` }}
+                className="w-full shrink-0 pointer-events-none"
+                aria-hidden="true"
+              />
             )}
-          </motion.div>
+          </div>
         </div>
       )}
     </AnimatePresence>
