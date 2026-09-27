@@ -20,7 +20,6 @@ export default function TopographicBackground() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let isRunning = true;
     let lastTime = 0;
     // Cadencia nativa fluida a 60 FPS sincronizada en todos los dispositivos
     const fpsInterval = 1000 / 60;
@@ -63,19 +62,7 @@ export default function TopographicBackground() {
 
     window.addEventListener('resize', handleResize, { passive: true });
 
-    // Pausar renderizado cuando la pestaña esté oculta o en segundo plano
-    const handleVisibilityChange = () => {
-      isRunning = !document.hidden;
-      if (isRunning && !prefersReduced) {
-        lastTime = performance.now();
-        animationFrameId = requestAnimationFrame(render);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
     const render = (time: number) => {
-      if (!isRunning) return;
-
       if (!prefersReduced) {
         animationFrameId = requestAnimationFrame(render);
       }
@@ -158,10 +145,8 @@ export default function TopographicBackground() {
     }
 
     return () => {
-      isRunning = false;
       themeObserver.disconnect();
       window.removeEventListener('resize', handleResize);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
