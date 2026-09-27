@@ -79,7 +79,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto p-2 sm:p-4 md:p-6 overscroll-contain"
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 md:p-6 overscroll-contain"
           role="dialog"
           aria-modal="true"
           aria-labelledby="contact-modal-title"
