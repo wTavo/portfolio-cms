@@ -61,6 +61,34 @@ export default function AdaptiveModal({
   const keyboardHeight = useKeyboardHeight(isOpen);
   const isKeyboardOpen = keyboardHeight > 100;
 
+  // Detección de si el modal no cabe completamente en la altura visible disponible (Directiva 32)
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+
+    const checkOverflow = () => {
+      if (modalRef.current) {
+        const modalHeight = modalRef.current.offsetHeight;
+        // Margen de seguridad vertical mínimo (32px: 16px superior + 16px inferior)
+        const availableHeight = window.innerHeight - 32;
+        setIsOverflowing(modalHeight > availableHeight);
+      }
+    };
+
+    checkOverflow();
+    const rafId = requestAnimationFrame(checkOverflow);
+
+    window.addEventListener('resize', checkOverflow);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', checkOverflow);
+    };
+  }, [isOpen]);
+
+  // Se habilita el scroll vertical cuando el teclado está activo O cuando el modal supera la altura visible
+  const isScrollActive = isKeyboardOpen || isOverflowing;
+
   // Almacena la posición superior original del modal para que al abrir el teclado no salte
   const [modalTop, setModalTop] = useState<number | null>(null);
 
@@ -79,12 +107,12 @@ export default function AdaptiveModal({
     }
   }, [isOpen, isKeyboardOpen]);
 
-  // Al cerrar el teclado, resetear el desplazamiento del contenedor
+  // Al cerrar el teclado y si no hay desbordamiento natural, resetear el desplazamiento del contenedor
   useEffect(() => {
-    if (!isKeyboardOpen && scrollContainerRef.current) {
+    if (!isKeyboardOpen && !isOverflowing && scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 0;
     }
-  }, [isKeyboardOpen]);
+  }, [isKeyboardOpen, isOverflowing]);
 
   // Cierre accesible con tecla Escape
   useEffect(() => {
@@ -112,7 +140,7 @@ export default function AdaptiveModal({
         <div
           ref={scrollContainerRef}
           className={`fixed inset-0 z-50 overscroll-contain ${
-            isKeyboardOpen ? 'overflow-y-auto' : 'overflow-hidden'
+            isScrollActive ? 'overflow-y-auto' : 'overflow-hidden'
           }`}
           role="dialog"
           aria-modal="true"
@@ -130,16 +158,23 @@ export default function AdaptiveModal({
             aria-hidden="true"
           />
 
-          {/* Contenedor: centrado en reposo (sin scroll), scrolleable sin saltos únicamente con teclado activo */}
+          {/* Contenedor: centrado en reposo cuando cabe en pantalla, scrolleable sin saltos ante teclado o desbordamiento */}
           <div
             className={`w-full min-h-full flex flex-col items-center ${
-              isKeyboardOpen ? 'justify-start' : 'justify-center p-3.5 sm:p-4'
+              isScrollActive ? 'justify-start' : 'justify-center p-3.5 sm:p-4'
             } text-center`}
             style={
               isKeyboardOpen
                 ? {
                     paddingTop: `${modalTop ?? fallbackTop}px`,
                     paddingBottom: `${keyboardHeight + 80}px`,
+                    paddingLeft: '0.875rem',
+                    paddingRight: '0.875rem',
+                  }
+                : isOverflowing
+                ? {
+                    paddingTop: '1rem',
+                    paddingBottom: '2.5rem',
                     paddingLeft: '0.875rem',
                     paddingRight: '0.875rem',
                   }
