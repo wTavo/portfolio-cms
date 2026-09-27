@@ -1,21 +1,10 @@
 /**
  * @file useKeyboardOffset.ts
- * @description Hook y utilidades reactivas para el cálculo dinámico del área visual disponible (Visual Viewport API),
- * permitiendo que los modales se adapten suavemente al teclado virtual móvil sin saltos bruscos ni desfasajes.
+ * @description Hook y utilidades para detección de teclado virtual en móviles (IME Detection),
+ * permitiendo una elevación GPU fluida y sin rebotes al alternar entre campos de texto.
  */
 
-import { useState, useEffect } from 'react';
-
-export interface KeyboardOffsetResult {
-  /** Altura actual del viewport visual interactivo en píxeles (si está disponible) */
-  viewportHeight?: number;
-  /** Desplazamiento superior del visual viewport en píxeles */
-  offsetTop: number;
-  /** Booleano que indica si el teclado virtual está desplegado */
-  isKeyboardOpen: boolean;
-  /** Desplazamiento vertical residual en píxeles para compatibilidad */
-  keyboardOffset: number;
-}
+import { useState, useEffect, useRef } from 'react';
 
 /**
  * Calcula el offset vertical en píxeles para recentrar el modal según la altura del teclado virtual.
@@ -34,57 +23,73 @@ export function calculateKeyboardOffset(windowHeight: number, visualHeight: numb
 }
 
 /**
- * Monitorea el viewport visual interactivo en dispositivos móviles usando la Visual Viewport API.
- * Sincroniza la altura y posición del contenedor modal directamente con el área visible sobre el teclado.
+ * Hook que detecta si el teclado virtual está activo exclusivamente en dispositivos móviles (< 768px).
+ * Mantiene el estado activo de forma continua mientras se alternan campos dentro del formulario,
+ * evitando que el modal baje y suba al pasar de un input a otro.
  *
- * @param isOpen - Estado de visibilidad del modal o diálogo contenedor.
- * @returns {KeyboardOffsetResult} Dimensiones visuales sincronizadas con el teclado virtual.
+ * @param isOpen - Estado de visibilidad del modal contenedor.
+ * @returns {boolean} True solo si es móvil y el teclado virtual está activo por foco en inputs.
  */
-export function useKeyboardOffset(isOpen: boolean): KeyboardOffsetResult {
-  const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined);
-  const [offsetTop, setOffsetTop] = useState<number>(0);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
-  const [keyboardOffset, setKeyboardOffset] = useState<number>(0);
+export function useKeyboardActive(isOpen: boolean): boolean {
+  const [isKeyboardActive, setIsKeyboardActive] = useState(false);
+  const isInputFocusedRef = useRef(false);
 
   useEffect(() => {
-    if (!isOpen || typeof window === 'undefined' || !window.visualViewport) {
-      setViewportHeight(undefined);
-      setOffsetTop(0);
-      setIsKeyboardOpen(false);
-      setKeyboardOffset(0);
+    if (!isOpen || typeof window === 'undefined') {
+      setIsKeyboardActive(false);
       return;
     }
 
-    const vv = window.visualViewport;
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile) return;
 
-    const handleViewportChange = () => {
-      if (!vv) return;
-      const currentVisualHeight = vv.height;
-      const windowHeight = window.innerHeight;
-      const currentOffsetTop = vv.offsetTop || 0;
-      const offset = calculateKeyboardOffset(windowHeight, currentVisualHeight);
-
-      setViewportHeight(currentVisualHeight);
-      setOffsetTop(currentOffsetTop);
-      setKeyboardOffset(offset);
-      setIsKeyboardOpen(offset > 0);
+    // Detectar cuando cualquier input o textarea dentro del modal gana foco
+    const handleFocusIn = (e: FocusEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) {
+        isInputFocusedRef.current = true;
+        setIsKeyboardActive(true);
+      }
     };
 
-    vv.addEventListener('resize', handleViewportChange);
-    vv.addEventListener('scroll', handleViewportChange);
+    // Detectar cuando pierde foco; esperamos 90ms para verificar si el foco pasó a otro campo
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement;
+        const stillInInput =
+          active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA');
 
-    // Sincronización inicial al abrir
-    handleViewportChange();
+        if (!stillInInput) {
+          isInputFocusedRef.current = false;
+          setIsKeyboardActive(false);
+        }
+      }, 90);
+    };
+
+    // Sincronizar también con la salida del teclado por botón físico/atrás del SO
+    const handleViewportResize = () => {
+      if (!window.visualViewport) return;
+      const isFullHeight = window.visualViewport.height >= window.innerHeight - 80;
+      if (isFullHeight && !isInputFocusedRef.current) {
+        setIsKeyboardActive(false);
+      }
+    };
+
+    window.addEventListener('focusin', handleFocusIn);
+    window.addEventListener('focusout', handleFocusOut);
+    window.visualViewport?.addEventListener('resize', handleViewportResize);
 
     return () => {
-      vv.removeEventListener('resize', handleViewportChange);
-      vv.removeEventListener('scroll', handleViewportChange);
-      setViewportHeight(undefined);
-      setOffsetTop(0);
-      setIsKeyboardOpen(false);
-      setKeyboardOffset(0);
+      window.removeEventListener('focusin', handleFocusIn);
+      window.removeEventListener('focusout', handleFocusOut);
+      window.visualViewport?.removeEventListener('resize', handleViewportResize);
+      setIsKeyboardActive(false);
+      isInputFocusedRef.current = false;
     };
   }, [isOpen]);
 
-  return { viewportHeight, offsetTop, isKeyboardOpen, keyboardOffset };
+  return isKeyboardActive;
 }
+
+// Alias para compatibilidad
+export const useKeyboardOffset = useKeyboardActive;
