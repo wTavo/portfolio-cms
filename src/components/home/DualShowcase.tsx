@@ -223,8 +223,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                     <BrandLogoIcon size={20} className="w-5 h-5 text-[var(--color-text-primary)]" />
                   </div>
 
-                  {/* Título de Marca con Efecto Shine de Alto Impacto */}
-                  <span className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-shine leading-none select-none">
+                  {/* Título de Marca */}
+                  <span className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-none select-none">
                     {i18n.showcase.title}
                   </span>
                 </motion.button>
