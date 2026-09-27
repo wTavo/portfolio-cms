@@ -126,7 +126,7 @@ export default function LoginModal({
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
             transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-            className="relative w-full max-w-md my-auto sm:my-0 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col max-h-[88dvh] z-10"
+            className="relative w-full max-w-md bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col max-h-[88dvh] z-10"
           >
             {/* 1. Cabecera Fija */}
             <header className="px-5 sm:px-6 py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)]">
