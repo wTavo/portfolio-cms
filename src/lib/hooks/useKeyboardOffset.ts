@@ -74,9 +74,18 @@ export function useBodyScrollLock(isOpen: boolean): void {
       }
     });
 
+    // Asegurar que la ventana del navegador jamás se desplace verticalmente
+    const handleScroll = () => {
+      if (window.scrollY !== 0) {
+        window.scrollTo(0, 0);
+      }
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
+      window.removeEventListener('scroll', handleScroll);
       originalOverflows.forEach((originalVal, el) => {
         el.style.overflow = originalVal;
       });
