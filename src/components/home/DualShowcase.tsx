@@ -190,7 +190,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const isPortfolios = currentView === 'portfolios';
 
   return (
-    <div className="relative w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+    <div className="relative w-full h-full min-h-[100lvh] max-h-[100lvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
       {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional */}
       <TopographicBackground />
 
@@ -261,14 +261,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       {/* Contenedor de Scroll-Snap Nativo Fluido a 120 FPS */}
       <div
         ref={containerRef}
-        className="w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth relative z-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="w-full h-full min-h-[100lvh] max-h-[100lvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth relative z-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {/* Sección 1: Portada Cinemática con Título Cinético */}
         <section
           id="hero"
           ref={heroRef}
           aria-hidden={isPortfolios}
-          className="w-full h-full min-h-[100dvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
+          className="w-full h-full min-h-[100lvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
         >
           <KineticTitle text={i18n.showcase.title} />
 
@@ -296,7 +296,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           id="portafolios"
           ref={portfoliosRef}
           aria-hidden={!isPortfolios}
-          className="w-full min-h-[100dvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 md:pt-24 pb-8 sm:pb-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-4"
+          className="w-full min-h-[100lvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 md:pt-24 pb-8 sm:pb-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-4"
         >
           <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
