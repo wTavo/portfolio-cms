@@ -22,14 +22,15 @@ export default function TopographicBackground() {
     let animationFrameId: number;
     let isRunning = true;
     let lastTime = 0;
-    const isMobileDevice = window.innerWidth < 768;
-    const fpsInterval = 1000 / (isMobileDevice ? 24 : 40);
+    // Cadencia nativa fluida a 60 FPS sincronizada en todos los dispositivos
+    const fpsInterval = 1000 / 60;
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     let width = window.innerWidth;
     let height = window.innerHeight;
 
+    // Limitar DPR a 2 para máxima nitidez Retina sin sobrecargar la GPU
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = width * dpr;
     canvas.height = height * dpr;
@@ -85,21 +86,20 @@ export default function TopographicBackground() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // Entorno compacto: móvil vertical (width < 768) o móvil/pantallas cortas en horizontal (height < 540)
-      const isCompact = width < 768 || height < 540;
-      const lineCount = isCompact ? 5 : 7;
-      const segmentCount = isCompact ? 10 : 16;
+      // Parámetros unificados idénticos para móvil y PC: 7 líneas orgánicas con ondulación fluida
+      const lineCount = 7;
+      const segmentCount = 16;
       const t = prefersReduced ? 1000 : time * 0.0006;
 
-      // Amplitud de ondas y dispersión vertical estrictamente simétricas y proporcionales
-      const amp1 = isCompact ? 10 : 28;
-      const amp2 = isCompact ? 5 : 14;
-      const amp3 = isCompact ? 7 : 18;
-      const spread = isCompact ? Math.min(height * 0.20, 130) : height * 0.44;
+      // Amplitud de ondas y dispersión vertical simétricas y proporcionales en toda resolución
+      const amp1 = 28;
+      const amp2 = 14;
+      const amp3 = 18;
+      const spread = height * 0.44;
 
       for (let i = 0; i < lineCount; i++) {
         const progress = i / (lineCount - 1);
-        // Franja vertical central rigurosamente simétrica respecto al centro exacto del viewport
+        // Franja vertical central simétrica respecto al centro del viewport
         const baseY = height * 0.5 + (progress - 0.5) * spread;
 
         // Color y transparencia de la curva
