@@ -4,12 +4,12 @@
  * Proporciona scroll táctil vertical libre en su propia capa, sin movimientos automáticos al abrir el teclado virtual.
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOTION_DURATIONS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
-import { useBodyScrollLock } from '../../lib/hooks/useKeyboardOffset';
+import { useBodyScrollLock, useKeyboardHeight } from '../../lib/hooks/useKeyboardOffset';
 
 export interface AdaptiveModalProps {
   /** Estado de visibilidad del modal */
@@ -52,9 +52,39 @@ export default function AdaptiveModal({
   contentClassName = '',
 }: AdaptiveModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Bloqueo estricto del scroll del documento de fondo (el fondo jamás se mueve)
   useBodyScrollLock(isOpen);
+
+  // Detección de presencia y altura del teclado virtual
+  const keyboardHeight = useKeyboardHeight(isOpen);
+  const isKeyboardOpen = keyboardHeight > 100;
+
+  // Almacena la posición superior original del modal para que al abrir el teclado no salte
+  const [modalTop, setModalTop] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setModalTop(null);
+      return;
+    }
+
+    // Registrar la posición vertical natural centrada antes de que el teclado abra
+    if (!isKeyboardOpen && modalRef.current) {
+      const rect = modalRef.current.getBoundingClientRect();
+      if (rect.top > 0) {
+        setModalTop(rect.top);
+      }
+    }
+  }, [isOpen, isKeyboardOpen]);
+
+  // Al cerrar el teclado, resetear el desplazamiento del contenedor
+  useEffect(() => {
+    if (!isKeyboardOpen && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [isKeyboardOpen]);
 
   // Cierre accesible con tecla Escape
   useEffect(() => {
@@ -70,11 +100,20 @@ export default function AdaptiveModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
+  // Cálculo de top de respaldo si aún no se ha medido el elemento en el DOM
+  const fallbackTop =
+    typeof window !== 'undefined'
+      ? Math.max(16, (window.innerHeight - 280) / 2)
+      : 120;
+
   return (
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 overflow-y-auto overscroll-contain"
+          ref={scrollContainerRef}
+          className={`fixed inset-0 z-50 overscroll-contain ${
+            isKeyboardOpen ? 'overflow-y-auto' : 'overflow-hidden'
+          }`}
           role="dialog"
           aria-modal="true"
           aria-labelledby={ariaLabelledBy}
@@ -91,9 +130,21 @@ export default function AdaptiveModal({
             aria-hidden="true"
           />
 
-          {/* Contenedor scrolleable estilo Figma: pista continua en móvil para mover el modal en vertical sin saltos automáticos */}
+          {/* Contenedor: centrado en reposo (sin scroll), scrolleable sin saltos únicamente con teclado activo */}
           <div
-            className="min-h-full flex flex-col items-center justify-start sm:justify-center p-3.5 sm:p-4 pt-12 sm:pt-4 pb-[70vh] sm:pb-4 text-center"
+            className={`w-full min-h-full flex flex-col items-center ${
+              isKeyboardOpen ? 'justify-start' : 'justify-center p-3.5 sm:p-4'
+            } text-center`}
+            style={
+              isKeyboardOpen
+                ? {
+                    paddingTop: `${modalTop ?? fallbackTop}px`,
+                    paddingBottom: `${keyboardHeight + 80}px`,
+                    paddingLeft: '0.875rem',
+                    paddingRight: '0.875rem',
+                  }
+                : undefined
+            }
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 onClose();
