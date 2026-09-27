@@ -103,13 +103,6 @@ export default function AdaptiveModal({
       const keyboardActive = Math.max(0, window.innerHeight - currentHeight) > 80;
       const isOverflowing = (modalHeight + 32) > currentHeight;
 
-      const activeEl = typeof document !== 'undefined' ? document.activeElement : null;
-      const isModalInput = !!(
-        activeEl &&
-        modalEl?.contains(activeEl) &&
-        (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')
-      );
-
       if (keyboardActive && vv) {
         // Teclado detectado como activo: cancelar cualquier cierre pendiente
         if (closeDebounce) {
@@ -137,25 +130,24 @@ export default function AdaptiveModal({
           }
         }
       } else {
-        // Si un campo dentro del modal sigue enfocado, el teclado no se ha cerrado realmente
-        // (es un parpadeo de reinicio de IME nativo de Android al cambiar a tipo contraseña).
-        if (isModalInput) {
-          return;
-        }
-
-        // Cierre voluntario: esperar 300ms para asegurar que el usuario no está alternando campos
+        // Cierre de teclado: esperar 180ms para confirmar que no es una micro-transición al alternar campos
         if (keyboardWasActive.current && !closeDebounce) {
           closeDebounce = setTimeout(() => {
-            const currentActive = typeof document !== 'undefined' ? document.activeElement : null;
-            const stillInput = !!(
-              currentActive &&
-              modalRef.current?.contains(currentActive) &&
-              (currentActive.tagName === 'INPUT' || currentActive.tagName === 'TEXTAREA')
-            );
+            // Verificar si el viewport realmente sigue en altura completa (teclado cerrado físicamente)
+            const checkVv = window.visualViewport;
+            const checkHeight = checkVv ? checkVv.height : window.innerHeight;
+            const isPhysicallyClosed = Math.max(0, window.innerHeight - checkHeight) <= 80;
 
-            if (stillInput) {
+            if (!isPhysicallyClosed) {
               closeDebounce = null;
               return;
+            }
+
+            // En Android, presionar 'Atrás' cierra el teclado pero deja el input enfocado;
+            // desenfocarlo para que el estado visual concuerde con el teclado cerrado
+            const currentActive = typeof document !== 'undefined' ? document.activeElement : null;
+            if (currentActive instanceof HTMLElement && modalRef.current?.contains(currentActive)) {
+              currentActive.blur();
             }
 
             enableTransition();
@@ -171,7 +163,7 @@ export default function AdaptiveModal({
             const m = modalRef.current;
             const mh = m ? m.offsetHeight : 340;
             setCanScroll((mh + 32) > window.innerHeight);
-          }, 300);
+          }, 180);
         } else if (!keyboardWasActive.current) {
           if (lastCommittedHeight.current !== null) {
             lastCommittedHeight.current = null;
