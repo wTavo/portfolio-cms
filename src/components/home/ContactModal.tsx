@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon, MailIcon, CheckIcon } from '../icons/Icons';
 import { MOTION_DURATIONS } from '../../lib/motion';
-import { useKeyboardActive } from '../../lib/hooks/useKeyboardOffset';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -24,9 +23,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-
-  // Detección de teclado virtual en móvil con persistencia entre campos
-  const isKeyboardActive = useKeyboardActive(isOpen);
 
   // Focus y manejo de tecla Escape para accesibilidad
   useEffect(() => {
@@ -83,7 +79,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 overscroll-contain"
+          className="fixed inset-0 z-50 flex items-start sm:items-center justify-center overflow-y-auto p-2 sm:p-4 md:p-6 overscroll-contain"
           role="dialog"
           aria-modal="true"
           aria-labelledby="contact-modal-title"
@@ -103,14 +99,10 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
           <motion.div
             ref={modalRef}
             initial={{ opacity: 0, scale: 0.95 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              y: isKeyboardActive ? -48 : 0,
-            }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.25, ease: [0.2, 0, 0, 1] }}
-            className="relative w-full max-w-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-xl)] shadow-2xl overflow-hidden flex flex-col max-h-[88dvh] z-10"
+            className="relative w-full max-w-lg my-auto sm:my-0 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-xl)] shadow-2xl overflow-hidden flex flex-col max-h-[88dvh] z-10"
           >
             {/* 1. Cabecera Fija */}
             <header className="px-4 sm:px-6 py-2.5 sm:py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)]">
