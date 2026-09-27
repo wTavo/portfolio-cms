@@ -145,7 +145,7 @@ export default function AdaptiveModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby={ariaLabelledBy}
-          style={{ WebkitOverflowScrolling: 'touch' }}
+          style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
         >
           {/* Backdrop con desenfoque suave acelerado por GPU en capa fija detrás del contenido */}
           <motion.div

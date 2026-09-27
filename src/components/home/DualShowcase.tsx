@@ -170,6 +170,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
+      // Prevenir que teclas como Space o ArrowDown desplacen el fondo si un modal está abierto
+      if (isContactOpen || isLoginOpen) return;
 
       if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentView === 'hero') {
         e.preventDefault();
@@ -185,7 +187,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentView, scrollToHero, scrollToPortfolios]);
+  }, [currentView, scrollToHero, scrollToPortfolios, isContactOpen, isLoginOpen]);
 
   const isPortfolios = currentView === 'portfolios';
 
@@ -261,7 +263,11 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       {/* Contenedor de Scroll-Snap Nativo Fluido a 120 FPS */}
       <div
         ref={containerRef}
-        className="w-full h-full min-h-[100lvh] max-h-[100lvh] overflow-y-auto overflow-x-hidden snap-y snap-mandatory scroll-smooth relative z-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={`w-full h-full min-h-[100lvh] max-h-[100lvh] ${
+          isContactOpen || isLoginOpen
+            ? 'overflow-hidden pointer-events-none'
+            : 'overflow-y-auto snap-y snap-mandatory'
+        } overflow-x-hidden scroll-smooth relative z-10 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
       >
         {/* Sección 1: Portada Cinemática con Título Cinético */}
         <section

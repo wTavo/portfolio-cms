@@ -61,9 +61,25 @@ export function useBodyScrollLock(isOpen: boolean): void {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
 
+    // Congelar cualquier contenedor interno de desplazamiento en la página detrás del modal
+    const backgroundScrollElements = document.querySelectorAll<HTMLElement>(
+      'main, [class*="overflow-y-auto"], .snap-mandatory'
+    );
+    const originalOverflows = new Map<HTMLElement, string>();
+
+    backgroundScrollElements.forEach((el) => {
+      if (!el.closest('[role="dialog"]')) {
+        originalOverflows.set(el, el.style.overflow);
+        el.style.overflow = 'hidden';
+      }
+    });
+
     return () => {
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
+      originalOverflows.forEach((originalVal, el) => {
+        el.style.overflow = originalVal;
+      });
     };
   }, [isOpen]);
 }
