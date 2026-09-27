@@ -48,7 +48,8 @@ export function calculateSafeKeyboardOffset(
 
 /**
  * Bloquea el scroll del documento mientras un modal o bottom sheet esté visible,
- * sin alterar position: fixed en el body para prevenir saltos de layout en el fondo.
+ * fijando la posición del viewport para impedir desplazamientos nativos espurios
+ * al interactuar con campos de formulario en dispositivos móviles.
  *
  * @param isOpen - Estado booleano de visibilidad del modal.
  */
@@ -58,8 +59,16 @@ export function useBodyScrollLock(isOpen: boolean): void {
 
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalBodyPosition = document.body.style.position;
+    const originalBodyWidth = document.body.style.width;
+    const originalHtmlPosition = document.documentElement.style.position;
+
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.width = '100%';
+    document.documentElement.style.position = 'fixed';
+    document.documentElement.style.width = '100%';
 
     // Congelar cualquier contenedor interno de desplazamiento en la página detrás del modal
     const backgroundScrollElements = document.querySelectorAll<HTMLElement>(
@@ -74,18 +83,13 @@ export function useBodyScrollLock(isOpen: boolean): void {
       }
     });
 
-    // Asegurar que la ventana del navegador jamás se desplace verticalmente
-    const handleScroll = () => {
-      if (window.scrollY !== 0) {
-        window.scrollTo(0, 0);
-      }
-    };
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
     return () => {
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
-      window.removeEventListener('scroll', handleScroll);
+      document.body.style.position = originalBodyPosition;
+      document.body.style.width = originalBodyWidth;
+      document.documentElement.style.position = originalHtmlPosition;
+      document.documentElement.style.width = '';
       originalOverflows.forEach((originalVal, el) => {
         el.style.overflow = originalVal;
       });
@@ -119,10 +123,16 @@ export function useIsMobile(): boolean {
   return isMobile;
 }
 
+export interface VisualViewportInfo {
+  keyboardHeight: number;
+  isKeyboardOpen: boolean;
+  viewportHeight: number;
+}
+
 /**
  * Hook reactivo que monitorea la altura exacta del teclado virtual en dispositivos móviles
  * mediante la Visual Viewport API, con ventana de tolerancia de 150ms para evitar
- * que el Bottom Sheet caiga y suba bruscamente al alternar entre campos de texto.
+ * que el modal caiga y suba bruscamente al alternar entre campos de texto.
  *
  * @param isOpen - Estado booleano de visibilidad del modal.
  * @returns {number} Altura en píxeles del teclado virtual (0 si no está activo).
@@ -141,7 +151,7 @@ export function useKeyboardHeight(isOpen: boolean): number {
 
     const handleViewportUpdate = () => {
       const diff = Math.max(0, window.innerHeight - vv.height);
-      if (diff > 100) {
+      if (diff > 80) {
         // Teclado activo: cancelar temporizador de cierre y elevar inmediatamente
         if (closeTimer) {
           clearTimeout(closeTimer);
@@ -149,9 +159,7 @@ export function useKeyboardHeight(isOpen: boolean): number {
         }
         setKeyboardHeight(diff);
       } else {
-        // Posible transición de foco entre campos o cierre voluntario:
-        // Ventana de tolerancia de 150ms para que si el usuario tocó otro input,
-        // no se produzca el molesto parpadeo o contracción del sheet.
+        // Posible transición de foco entre campos o cierre voluntario
         if (!closeTimer) {
           closeTimer = setTimeout(() => {
             setKeyboardHeight(0);
@@ -177,6 +185,79 @@ export function useKeyboardHeight(isOpen: boolean): number {
   }, [isOpen]);
 
   return keyboardHeight;
+}
+
+/**
+ * Hook reactivo que provee la información integral del viewport visual en dispositivos móviles.
+ * Retorna la altura del teclado, estado booleano de presencia de teclado y la altura visible disponible.
+ *
+ * @param isOpen - Estado booleano de visibilidad del modal.
+ * @returns {VisualViewportInfo} Métricas reactivas del viewport visual.
+ */
+export function useVisualViewportInfo(isOpen: boolean): VisualViewportInfo {
+  const [info, setInfo] = useState<VisualViewportInfo>(() => ({
+    keyboardHeight: 0,
+    isKeyboardOpen: false,
+    viewportHeight: typeof window !== 'undefined' ? window.innerHeight : 0,
+  }));
+
+  useEffect(() => {
+    if (!isOpen || typeof window === 'undefined') return;
+
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const handleUpdate = () => {
+      const vv = window.visualViewport;
+      const currentInnerHeight = window.innerHeight;
+      const currentVvHeight = vv ? vv.height : currentInnerHeight;
+      const diff = Math.max(0, currentInnerHeight - currentVvHeight);
+      const isKeyboard = diff > 80;
+
+      if (isKeyboard) {
+        if (closeTimer) {
+          clearTimeout(closeTimer);
+          closeTimer = null;
+        }
+        setInfo({
+          keyboardHeight: diff,
+          isKeyboardOpen: true,
+          viewportHeight: Math.round(currentVvHeight),
+        });
+      } else {
+        if (!closeTimer) {
+          closeTimer = setTimeout(() => {
+            setInfo({
+              keyboardHeight: 0,
+              isKeyboardOpen: false,
+              viewportHeight: currentInnerHeight,
+            });
+            closeTimer = null;
+          }, 150);
+        }
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleUpdate);
+      window.visualViewport.addEventListener('scroll', handleUpdate);
+    }
+    window.addEventListener('resize', handleUpdate);
+    handleUpdate();
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleUpdate);
+        window.visualViewport.removeEventListener('scroll', handleUpdate);
+      }
+      window.removeEventListener('resize', handleUpdate);
+      if (closeTimer) {
+        clearTimeout(closeTimer);
+        closeTimer = null;
+      }
+    };
+  }, [isOpen]);
+
+  return info;
 }
 
 // Aliases para compatibilidad con código anterior

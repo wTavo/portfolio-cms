@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MOTION_DURATIONS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
-import { useBodyScrollLock, useKeyboardHeight } from '../../lib/hooks/useKeyboardOffset';
+import { useBodyScrollLock } from '../../lib/hooks/useKeyboardOffset';
 
 export interface AdaptiveModalProps {
   /** Estado de visibilidad del modal */
@@ -53,51 +53,174 @@ export default function AdaptiveModal({
 }: AdaptiveModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [canScroll, setCanScroll] = useState(false);
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+  /** Altura comprometida al estado para evitar re-renders por micro-variaciones de 1-5px */
+  const lastCommittedHeight = useRef<number | null>(null);
+  /** Estado previo del teclado para detectar transiciones reales open<->close */
+  const keyboardWasActive = useRef(false);
+  /** Bandera: la transición CSS de height solo se activa durante apertura/cierre real del teclado */
+  const [animateHeight, setAnimateHeight] = useState(false);
+  /** Temporizador para desactivar la transición CSS tras completarse la animación */
+  const animateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Bloqueo estricto del scroll del documento de fondo (el fondo jamás se mueve)
   useBodyScrollLock(isOpen);
 
-  // Detección de presencia y altura del teclado virtual
-  const keyboardHeight = useKeyboardHeight(isOpen);
-  const isKeyboardOpen = keyboardHeight > 100;
-
-  // Detección de si el modal no cabe completamente en la altura visible disponible (Directiva 32)
-  const [isOverflowing, setIsOverflowing] = useState(false);
-
+  // Activar desplazamiento vertical SOLO cuando el modal desborda la altura visible
   useEffect(() => {
-    if (!isOpen || typeof window === 'undefined') return;
+    if (!isOpen || typeof window === 'undefined') {
+      setCanScroll(false);
+      setViewportHeight(null);
+      lastCommittedHeight.current = null;
+      keyboardWasActive.current = false;
+      setAnimateHeight(false);
+      return;
+    }
 
-    const checkOverflow = () => {
-      if (modalRef.current) {
-        const modalHeight = modalRef.current.offsetHeight;
-        // Altura disponible real en pantalla (descontando el teclado si está desplegado)
-        const availableHeight = isKeyboardOpen
-          ? window.innerHeight - keyboardHeight
-          : window.innerHeight;
-        // Margen de seguridad vertical mínimo (32px: 16px superior + 16px inferior)
-        setIsOverflowing(modalHeight > availableHeight - 32);
+    /** Temporizador para debounce del cierre de teclado */
+    let closeDebounce: ReturnType<typeof setTimeout> | null = null;
+
+    /**
+     * Activa la transición CSS de height por un periodo breve (250ms).
+     * Solo se invoca cuando el teclado realmente se abre o se cierra,
+     * NUNCA durante cambios de foco entre campos de texto.
+     */
+    const enableTransition = () => {
+      setAnimateHeight(true);
+      if (animateTimer.current) clearTimeout(animateTimer.current);
+      animateTimer.current = setTimeout(() => {
+        setAnimateHeight(false);
+        animateTimer.current = null;
+      }, 250);
+    };
+
+    const checkScrollCondition = () => {
+      const modalEl = modalRef.current;
+      const modalHeight = modalEl ? modalEl.offsetHeight : 340;
+      const vv = window.visualViewport;
+      const currentHeight = vv ? vv.height : window.innerHeight;
+      const keyboardActive = Math.max(0, window.innerHeight - currentHeight) > 80;
+      const isOverflowing = (modalHeight + 32) > currentHeight;
+
+      const activeEl = typeof document !== 'undefined' ? document.activeElement : null;
+      const isModalInput = !!(
+        activeEl &&
+        modalEl?.contains(activeEl) &&
+        (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')
+      );
+
+      if (keyboardActive && vv) {
+        // Teclado detectado como activo: cancelar cualquier cierre pendiente
+        if (closeDebounce) {
+          clearTimeout(closeDebounce);
+          closeDebounce = null;
+        }
+
+        const newHeight = Math.round(vv.height);
+
+        // Si el teclado estaba cerrado, esta es la apertura real: activar animación suave
+        if (!keyboardWasActive.current || lastCommittedHeight.current === null) {
+          enableTransition();
+          lastCommittedHeight.current = newHeight;
+          setViewportHeight(newHeight);
+          keyboardWasActive.current = true;
+        } else {
+          // El teclado ya estaba activo: congelar la altura para evitar que
+          // el cambio de modo de Gboard (ej. pasar a contraseña o mostrar sugerencias)
+          // cause saltos o re-renders. Solo actualizar en cambios drásticos como rotación (> 160px).
+          const lastHeight = lastCommittedHeight.current;
+          if (Math.abs(newHeight - lastHeight) > 160) {
+            enableTransition();
+            lastCommittedHeight.current = newHeight;
+            setViewportHeight(newHeight);
+          }
+        }
+      } else {
+        // Si un campo dentro del modal sigue enfocado, el teclado no se ha cerrado realmente
+        // (es un parpadeo de reinicio de IME nativo de Android al cambiar a tipo contraseña).
+        if (isModalInput) {
+          return;
+        }
+
+        // Cierre voluntario: esperar 300ms para asegurar que el usuario no está alternando campos
+        if (keyboardWasActive.current && !closeDebounce) {
+          closeDebounce = setTimeout(() => {
+            const currentActive = typeof document !== 'undefined' ? document.activeElement : null;
+            const stillInput = !!(
+              currentActive &&
+              modalRef.current?.contains(currentActive) &&
+              (currentActive.tagName === 'INPUT' || currentActive.tagName === 'TEXTAREA')
+            );
+
+            if (stillInput) {
+              closeDebounce = null;
+              return;
+            }
+
+            enableTransition();
+            lastCommittedHeight.current = null;
+            setViewportHeight(null);
+            keyboardWasActive.current = false;
+            closeDebounce = null;
+
+            if (scrollContainerRef.current) {
+              scrollContainerRef.current.scrollTop = 0;
+            }
+
+            const m = modalRef.current;
+            const mh = m ? m.offsetHeight : 340;
+            setCanScroll((mh + 32) > window.innerHeight);
+          }, 300);
+        } else if (!keyboardWasActive.current) {
+          if (lastCommittedHeight.current !== null) {
+            lastCommittedHeight.current = null;
+            setViewportHeight(null);
+          }
+        }
+      }
+
+      setCanScroll(isOverflowing);
+    };
+
+    // Al enfocar cualquier input dentro del modal, cancelar inmediatamente cualquier timer de cierre
+    const handleFocusIn = () => {
+      if (closeDebounce) {
+        clearTimeout(closeDebounce);
+        closeDebounce = null;
       }
     };
 
-    checkOverflow();
-    const rafId = requestAnimationFrame(checkOverflow);
-
-    window.addEventListener('resize', checkOverflow);
-    return () => {
-      cancelAnimationFrame(rafId);
-      window.removeEventListener('resize', checkOverflow);
-    };
-  }, [isOpen, isKeyboardOpen, keyboardHeight]);
-
-  // Se habilita el scroll vertical cuando el modal no cabe en el espacio visible disponible
-  const isScrollActive = isOverflowing;
-
-  // Al no haber desbordamiento, resetear el desplazamiento del contenedor
-  useEffect(() => {
-    if (!isScrollActive && scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 0;
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener('focusin', handleFocusIn);
     }
-  }, [isScrollActive]);
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', checkScrollCondition);
+    }
+    window.addEventListener('resize', checkScrollCondition);
+
+    checkScrollCondition();
+    const raf = requestAnimationFrame(checkScrollCondition);
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', checkScrollCondition);
+      }
+      window.removeEventListener('resize', checkScrollCondition);
+      cancelAnimationFrame(raf);
+      if (closeDebounce) {
+        clearTimeout(closeDebounce);
+      }
+      if (animateTimer.current) {
+        clearTimeout(animateTimer.current);
+      }
+      if (container) {
+        container.removeEventListener('focusin', handleFocusIn);
+      }
+    };
+  }, [isOpen]);
 
   // Cierre accesible con tecla Escape
   useEffect(() => {
@@ -116,61 +239,60 @@ export default function AdaptiveModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div
-          ref={scrollContainerRef}
-          className={`fixed inset-0 z-50 overscroll-contain ${
-            isScrollActive ? 'overflow-y-auto' : 'overflow-hidden'
-          }`}
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby={ariaLabelledBy}
-          style={{ WebkitOverflowScrolling: 'touch', overscrollBehavior: 'contain' }}
-        >
-          {/* Backdrop con desenfoque suave acelerado por GPU en capa fija detrás del contenido */}
+        <div className="fixed inset-0 z-50">
+          {/* Capa 1: Backdrop Fijo Inmóvil (El fondo y el desenfoque permanecen 100% estáticos) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: MOTION_DURATIONS.fast }}
-            className="fixed inset-0 bg-black/65 backdrop-blur-sm -z-10"
+            className="fixed inset-0 bg-black/65 backdrop-blur-sm pointer-events-auto"
             onClick={onClose}
+            onTouchMove={(e) => e.preventDefault()}
             aria-hidden="true"
           />
 
-          {/* Contenedor: centrado en reposo cuando cabe en pantalla, scrolleable sin espacios artificiales cuando desborda */}
+          {/* Capa 2: Contenedor con scroll habilitado estrictamente bajo demanda */}
           <div
-            className={`w-full min-h-full flex flex-col items-center ${
-              isScrollActive ? 'justify-start' : 'justify-center p-3.5 sm:p-4'
-            } text-center`}
-            style={
-              isScrollActive
-                ? {
-                    paddingTop: '1rem',
-                    paddingBottom: '1.5rem',
-                    paddingLeft: '0.875rem',
-                    paddingRight: '0.875rem',
-                  }
-                : undefined
-            }
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                onClose();
-              }
+            ref={scrollContainerRef}
+            className={`fixed inset-x-0 top-0 overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+              canScroll ? 'overflow-y-auto' : 'overflow-hidden'
+            }`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={ariaLabelledBy}
+            style={{
+              height: viewportHeight ? `${viewportHeight}px` : '100dvh',
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              // La transición SOLO se activa durante apertura/cierre real del teclado.
+              // Desactivada por defecto para que micro-ajustes del viewport durante
+              // cambios de foco entre campos sean instantáneos e invisibles.
+              transition: animateHeight ? 'height 0.15s ease-out' : 'none',
             }}
           >
-            {/* Tarjeta Modal Flotante */}
-            <motion.div
-              ref={modalRef}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{
-                duration: MOTION_DURATIONS.fast,
-                ease: [0.2, 0, 0, 1],
+            {/* Contenedor con centrado nativo estándar (m-auto previene recortes en pantallas bajas) */}
+            <div
+              className="min-h-full w-full flex p-3.5 sm:p-4 text-center"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  onClose();
+                }
               }}
-              className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0 max-h-[85vh]`}
             >
-              {/* 1. Cabecera Fija */}
+              {/* Tarjeta Modal Flotante centrada naturalmente con m-auto */}
+              <motion.div
+                ref={modalRef}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{
+                  duration: MOTION_DURATIONS.fast,
+                  ease: [0.2, 0, 0, 1],
+                }}
+                className={`m-auto relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
+              >
+              {/* 1. Cabecera Fija de la Tarjeta */}
               <header className="px-5 sm:px-6 py-3 sm:py-3.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                   {icon && (
@@ -205,12 +327,12 @@ export default function AdaptiveModal({
                 )}
               </header>
 
-              {/* 2. Cuerpo Scrolleable */}
-              <div className={`flex-1 overflow-y-auto ${contentClassName}`}>
+              {/* 2. Cuerpo del Modal */}
+              <div className={`flex-1 ${contentClassName}`}>
                 {children}
               </div>
 
-              {/* 3. Pie Fijo con Botones de Acción (Directiva 12) */}
+              {/* 3. Pie con Botones de Acción (Directiva 12) */}
               {footer && (
                 <footer className="px-5 sm:px-6 py-3 sm:py-3.5 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface-elevated)] shrink-0">
                   {footer}
@@ -219,7 +341,8 @@ export default function AdaptiveModal({
             </motion.div>
           </div>
         </div>
-      )}
-    </AnimatePresence>
-  );
+      </div>
+    )}
+  </AnimatePresence>
+);
 }
