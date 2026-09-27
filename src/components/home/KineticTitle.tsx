@@ -203,8 +203,8 @@ export default function KineticTitle({
         {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
           const containerClasses = isFirstLine
-            ? 'w-full max-w-5xl max-h-[min(15lvh,160px)] [@media(max-height:540px)]:max-h-[46px] h-auto object-contain'
-            : 'w-[90%] max-w-4xl max-h-[min(13lvh,140px)] [@media(max-height:540px)]:max-h-[38px] h-auto object-contain';
+            ? 'w-full max-w-5xl max-h-[min(15dvh,160px)] [@media(max-height:540px)]:max-h-[46px] h-auto object-contain'
+            : 'w-[90%] max-w-4xl max-h-[min(13dvh,140px)] [@media(max-height:540px)]:max-h-[38px] h-auto object-contain';
 
           return (
             <svg
