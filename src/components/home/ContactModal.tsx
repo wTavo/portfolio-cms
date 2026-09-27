@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon, MailIcon, CheckIcon } from '../icons/Icons';
 import { MOTION_DURATIONS } from '../../lib/motion';
-import { useKeyboardModalOffset } from '../../lib/hooks/useKeyboardOffset';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -24,9 +23,6 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
 
   const modalRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
-
-  // Elevación adaptativa segura al teclado virtual móvil (IME) con centrado en reposo
-  const keyboardOffsetY = useKeyboardModalOffset(isOpen, modalRef);
 
   // Focus y manejo de tecla Escape para accesibilidad
   useEffect(() => {
@@ -49,12 +45,19 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    setTimeout(() => {
-      nameInputRef.current?.focus();
-    }, 100);
+
+    // En dispositivos de escritorio se auto-enfoca; en móvil (< 768px) no se fuerza para no abrir el teclado bruscamente
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (isDesktop) {
+      timer = setTimeout(() => {
+        nameInputRef.current?.focus();
+      }, 100);
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      if (timer) clearTimeout(timer);
     };
   }, [isOpen, onClose]);
 
@@ -103,13 +106,9 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
           <motion.div
             ref={modalRef}
             initial={{ opacity: 0, scale: 0.95 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              y: keyboardOffsetY,
-            }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            transition={{ duration: MOTION_DURATIONS.normal, ease: [0.2, 0, 0, 1] }}
+            transition={{ duration: MOTION_DURATIONS.fast, ease: [0.2, 0, 0, 1] }}
             className="relative w-full max-w-lg bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-xl)] shadow-2xl overflow-hidden flex flex-col max-h-[88dvh] z-10"
           >
             {/* 1. Cabecera Fija */}

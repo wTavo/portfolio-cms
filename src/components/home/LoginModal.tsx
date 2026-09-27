@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon, BrandLogoIcon } from '../icons/Icons';
 import { MOTION_DURATIONS } from '../../lib/motion';
-import { useKeyboardModalOffset } from '../../lib/hooks/useKeyboardOffset';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -30,9 +29,6 @@ export default function LoginModal({
 
   const modalRef = useRef<HTMLDivElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
-
-  // Elevación adaptativa segura al teclado virtual móvil (IME) con centrado en reposo
-  const keyboardOffsetY = useKeyboardModalOffset(isOpen, modalRef);
 
   // Focus inicial y manejo de tecla Escape para accesibilidad WCAG 2.2 AA
   useEffect(() => {
@@ -57,13 +53,19 @@ export default function LoginModal({
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    const timer = setTimeout(() => {
-      emailInputRef.current?.focus();
-    }, 120);
+
+    // En dispositivos de escritorio se auto-enfoca; en móvil (< 768px) no se fuerza para no abrir el teclado bruscamente
+    const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 768;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (isDesktop) {
+      timer = setTimeout(() => {
+        emailInputRef.current?.focus();
+      }, 100);
+    }
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      clearTimeout(timer);
+      if (timer) clearTimeout(timer);
     };
   }, [isOpen, onClose, initialError]);
 
@@ -127,13 +129,9 @@ export default function LoginModal({
           <motion.div
             ref={modalRef}
             initial={{ opacity: 0, scale: 0.96 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              y: keyboardOffsetY,
-            }}
+            animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
-            transition={{ duration: MOTION_DURATIONS.normal, ease: [0.2, 0, 0, 1] }}
+            transition={{ duration: MOTION_DURATIONS.fast, ease: [0.2, 0, 0, 1] }}
             className="relative w-full max-w-md bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col max-h-[88dvh] z-10"
           >
             {/* 1. Cabecera Fija */}
