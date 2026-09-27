@@ -1,18 +1,20 @@
 /**
  * @file useKeyboardOffset.ts
- * @description Hook y utilidades reactivas para el cálculo dinámico de la altura del teclado virtual móvil (IME Inset Avoidance),
- * adaptando modales y formularios al área visible sin oclusiones.
+ * @description Hook y utilidades reactivas para el cálculo dinámico del área visual disponible (Visual Viewport API),
+ * permitiendo que los modales se adapten suavemente al teclado virtual móvil sin saltos bruscos ni desfasajes.
  */
 
 import { useState, useEffect } from 'react';
 
 export interface KeyboardOffsetResult {
-  /** Desplazamiento vertical en píxeles hacia arriba para recentrar el modal sobre el teclado */
-  keyboardOffset: number;
   /** Altura actual del viewport visual interactivo en píxeles (si está disponible) */
-  viewportHeight: number | null;
+  viewportHeight?: number;
+  /** Desplazamiento superior del visual viewport en píxeles */
+  offsetTop: number;
   /** Booleano que indica si el teclado virtual está desplegado */
   isKeyboardOpen: boolean;
+  /** Desplazamiento vertical residual en píxeles para compatibilidad */
+  keyboardOffset: number;
 }
 
 /**
@@ -20,7 +22,7 @@ export interface KeyboardOffsetResult {
  *
  * @param windowHeight - Altura total de la ventana (window.innerHeight).
  * @param visualHeight - Altura visible disponible reportada por window.visualViewport.
- * @returns {number} Cantidad de píxeles a elevar el modal.
+ * @returns {number} Cantidad de píxeles calculados.
  */
 export function calculateKeyboardOffset(windowHeight: number, visualHeight: number): number {
   const keyboardHeight = Math.max(0, windowHeight - visualHeight);
@@ -32,21 +34,24 @@ export function calculateKeyboardOffset(windowHeight: number, visualHeight: numb
 }
 
 /**
- * Calcula dinámicamente el espacio del teclado virtual en dispositivos móviles usando la Visual Viewport API.
+ * Monitorea el viewport visual interactivo en dispositivos móviles usando la Visual Viewport API.
+ * Sincroniza la altura y posición del contenedor modal directamente con el área visible sobre el teclado.
  *
  * @param isOpen - Estado de visibilidad del modal o diálogo contenedor.
- * @returns {KeyboardOffsetResult} Valores reactivos de desplazamiento y altura visual.
+ * @returns {KeyboardOffsetResult} Dimensiones visuales sincronizadas con el teclado virtual.
  */
 export function useKeyboardOffset(isOpen: boolean): KeyboardOffsetResult {
-  const [keyboardOffset, setKeyboardOffset] = useState<number>(0);
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+  const [viewportHeight, setViewportHeight] = useState<number | undefined>(undefined);
+  const [offsetTop, setOffsetTop] = useState<number>(0);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState<boolean>(false);
+  const [keyboardOffset, setKeyboardOffset] = useState<number>(0);
 
   useEffect(() => {
     if (!isOpen || typeof window === 'undefined' || !window.visualViewport) {
-      setKeyboardOffset(0);
-      setViewportHeight(null);
+      setViewportHeight(undefined);
+      setOffsetTop(0);
       setIsKeyboardOpen(false);
+      setKeyboardOffset(0);
       return;
     }
 
@@ -56,9 +61,11 @@ export function useKeyboardOffset(isOpen: boolean): KeyboardOffsetResult {
       if (!vv) return;
       const currentVisualHeight = vv.height;
       const windowHeight = window.innerHeight;
+      const currentOffsetTop = vv.offsetTop || 0;
       const offset = calculateKeyboardOffset(windowHeight, currentVisualHeight);
 
       setViewportHeight(currentVisualHeight);
+      setOffsetTop(currentOffsetTop);
       setKeyboardOffset(offset);
       setIsKeyboardOpen(offset > 0);
     };
@@ -66,17 +73,18 @@ export function useKeyboardOffset(isOpen: boolean): KeyboardOffsetResult {
     vv.addEventListener('resize', handleViewportChange);
     vv.addEventListener('scroll', handleViewportChange);
 
-    // Ejecución inicial al abrir el modal
+    // Sincronización inicial al abrir
     handleViewportChange();
 
     return () => {
       vv.removeEventListener('resize', handleViewportChange);
       vv.removeEventListener('scroll', handleViewportChange);
-      setKeyboardOffset(0);
-      setViewportHeight(null);
+      setViewportHeight(undefined);
+      setOffsetTop(0);
       setIsKeyboardOpen(false);
+      setKeyboardOffset(0);
     };
   }, [isOpen]);
 
-  return { keyboardOffset, viewportHeight, isKeyboardOpen };
+  return { viewportHeight, offsetTop, isKeyboardOpen, keyboardOffset };
 }

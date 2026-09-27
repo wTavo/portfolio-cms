@@ -31,8 +31,8 @@ export default function LoginModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const emailInputRef = useRef<HTMLInputElement>(null);
 
-  // Detección y adaptación dinámica al teclado virtual móvil (IME Inset Avoidance)
-  const { keyboardOffset, isKeyboardOpen } = useKeyboardOffset(isOpen);
+  // Detección y adaptación dinámica al teclado virtual móvil mediante Visual Viewport
+  const { viewportHeight, offsetTop } = useKeyboardOffset(isOpen);
 
   // Focus inicial y manejo de tecla Escape para accesibilidad WCAG 2.2 AA
   useEffect(() => {
@@ -107,7 +107,11 @@ export default function LoginModal({
     <AnimatePresence>
       {isOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6"
+          className="fixed inset-x-0 z-50 flex items-center justify-center p-3 sm:p-4 overscroll-contain transition-[height] duration-200 ease-out"
+          style={{
+            top: offsetTop || 0,
+            height: viewportHeight ? `${viewportHeight}px` : '100dvh',
+          }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="login-modal-title"
@@ -126,20 +130,11 @@ export default function LoginModal({
           {/* Contenedor del Modal (Estructura Tripartita: Header, Body, Footer - Directiva 12) */}
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.96, y: 12 }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              y: isKeyboardOpen ? -keyboardOffset : 0,
-            }}
-            exit={{ opacity: 0, scale: 0.96, y: 12 }}
-            transition={{
-              type: 'spring',
-              stiffness: 380,
-              damping: 32,
-              mass: 0.7,
-            }}
-            className="relative w-full max-w-md bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col max-h-[92dvh] z-10"
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: MOTION_DURATIONS.normal, ease: [0.16, 1, 0.3, 1] }}
+            className="relative w-full max-w-md bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col max-h-[calc(100%-1rem)] z-10"
           >
             {/* 1. Cabecera Fija */}
             <header className="px-5 sm:px-6 py-4 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)]">
@@ -197,7 +192,6 @@ export default function LoginModal({
                     autoComplete="username"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    onFocus={(e) => e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
                     disabled={status === 'loading'}
                     placeholder="usuario@ejemplo.com"
                     className="w-full min-h-(--size-input-height) px-3.5 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-base)] border border-[var(--color-border-default)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-brand-accent)] focus:ring-1 focus:ring-[var(--color-brand-accent)] transition-colors disabled:opacity-50"
@@ -218,7 +212,6 @@ export default function LoginModal({
                     autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    onFocus={(e) => e.target.scrollIntoView({ behavior: 'smooth', block: 'nearest' })}
                     disabled={status === 'loading'}
                     placeholder="••••••••"
                     className="w-full min-h-(--size-input-height) px-3.5 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-base)] border border-[var(--color-border-default)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-brand-accent)] focus:ring-1 focus:ring-[var(--color-brand-accent)] transition-colors disabled:opacity-50"
