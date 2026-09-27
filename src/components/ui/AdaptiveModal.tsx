@@ -1,7 +1,7 @@
 /**
  * @file AdaptiveModal.tsx
- * @description Modal centrado y accesible según el Enfoque 3 (estándar Vercel/GitHub).
- * Proporciona renderizado unificado, elegante y flotante tanto en móviles como en escritorio (Directivas 5, 12, 14, 31, 32).
+ * @description Modal flotante y accesible con capa de desplazamiento manual continuo estilo Figma (Directivas 5, 12, 14, 31, 32).
+ * Proporciona scroll táctil vertical libre en su propia capa, sin movimientos automáticos al abrir el teclado virtual.
  */
 
 import React, { useEffect, useRef } from 'react';
@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { MOTION_DURATIONS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
-import { useBodyScrollLock, useKeyboardHeight } from '../../lib/hooks/useKeyboardOffset';
+import { useBodyScrollLock } from '../../lib/hooks/useKeyboardOffset';
 
 export interface AdaptiveModalProps {
   /** Estado de visibilidad del modal */
@@ -53,12 +53,8 @@ export default function AdaptiveModal({
 }: AdaptiveModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
-  // Bloqueo estricto del scroll del documento de fondo
+  // Bloqueo estricto del scroll del documento de fondo (el fondo jamás se mueve)
   useBodyScrollLock(isOpen);
-
-  // Detección de presencia de teclado virtual para habilitar pista de scroll vertical (estilo Figma)
-  const keyboardHeight = useKeyboardHeight(isOpen);
-  const isKeyboardActive = keyboardHeight > 100;
 
   // Cierre accesible con tecla Escape
   useEffect(() => {
@@ -95,16 +91,16 @@ export default function AdaptiveModal({
             aria-hidden="true"
           />
 
-          {/* Contenedor de la capa que centra el modal en reposo y permite scroll manual libre con teclado activo */}
+          {/* Contenedor scrolleable estilo Figma: pista continua en móvil para mover el modal en vertical sin saltos automáticos */}
           <div
-            className="flex min-h-full flex-col items-center p-3.5 sm:p-4 text-center"
+            className="min-h-full flex flex-col items-center justify-start sm:justify-center p-3.5 sm:p-4 pt-12 sm:pt-4 pb-[70vh] sm:pb-4 text-center"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 onClose();
               }
             }}
           >
-            {/* Tarjeta Modal Centrada con my-auto (sin saltos automáticos, solo desplazamiento manual) */}
+            {/* Tarjeta Modal Flotante */}
             <motion.div
               ref={modalRef}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -114,7 +110,7 @@ export default function AdaptiveModal({
                 duration: MOTION_DURATIONS.fast,
                 ease: [0.2, 0, 0, 1],
               }}
-              className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left my-auto max-h-[85vh] shrink-0`}
+              className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0 max-h-[85vh]`}
             >
               {/* 1. Cabecera Fija */}
               <header className="px-5 sm:px-6 py-3 sm:py-3.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
@@ -163,15 +159,6 @@ export default function AdaptiveModal({
                 </footer>
               )}
             </motion.div>
-
-            {/* Pista de scroll inferior activa cuando el teclado virtual está desplegado (estilo Figma) */}
-            {isKeyboardActive && (
-              <div
-                style={{ height: `${Math.max(keyboardHeight, 350)}px` }}
-                className="w-full shrink-0 pointer-events-none"
-                aria-hidden="true"
-              />
-            )}
           </div>
         </div>
       )}
