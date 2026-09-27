@@ -153,12 +153,12 @@ export default function TopographicBackground() {
 
   return (
     <div
-      className="fixed inset-0 w-full h-[100dvh] pointer-events-none z-0 overflow-hidden select-none bg-[var(--color-bg-base)] transition-colors duration-300"
+      className="fixed inset-0 w-full h-[100lvh] pointer-events-none z-0 overflow-hidden select-none bg-[var(--color-bg-base)] transition-colors duration-300"
       aria-hidden="true"
     >
       {/* 1. Halo Ambiental Central con gradiente radial difuso perfectamente centrado detrás del título */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(92vw,950px)] h-[min(26dvh,340px)] pointer-events-none opacity-30 dark:opacity-20"
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[min(92vw,950px)] h-[min(26lvh,340px)] pointer-events-none opacity-30 dark:opacity-20"
         style={{
           background:
             'radial-gradient(ellipse at center, var(--color-brand-accent) 0%, rgba(99, 102, 241, 0.12) 35%, rgba(56, 189, 248, 0.03) 60%, transparent 80%)',
