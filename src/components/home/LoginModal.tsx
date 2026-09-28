@@ -3,11 +3,10 @@
  * @description Modal de inicio de sesión que consume el componente unificado AdaptiveModal (Directivas 5, 8, 12, 20).
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { i18n } from '../../lib/i18n/es';
 import { BrandLogoIcon } from '../icons/Icons';
 import AdaptiveModal from '../ui/AdaptiveModal';
-import { useIsMobile } from '../../lib/hooks/useKeyboardOffset';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -27,10 +26,7 @@ export default function LoginModal({
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const emailInputRef = useRef<HTMLInputElement>(null);
-  const isMobile = useIsMobile();
-
-  // Gestión de foco inicial y limpieza de estado
+  // Limpieza de estado al cerrar
   useEffect(() => {
     if (!isOpen) {
       setTimeout(() => {
@@ -45,20 +41,7 @@ export default function LoginModal({
     if (initialError === 'account_suspended') {
       setErrorMessage(i18n.auth.accountSuspended);
     }
-
-    // Auto-focus únicamente en escritorio. En móviles la apertura del teclado
-    // debe ser resultado directo del toque voluntario del usuario para evitar colisiones.
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    if (!isMobile) {
-      timer = setTimeout(() => {
-        emailInputRef.current?.focus();
-      }, 150);
-    }
-
-    return () => {
-      if (timer) clearTimeout(timer);
-    };
-  }, [isOpen, initialError, isMobile]);
+  }, [isOpen, initialError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,7 +126,6 @@ export default function LoginModal({
             {i18n.auth.emailLabel}
           </label>
           <input
-            ref={emailInputRef}
             id="login-modal-email"
             type="email"
             required
