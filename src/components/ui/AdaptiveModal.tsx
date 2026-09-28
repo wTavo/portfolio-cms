@@ -4,7 +4,7 @@
  * Centra el modal en el espacio disponible sobre el teclado y ajusta la posición de los campos solo cuando el modal no cabe completo.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOTION_DURATIONS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
@@ -54,6 +54,9 @@ export default function AdaptiveModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  /** Hook de efecto de layout seguro para SSR */
+  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
+
   /** Métricas reactivas del viewport visual en tiempo real */
   const [viewportMetrics, setViewportMetrics] = useState(() => ({
     height: typeof window !== 'undefined' ? window.innerHeight : 0,
@@ -62,14 +65,37 @@ export default function AdaptiveModal({
 
   /** Estado reactivo que indica si la tarjeta modal cabe completa en el espacio visible */
   const [modalFits, setModalFits] = useState<boolean>(true);
+  const modalFitsRef = useRef<boolean>(true);
 
   const lastWindowWidth = useRef<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
+  /** Altura base del viewport sin teclado virtual activo */
+  const baselineHeightRef = useRef<number>(
+    typeof window !== 'undefined'
+      ? Math.max(window.innerHeight, window.visualViewport ? Math.round(window.visualViewport.height) : 0)
+      : 0
+  );
+  /** Referencia al último campo interactuado para preservar centrado al redimensionar teclado */
+  const activeInputRef = useRef<HTMLElement | null>(null);
   /** Altura mínima estable alcanzada durante el despliegue del teclado para congelar la altura */
   const minStableHeight = useRef<number | null>(null);
-  /** Temporizador para descartar micro-glitches de blur transitorios al alternar entre campos */
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   /** Temporizador para registrar cambios deliberados y estables en el tamaño del teclado */
   const resizeDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Temporizador para descartar micro-glitches de blur transitorios al alternar entre campos */
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Indicador de interacción activa con un campo para prevenir cierres involuntarios durante alternancia */
+  const isInteractingWithInput = useRef<boolean>(false);
+  const interactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Centra un elemento dentro del contenedor de scroll sin desplazar la ventana del navegador.
+   */
+  const centerElementInContainer = (container: HTMLElement, target: HTMLElement) => {
+    const containerRect = container.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const currentCenterOffset =
+      targetRect.top + targetRect.height / 2 - (containerRect.top + containerRect.height / 2);
+    container.scrollTop = Math.max(0, container.scrollTop + currentCenterOffset);
+  };
 
   // Bloqueo estricto del scroll del documento de fondo
   useBodyScrollLock(isOpen);
@@ -78,32 +104,38 @@ export default function AdaptiveModal({
   useEffect(() => {
     if (!isOpen || typeof window === 'undefined') {
       minStableHeight.current = null;
+      activeInputRef.current = null;
+      isInteractingWithInput.current = false;
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (resizeDebounceRef.current) clearTimeout(resizeDebounceRef.current);
+      if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
       return;
     }
 
-    // Altura física real de la pantalla según orientación (inmune a la reducción por teclado)
-    const getScreenPhysicalHeight = () => {
-      const isLandscape = window.innerWidth > window.innerHeight;
-      const screenH = typeof window.screen !== 'undefined' ? window.screen.height : window.innerHeight;
-      const screenW = typeof window.screen !== 'undefined' ? window.screen.width : window.innerWidth;
-      return isLandscape ? Math.min(screenH, screenW) : Math.max(screenH, screenW);
-    };
+    // Inicializar o sincronizar altura base del viewport al abrir el modal
+    const vvInit = window.visualViewport;
+    const currentInitHeight = vvInit ? Math.round(vvInit.height) : window.innerHeight;
+    if (baselineHeightRef.current === 0 || currentInitHeight > baselineHeightRef.current) {
+      baselineHeightRef.current = currentInitHeight;
+    }
 
     const updateMetrics = () => {
+      const vv = window.visualViewport;
+      const currentHeight = vv ? Math.round(vv.height) : window.innerHeight;
+
       // Detección de rotación de pantalla (Directiva 32)
       if (Math.abs(window.innerWidth - lastWindowWidth.current) > 20) {
         lastWindowWidth.current = window.innerWidth;
+        baselineHeightRef.current = currentHeight;
         minStableHeight.current = null;
         if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
         if (resizeDebounceRef.current) clearTimeout(resizeDebounceRef.current);
+      } else if (currentHeight > baselineHeightRef.current) {
+        // Si el viewport crece más allá de la base conocida (ej. se ocultó barra del navegador o cerró teclado), actualizar base
+        baselineHeightRef.current = currentHeight;
       }
 
-      const vv = window.visualViewport;
-      const currentHeight = vv ? Math.round(vv.height) : window.innerHeight;
-      const fullScreenHeight = getScreenPhysicalHeight();
-      const keyboardHeight = Math.max(0, fullScreenHeight - currentHeight);
+      const keyboardHeight = Math.max(0, baselineHeightRef.current - currentHeight);
       const isKeyboard = keyboardHeight > 60;
 
       // Neutralizar cualquier paneo involuntario de la ventana en navegadores móviles
@@ -112,19 +144,17 @@ export default function AdaptiveModal({
       }
 
       if (isKeyboard) {
-        // Cancelar temporizador de cierre si el teclado permanece activo
         if (closeTimerRef.current) {
           clearTimeout(closeTimerRef.current);
           closeTimerRef.current = null;
         }
 
-        if (currentHeight >= 80) {
+        if (currentHeight >= 30) {
           if (minStableHeight.current === null) {
-            // Primer despliegue del teclado: congelar inmediatamente
+            // Primer despliegue del teclado: congelar inmediatamente la altura
             minStableHeight.current = currentHeight;
           } else if (currentHeight < minStableHeight.current) {
-            // Si la altura se reduce (ej. aparece barra de autofill, sugerencias o se agranda el teclado),
-            // adoptar el valor más compacto para garantizar que nada quede cubierto.
+            // Teclado agrandado o barra de autofill/sugerencias desplegada: adaptar al tamaño más compacto
             minStableHeight.current = currentHeight;
             if (resizeDebounceRef.current) {
               clearTimeout(resizeDebounceRef.current);
@@ -132,9 +162,9 @@ export default function AdaptiveModal({
             }
           } else if (currentHeight > minStableHeight.current) {
             const heightDiff = currentHeight - minStableHeight.current;
-            // Fluctuaciones de barras de credenciales, sugerencias o autofill (<= 90px) quedan 100% congeladas.
-            // Solo cambios de tamaño deliberados del teclado (> 90px) se adaptan tras 300ms de reposo.
-            if (heightDiff > 90) {
+            // Ignorar fluctuaciones de autofill/sugerencias (<= 85px) y transiciones de toque entre campos.
+            // Si el usuario reduce deliberadamente el tamaño del teclado (> 85px), adaptar tras 200ms de reposo.
+            if (!isInteractingWithInput.current && heightDiff > 85) {
               if (resizeDebounceRef.current) clearTimeout(resizeDebounceRef.current);
               resizeDebounceRef.current = setTimeout(() => {
                 resizeDebounceRef.current = null;
@@ -145,7 +175,7 @@ export default function AdaptiveModal({
                     isKeyboardOpen: true,
                   });
                 }
-              }, 300);
+              }, 200);
             }
           }
         }
@@ -165,16 +195,23 @@ export default function AdaptiveModal({
           };
         });
       } else {
-        // Posible micro-transición de foco (blur entre inputs): esperar 180ms antes de liberar
-        if (!closeTimerRef.current) {
-          closeTimerRef.current = setTimeout(() => {
-            closeTimerRef.current = null;
-            minStableHeight.current = null;
-            setViewportMetrics({
-              height: currentHeight,
-              isKeyboardOpen: false,
-            });
-          }, 180);
+        // Teclado cerrado físicamente: restaurar inmediatamente altura completa y centrado sin retardo ni espacios residuales
+        if (closeTimerRef.current) {
+          clearTimeout(closeTimerRef.current);
+          closeTimerRef.current = null;
+        }
+        if (resizeDebounceRef.current) {
+          clearTimeout(resizeDebounceRef.current);
+          resizeDebounceRef.current = null;
+        }
+        minStableHeight.current = null;
+        activeInputRef.current = null;
+        setViewportMetrics({
+          height: currentHeight,
+          isKeyboardOpen: false,
+        });
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = 0;
         }
       }
     };
@@ -193,18 +230,21 @@ export default function AdaptiveModal({
       window.removeEventListener('resize', updateMetrics);
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (resizeDebounceRef.current) clearTimeout(resizeDebounceRef.current);
+      if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
     };
   }, [isOpen]);
 
-  // 2. Comprobación precisa de si la tarjeta modal cabe en el espacio disponible
+  // 2. Comprobación precisa y dinámica de si la tarjeta modal cabe en el espacio disponible (ResizeObserver)
   useEffect(() => {
     if (!isOpen) return;
 
+    const modal = modalRef.current;
+    if (!modal) return;
+
     const checkFit = () => {
-      const modal = modalRef.current;
-      if (!modal) return;
       // 16px de margen de seguridad para respiración vertical de padding
       const fits = modal.offsetHeight + 16 <= viewportMetrics.height;
+      modalFitsRef.current = fits;
       setModalFits(fits);
 
       // Si cabe completo, asegurar que el scroll se mantenga en 0
@@ -214,27 +254,45 @@ export default function AdaptiveModal({
     };
 
     checkFit();
-    const frameId = requestAnimationFrame(checkFit);
-    return () => cancelAnimationFrame(frameId);
+
+    // Observar cambios dinámicos en el contenido del modal (errores, acordeones, campos dinámicos)
+    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(checkFit) : null;
+    observer?.observe(modal);
+
+    return () => {
+      observer?.disconnect();
+    };
   }, [isOpen, viewportMetrics.height]);
 
   // 3. Desplazamiento inteligente al input enfocado solo cuando el modal no cabe completo (Directiva 32)
-  useEffect(() => {
-    if (!isOpen || modalFits) return;
+  useIsomorphicLayoutEffect(() => {
+    if (!isOpen || modalFits || !viewportMetrics.isKeyboardOpen) return;
 
     const scrollFocusedIntoView = () => {
       const container = scrollContainerRef.current;
-      const activeEl = document.activeElement as HTMLElement | null;
-      if (!container || !activeEl || !container.contains(activeEl)) return;
+      if (!container) return;
+      const domActiveEl = document.activeElement as HTMLElement | null;
+      const activeEl =
+        (domActiveEl &&
+         container.contains(domActiveEl) &&
+         ['INPUT', 'TEXTAREA', 'SELECT'].includes(domActiveEl.tagName)
+          ? domActiveEl
+          : null) ||
+        (activeInputRef.current && container.contains(activeInputRef.current)
+          ? activeInputRef.current
+          : null) ||
+        container.querySelector<HTMLElement>('input:focus, textarea:focus, select:focus');
+
+      if (!activeEl || !container.contains(activeEl)) return;
       if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName)) return;
 
-      activeEl.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+      centerElementInContainer(container, activeEl);
     };
 
-    // Al desplegarse el teclado o reducirse el espacio en horizontal, centrar el input activo en pantalla
-    const timer = setTimeout(scrollFocusedIntoView, 120);
-    return () => clearTimeout(timer);
-  }, [isOpen, modalFits, viewportMetrics.height]);
+    scrollFocusedIntoView();
+    const frameId = requestAnimationFrame(scrollFocusedIntoView);
+    return () => cancelAnimationFrame(frameId);
+  }, [isOpen, modalFits, viewportMetrics.isKeyboardOpen, viewportMetrics.height]);
 
   // 4. Control de scroll manual cuando el modal excede la altura disponible
   const handleContainerScroll = () => {
@@ -244,6 +302,34 @@ export default function AdaptiveModal({
     // Solo si cabe completo se fuerza a 0; si no cabe completo, el scroll es 100% libre y natural
     if (modalFits && container.scrollTop !== 0) {
       container.scrollTop = 0;
+    }
+  };
+
+  /**
+   * Manejador unificado de foco e interacción táctil sobre campos interactivos.
+   * Si el modal cabe completo, mantiene el contenedor 100% estático.
+   * Si no cabe completo (ej. horizontal), centra el campo de inmediato en el contenedor aislado.
+   */
+  const handleInputTouchOrFocus = (e: React.SyntheticEvent) => {
+    const target = e.target as HTMLElement;
+    if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+      activeInputRef.current = target;
+      isInteractingWithInput.current = true;
+      if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
+      interactionTimerRef.current = setTimeout(() => {
+        isInteractingWithInput.current = false;
+      }, 300);
+
+      const container = scrollContainerRef.current;
+      if (container) {
+        if (modalFitsRef.current) {
+          if (container.scrollTop !== 0) {
+            container.scrollTop = 0;
+          }
+        } else {
+          centerElementInContainer(container, target);
+        }
+      }
     }
   };
 
@@ -281,21 +367,8 @@ export default function AdaptiveModal({
           <div
             ref={scrollContainerRef}
             onScroll={handleContainerScroll}
-            onFocusCapture={(e) => {
-              if (modalFits) {
-                if (scrollContainerRef.current && scrollContainerRef.current.scrollTop !== 0) {
-                  scrollContainerRef.current.scrollTop = 0;
-                }
-              } else {
-                // Si NO cabe completo (ej. horizontal con teclado), centrar el input enfocado para que nunca quede oculto
-                const target = e.target as HTMLElement;
-                if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
-                  setTimeout(() => {
-                    target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
-                  }, 100);
-                }
-              }
-            }}
+            onFocusCapture={handleInputTouchOrFocus}
+            onPointerDownCapture={handleInputTouchOrFocus}
             className="fixed inset-x-0 top-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="dialog"
             aria-modal="true"

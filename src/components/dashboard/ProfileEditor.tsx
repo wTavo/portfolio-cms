@@ -145,7 +145,10 @@ export default function ProfileEditor() {
               Nombre completo
             </label>
             <input
+              id="profile-name"
+              name="name"
               type="text"
+              autoComplete="name"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -158,6 +161,8 @@ export default function ProfileEditor() {
               Profesión / Título
             </label>
             <input
+              id="profile-profession"
+              name="profession"
               type="text"
               value={profession}
               placeholder="Ingeniero de software"
@@ -186,6 +191,8 @@ export default function ProfileEditor() {
               Ubicación
             </label>
             <input
+              id="profile-location"
+              name="location"
               type="text"
               value={location}
               placeholder="México / Remoto"

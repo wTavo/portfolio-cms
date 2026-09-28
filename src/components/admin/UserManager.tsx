@@ -126,7 +126,10 @@ export default function UserManager() {
               Nombre para mostrar
             </label>
             <input
+              id="user-display-name"
+              name="displayName"
               type="text"
+              autoComplete="name"
               required
               placeholder="Gustavo Morales"
               value={displayName}
@@ -140,7 +143,11 @@ export default function UserManager() {
               Correo electrónico
             </label>
             <input
+              id="user-email"
+              name="email"
               type="email"
+              inputMode="email"
+              autoComplete="email"
               required
               placeholder="gustavo@ejemplo.com"
               value={email}
@@ -154,7 +161,10 @@ export default function UserManager() {
               Contraseña inicial
             </label>
             <input
+              id="user-password"
+              name="password"
               type="password"
+              autoComplete="new-password"
               required
               placeholder="••••••••"
               value={password}
@@ -170,7 +180,10 @@ export default function UserManager() {
             <div className="flex items-center">
               <span className="text-xs text-[var(--color-text-muted)] mr-1">/</span>
               <input
+                id="user-slug"
+                name="slug"
                 type="text"
+                autoComplete="off"
                 required
                 placeholder="gustavo"
                 value={slug}

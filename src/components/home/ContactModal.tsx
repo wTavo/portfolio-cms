@@ -128,7 +128,9 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               <input
                 ref={nameInputRef}
                 id="contact-name"
+                name="name"
                 type="text"
+                autoComplete="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -147,7 +149,10 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               </label>
               <input
                 id="contact-email"
+                name="email"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -166,6 +171,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
               </label>
               <textarea
                 id="contact-message"
+                name="message"
                 rows={3}
                 required
                 value={message}
