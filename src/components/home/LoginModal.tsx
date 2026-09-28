@@ -109,7 +109,7 @@ export default function LoginModal({
           type="submit"
           form="login-modal-form"
           disabled={status === 'loading'}
-          className="w-full min-h-(--size-button-height) px-5 py-2.5 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] hover:bg-[var(--color-brand-primary-hover)] text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 shadow-[var(--shadow-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
+          className="w-full min-h-(--size-button-height) short-screen:min-h-[38px] px-5 py-2.5 short-screen:py-1.5 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] hover:bg-[var(--color-brand-primary-hover)] text-sm font-semibold transition-all inline-flex items-center justify-center gap-2 shadow-[var(--shadow-card)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-[0.98]"
         >
           {status === 'loading' && (
             <span className="w-4 h-4 border-2 border-[var(--color-brand-on-primary)] border-t-transparent rounded-full animate-spin" />
@@ -123,7 +123,7 @@ export default function LoginModal({
       <form
         id="login-modal-form"
         onSubmit={handleSubmit}
-        className="p-3.5 sm:p-6 space-y-2.5 sm:space-y-4"
+        className="p-4 sm:p-6 space-y-3 sm:space-y-4"
         noValidate
       >
         {errorMessage && (

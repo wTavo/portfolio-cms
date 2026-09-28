@@ -104,16 +104,22 @@ export function useBodyScrollLock(isOpen: boolean): void {
  * @returns {boolean} True si el ancho de pantalla es menor a 768px.
  */
 export function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState<boolean>(() => {
+  const checkMobile = () => {
     if (typeof window === 'undefined') return false;
-    return window.innerWidth < 768;
-  });
+    return (
+      window.innerWidth < 768 ||
+      window.innerHeight < 540 ||
+      window.matchMedia('(pointer: coarse)').matches
+    );
+  };
+
+  const [isMobile, setIsMobile] = useState<boolean>(checkMobile);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
+      setIsMobile(checkMobile());
     };
 
     window.addEventListener('resize', handleResize);

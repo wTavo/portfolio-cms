@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+@custom-variant short-screen (@media (max-height: 540px));
 
 /* Design Tokens */
 @import "./tokens/typography.css";
