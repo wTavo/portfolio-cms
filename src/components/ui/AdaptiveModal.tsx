@@ -54,12 +54,11 @@ export default function AdaptiveModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [keyboardPadding, setKeyboardPadding] = useState<number>(0);
-  /** Altura mínima estable alcanzada durante la apertura para congelar fluctuaciones del teclado */
+  /** Altura mínima estable del visualViewport alcanzada con teclado abierto para congelar fluctuaciones */
   const minStableHeight = useRef<number | null>(null);
-  /** Dimensiones de ventana para detectar rotación de pantalla (Directiva 32) */
+  /** Ancho de ventana para detectar rotación de pantalla real (Directiva 32) */
   const lastWindowWidth = useRef<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
-  const maxWindowHeight = useRef<number>(typeof window !== 'undefined' ? window.innerHeight : 0);
-  /** Bandera para registrar interacción activa con un campo de texto (previene falsos cierres al desplegar teclado) */
+  /** Bandera para registrar interacción activa con un campo de texto */
   const isInteractingWithInput = useRef<boolean>(false);
 
   // Bloqueo estricto del scroll del documento de fondo (el fondo jamás se mueve)
@@ -78,27 +77,26 @@ export default function AdaptiveModal({
     let closeDebounce: ReturnType<typeof setTimeout> | null = null;
 
     const checkKeyboardCondition = () => {
-      // Detectar rotación de pantalla (Directiva 32) comparando ancho
-      if (Math.abs(window.innerWidth - lastWindowWidth.current) > 80) {
+      // Detectar rotación de pantalla o cambio sustancial de ancho
+      if (Math.abs(window.innerWidth - lastWindowWidth.current) > 20) {
         lastWindowWidth.current = window.innerWidth;
-        maxWindowHeight.current = window.innerHeight;
         minStableHeight.current = null;
-        setKeyboardPadding(0);
-      } else if (window.innerHeight > maxWindowHeight.current) {
-        maxWindowHeight.current = window.innerHeight;
       }
 
       const vv = window.visualViewport;
-      const currentVvHeight = vv ? Math.round(vv.height) : window.innerHeight;
-      const rawKeyboardHeight = Math.max(0, maxWindowHeight.current - currentVvHeight);
-      const isKeyboardOpen = rawKeyboardHeight > 80;
+      const currentInnerHeight = window.innerHeight;
+      const currentVvHeight = vv ? Math.round(vv.height) : currentInnerHeight;
+      // En desktop / DevTools, currentInnerHeight === currentVvHeight (diff = 0).
+      // En móvil con teclado virtual abierto, vv.height se reduce respecto a window.innerHeight.
+      const diff = Math.max(0, currentInnerHeight - currentVvHeight);
+      const isKeyboardPhysicallyOpen = diff > 80;
 
-      // Si la ventana recuperó su tamaño completo, el teclado ya no está en pantalla
-      if (currentVvHeight >= maxWindowHeight.current - 60) {
+      // Si la ventana recuperó su tamaño completo, el teclado físico ya no está en pantalla
+      if (diff <= 60) {
         isInteractingWithInput.current = false;
       }
 
-      if (isKeyboardOpen) {
+      if (isKeyboardPhysicallyOpen) {
         if (closeDebounce) {
           clearTimeout(closeDebounce);
           closeDebounce = null;
@@ -109,30 +107,37 @@ export default function AdaptiveModal({
         // contra fluctuaciones menores al alternar campos.
         if (minStableHeight.current === null || currentVvHeight < minStableHeight.current) {
           minStableHeight.current = currentVvHeight;
-          const stableKeyboardHeight = Math.max(0, maxWindowHeight.current - currentVvHeight);
-          setKeyboardPadding(stableKeyboardHeight);
         }
+
+        const stableKeyboardHeight = Math.max(0, currentInnerHeight - minStableHeight.current);
+        setKeyboardPadding(stableKeyboardHeight);
       } else {
-        // Cierre de teclado: confirmar cierre físico tras 150ms solo si no se está tocando o enfocando un campo
-        if (!isInteractingWithInput.current && !closeDebounce) {
-          closeDebounce = setTimeout(() => {
-            const checkVv = window.visualViewport;
-            const checkHeight = checkVv ? Math.round(checkVv.height) : window.innerHeight;
-            const isPhysicallyClosed = Math.max(0, maxWindowHeight.current - checkHeight) <= 60;
-
-            if (!isPhysicallyClosed) {
+        // Cierre de teclado: confirmar cierre físico tras 150ms si no hay interacción activa
+        if (!isInteractingWithInput.current) {
+          if (diff <= 60) {
+            // Teclado cerrado físicamente: resetear sin demora
+            if (closeDebounce) {
+              clearTimeout(closeDebounce);
               closeDebounce = null;
-              return;
             }
-
             minStableHeight.current = null;
             setKeyboardPadding(0);
-            closeDebounce = null;
+          } else if (!closeDebounce) {
+            closeDebounce = setTimeout(() => {
+              const checkVv = window.visualViewport;
+              const checkHeight = checkVv ? Math.round(checkVv.height) : window.innerHeight;
+              const isPhysicallyClosed = Math.max(0, window.innerHeight - checkHeight) <= 60;
 
-            if (scrollContainerRef.current) {
-              scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-          }, 150);
+              if (isPhysicallyClosed) {
+                minStableHeight.current = null;
+                setKeyboardPadding(0);
+                if (scrollContainerRef.current) {
+                  scrollContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }
+              closeDebounce = null;
+            }, 150);
+          }
         }
       }
     };
@@ -156,9 +161,23 @@ export default function AdaptiveModal({
       }
     };
 
+    const handleFocusOut = () => {
+      setTimeout(() => {
+        const active = document.activeElement;
+        const isStillInput =
+          (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) &&
+          modalRef.current?.contains(active);
+        if (!isStillInput) {
+          isInteractingWithInput.current = false;
+          checkKeyboardCondition();
+        }
+      }, 50);
+    };
+
     const container = scrollContainerRef.current;
     if (container) {
       container.addEventListener('focusin', handleInputInteraction);
+      container.addEventListener('focusout', handleFocusOut);
       container.addEventListener('pointerdown', handleInputInteraction, { passive: true });
     }
 
@@ -181,6 +200,7 @@ export default function AdaptiveModal({
       }
       if (container) {
         container.removeEventListener('focusin', handleInputInteraction);
+        container.removeEventListener('focusout', handleFocusOut);
         container.removeEventListener('pointerdown', handleInputInteraction);
       }
     };
