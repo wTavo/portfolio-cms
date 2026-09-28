@@ -54,6 +54,8 @@ export default function AdaptiveModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [keyboardPadding, setKeyboardPadding] = useState<number>(0);
+  /** Altura mínima estable alcanzada durante la apertura para congelar fluctuaciones del teclado */
+  const minStableHeight = useRef<number | null>(null);
   /** Dimensiones de ventana para detectar rotación de pantalla (Directiva 32) */
   const lastWindowWidth = useRef<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
   const maxWindowHeight = useRef<number>(typeof window !== 'undefined' ? window.innerHeight : 0);
@@ -67,6 +69,7 @@ export default function AdaptiveModal({
   useEffect(() => {
     if (!isOpen || typeof window === 'undefined') {
       setKeyboardPadding(0);
+      minStableHeight.current = null;
       isInteractingWithInput.current = false;
       return;
     }
@@ -79,6 +82,7 @@ export default function AdaptiveModal({
       if (Math.abs(window.innerWidth - lastWindowWidth.current) > 80) {
         lastWindowWidth.current = window.innerWidth;
         maxWindowHeight.current = window.innerHeight;
+        minStableHeight.current = null;
         setKeyboardPadding(0);
       } else if (window.innerHeight > maxWindowHeight.current) {
         maxWindowHeight.current = window.innerHeight;
@@ -100,7 +104,14 @@ export default function AdaptiveModal({
           closeDebounce = null;
         }
 
-        setKeyboardPadding(rawKeyboardHeight);
+        // Durante el despliegue del teclado, seguir el movimiento hasta registrar
+        // la altura mínima real (máxima elevación). Una vez alcanzada, congelar/bloquear
+        // contra fluctuaciones menores al alternar campos.
+        if (minStableHeight.current === null || currentVvHeight < minStableHeight.current) {
+          minStableHeight.current = currentVvHeight;
+          const stableKeyboardHeight = Math.max(0, maxWindowHeight.current - currentVvHeight);
+          setKeyboardPadding(stableKeyboardHeight);
+        }
       } else {
         // Cierre de teclado: confirmar cierre físico tras 150ms solo si no se está tocando o enfocando un campo
         if (!isInteractingWithInput.current && !closeDebounce) {
@@ -114,6 +125,7 @@ export default function AdaptiveModal({
               return;
             }
 
+            minStableHeight.current = null;
             setKeyboardPadding(0);
             closeDebounce = null;
 
