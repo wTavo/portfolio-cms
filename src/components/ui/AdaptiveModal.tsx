@@ -208,7 +208,7 @@ export default function AdaptiveModal({
       setModalFits(fits);
 
       // Si cabe completo, asegurar que el scroll se mantenga en 0
-      if (fits && scrollContainerRef.current) {
+      if (fits && scrollContainerRef.current && scrollContainerRef.current.scrollTop !== 0) {
         scrollContainerRef.current.scrollTop = 0;
       }
     };
@@ -218,26 +218,36 @@ export default function AdaptiveModal({
     return () => cancelAnimationFrame(frameId);
   }, [isOpen, viewportMetrics.height]);
 
-  // 3. Control de scroll manual cuando el modal excede la altura disponible
+  // 3. Desplazamiento inteligente al input enfocado solo cuando el modal no cabe completo (Directiva 32)
+  useEffect(() => {
+    if (!isOpen || modalFits) return;
+
+    const scrollFocusedIntoView = () => {
+      const container = scrollContainerRef.current;
+      const activeEl = document.activeElement as HTMLElement | null;
+      if (!container || !activeEl || !container.contains(activeEl)) return;
+      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName)) return;
+
+      activeEl.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+    };
+
+    // Al desplegarse el teclado o reducirse el espacio en horizontal, centrar el input activo en pantalla
+    const timer = setTimeout(scrollFocusedIntoView, 120);
+    return () => clearTimeout(timer);
+  }, [isOpen, modalFits, viewportMetrics.height]);
+
+  // 4. Control de scroll manual cuando el modal excede la altura disponible
   const handleContainerScroll = () => {
     const container = scrollContainerRef.current;
-    const modal = modalRef.current;
-    if (!container || !modal) return;
+    if (!container) return;
 
-    if (modalFits) {
-      if (container.scrollTop !== 0) {
-        container.scrollTop = 0;
-      }
-      return;
-    }
-
-    const maxScroll = Math.max(0, modal.offsetHeight + 20 - viewportMetrics.height);
-    if (container.scrollTop > maxScroll) {
-      container.scrollTop = maxScroll;
+    // Solo si cabe completo se fuerza a 0; si no cabe completo, el scroll es 100% libre y natural
+    if (modalFits && container.scrollTop !== 0) {
+      container.scrollTop = 0;
     }
   };
 
-  // 4. Cierre accesible con tecla Escape
+  // 5. Cierre accesible con tecla Escape
   useEffect(() => {
     if (!isOpen) return;
 
@@ -271,9 +281,19 @@ export default function AdaptiveModal({
           <div
             ref={scrollContainerRef}
             onScroll={handleContainerScroll}
-            onFocusCapture={() => {
-              if (modalFits && scrollContainerRef.current) {
-                scrollContainerRef.current.scrollTop = 0;
+            onFocusCapture={(e) => {
+              if (modalFits) {
+                if (scrollContainerRef.current && scrollContainerRef.current.scrollTop !== 0) {
+                  scrollContainerRef.current.scrollTop = 0;
+                }
+              } else {
+                // Si NO cabe completo (ej. horizontal con teclado), centrar el input enfocado para que nunca quede oculto
+                const target = e.target as HTMLElement;
+                if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+                  setTimeout(() => {
+                    target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'smooth' });
+                  }, 100);
+                }
               }
             }}
             className="fixed inset-x-0 top-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
