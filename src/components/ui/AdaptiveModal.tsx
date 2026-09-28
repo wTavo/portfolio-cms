@@ -210,9 +210,6 @@ export default function AdaptiveModal({
           height: currentHeight,
           isKeyboardOpen: false,
         });
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = 0;
-        }
       }
     };
 
@@ -306,11 +303,11 @@ export default function AdaptiveModal({
   };
 
   /**
-   * Manejador unificado de foco e interacción táctil sobre campos interactivos.
+   * Manejador de foco sobre campos interactivos.
    * Si el modal cabe completo, mantiene el contenedor 100% estático.
-   * Si no cabe completo (ej. horizontal), centra el campo de inmediato en el contenedor aislado.
+   * Si no cabe completo (ej. horizontal), centra el campo enfocado en el contenedor aislado.
    */
-  const handleInputTouchOrFocus = (e: React.SyntheticEvent) => {
+  const handleInputFocus = (e: React.FocusEvent) => {
     const target = e.target as HTMLElement;
     if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
       activeInputRef.current = target;
@@ -367,8 +364,7 @@ export default function AdaptiveModal({
           <div
             ref={scrollContainerRef}
             onScroll={handleContainerScroll}
-            onFocusCapture={handleInputTouchOrFocus}
-            onPointerDownCapture={handleInputTouchOrFocus}
+            onFocusCapture={handleInputFocus}
             className="fixed inset-x-0 top-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="dialog"
             aria-modal="true"
