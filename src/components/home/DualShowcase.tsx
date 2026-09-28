@@ -192,7 +192,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const isPortfolios = currentView === 'portfolios';
 
   return (
-    <div className="relative w-full h-full min-h-[100lvh] max-h-[100lvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+    <div className="relative w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
       {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional */}
       <TopographicBackground />
 
@@ -263,7 +263,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       {/* Contenedor de Scroll-Snap Nativo Fluido a 120 FPS */}
       <div
         ref={containerRef}
-        className={`w-full h-full min-h-[100lvh] max-h-[100lvh] ${
+        className={`w-full h-full min-h-[100dvh] max-h-[100dvh] ${
           isContactOpen || isLoginOpen
             ? 'overflow-hidden pointer-events-none'
             : 'overflow-y-auto snap-y snap-mandatory'
@@ -274,7 +274,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           id="hero"
           ref={heroRef}
           aria-hidden={isPortfolios}
-          className="w-full h-full min-h-[100lvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
+          className="w-full h-full min-h-[100dvh] max-h-[100dvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
         >
           <KineticTitle text={i18n.showcase.title} />
 
@@ -284,7 +284,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             onClick={scrollToPortfolios}
             onMouseEnter={() => setIsButtonHovered(true)}
             onMouseLeave={() => setIsButtonHovered(false)}
-            className="absolute bottom-2 sm:bottom-4 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-[40px] sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
+            className="absolute bottom-6 sm:bottom-8 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-(--size-touch-target) sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1.5 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
             aria-label={i18n.showcase.goToPortfolios}
           >
             <span>{i18n.showcase.goToPortfolios}</span>
@@ -302,7 +302,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           id="portafolios"
           ref={portfoliosRef}
           aria-hidden={!isPortfolios}
-          className="w-full min-h-[100lvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-20 md:pt-24 pb-8 sm:pb-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-4"
+          className="w-full min-h-[100dvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-18 md:pt-20 pb-6 sm:pb-8 pb-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-3"
         >
           <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
@@ -371,7 +371,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           </div>
 
           {/* Pie de Página con Espaciado de Respiro Completo */}
-          <footer className="pt-3 pb-1 text-center text-[11px] text-[var(--color-text-muted)] opacity-70">
+          <footer className="pt-2 pb-1 text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70 shrink-0 select-none">
             <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
           </footer>
         </section>
