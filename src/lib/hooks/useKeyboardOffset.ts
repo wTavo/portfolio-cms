@@ -57,42 +57,36 @@ export function useBodyScrollLock(isOpen: boolean): void {
   useEffect(() => {
     if (!isOpen || typeof document === 'undefined') return;
 
+    const scrollY = window.scrollY;
     const originalBodyOverflow = document.body.style.overflow;
     const originalHtmlOverflow = document.documentElement.style.overflow;
+    const originalHtmlScrollBehavior = document.documentElement.style.scrollBehavior;
     const originalBodyPosition = document.body.style.position;
     const originalBodyWidth = document.body.style.width;
-    const originalHtmlPosition = document.documentElement.style.position;
+    const originalBodyTop = document.body.style.top;
+    const originalBodyLeft = document.body.style.left;
+    const originalBodyRight = document.body.style.right;
 
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
+    // Prevent smooth page scrolling when the browser adjusts the viewport for a focused input.
+    document.documentElement.style.scrollBehavior = 'auto';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
-    document.documentElement.style.position = 'fixed';
-    document.documentElement.style.width = '100%';
-
-    // Congelar cualquier contenedor interno de desplazamiento en la página detrás del modal
-    const backgroundScrollElements = document.querySelectorAll<HTMLElement>(
-      'main, [class*="overflow-y-auto"], .snap-mandatory'
-    );
-    const originalOverflows = new Map<HTMLElement, string>();
-
-    backgroundScrollElements.forEach((el) => {
-      if (!el.closest('[role="dialog"]')) {
-        originalOverflows.set(el, el.style.overflow);
-        el.style.overflow = 'hidden';
-      }
-    });
+    document.body.style.top = `${-scrollY}px`;
+    document.body.style.left = '0';
+    document.body.style.right = '0';
 
     return () => {
       document.body.style.overflow = originalBodyOverflow;
       document.documentElement.style.overflow = originalHtmlOverflow;
+      document.documentElement.style.scrollBehavior = originalHtmlScrollBehavior;
       document.body.style.position = originalBodyPosition;
       document.body.style.width = originalBodyWidth;
-      document.documentElement.style.position = originalHtmlPosition;
-      document.documentElement.style.width = '';
-      originalOverflows.forEach((originalVal, el) => {
-        el.style.overflow = originalVal;
-      });
+      document.body.style.top = originalBodyTop;
+      document.body.style.left = originalBodyLeft;
+      document.body.style.right = originalBodyRight;
+      window.scrollTo(0, scrollY);
     };
   }, [isOpen]);
 }
