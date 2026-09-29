@@ -100,7 +100,10 @@ export default function AdaptiveModal({
     const targetRect = target.getBoundingClientRect();
     const currentCenterOffset =
       targetRect.top + targetRect.height / 2 - (containerRect.top + containerRect.height / 2);
-    container.scrollTop = Math.max(0, container.scrollTop + currentCenterOffset);
+    container.scrollTo({
+      top: Math.max(0, container.scrollTop + currentCenterOffset),
+      behavior: 'smooth',
+    });
   };
 
   // Bloqueo estricto del scroll del documento de fondo
@@ -223,7 +226,10 @@ export default function AdaptiveModal({
 
         // Restaurar la posición de scroll exacta en la que el usuario dejó el modal antes del teclado
         if (!modalFitsRef.current && scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = userScrollBeforeKeyboardRef.current;
+          scrollContainerRef.current.scrollTo({
+            top: userScrollBeforeKeyboardRef.current,
+            behavior: 'smooth',
+          });
         }
       }
     };
@@ -399,12 +405,13 @@ export default function AdaptiveModal({
               isUserDraggingScroll.current = false;
             }}
             onFocusCapture={handleInputFocus}
-            className="fixed inset-x-0 top-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="fixed inset-x-0 top-0 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="dialog"
             aria-modal="true"
             aria-labelledby={ariaLabelledBy}
             style={{
               height: `${viewportMetrics.height}px`,
+              transition: 'height var(--motion-duration-normal) var(--motion-easing-standard)',
               overflowY: modalFits ? 'hidden' : 'auto',
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'contain',
@@ -436,23 +443,23 @@ export default function AdaptiveModal({
                 }}
                 className={`relative w-full ${maxWidthClass} m-0 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
               >
-                {/* Cabecera Fija de la Tarjeta (Directiva 32: compacta en pantallas de altura reducida) */}
-                <header className="px-4 sm:px-6 py-2 sm:py-3.5 short-screen:py-1.5 short-screen:px-3 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
-                  <div className="flex items-center gap-3 short-screen:gap-2 min-w-0">
+                {/* Cabecera Fija de la Tarjeta */}
+                <header className="px-4 sm:px-6 py-2 sm:py-3.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
+                  <div className="flex items-center gap-3 min-w-0">
                     {icon && (
-                      <div className="w-9 h-9 short-screen:w-7 short-screen:h-7 rounded-[var(--radius-lg)] short-screen:rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] text-[var(--color-brand-accent)] flex items-center justify-center shadow-[var(--shadow-card)] shrink-0">
+                      <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] text-[var(--color-brand-accent)] flex items-center justify-center shadow-[var(--shadow-card)] shrink-0">
                         {icon}
                       </div>
                     )}
                     <div className="min-w-0">
                       <h2
                         id={ariaLabelledBy}
-                        className="text-base short-screen:text-sm font-bold text-[var(--color-text-primary)] tracking-tight truncate"
+                        className="text-base font-bold text-[var(--color-text-primary)] tracking-tight truncate"
                       >
                         {title}
                       </h2>
                       {subtitle && (
-                        <p className="text-xs short-screen:text-[11px] text-[var(--color-text-secondary)] truncate">
+                        <p className="text-xs text-[var(--color-text-secondary)] truncate">
                           {subtitle}
                         </p>
                       )}
@@ -476,9 +483,9 @@ export default function AdaptiveModal({
                   {children}
                 </div>
 
-                {/* Pie con Botones de Acción (Directivas 12 y 32) */}
+                {/* Pie con Botones de Acción (Directiva 12) */}
                 {footer && (
-                  <footer className="px-4 sm:px-6 py-2 sm:py-3.5 short-screen:py-1.5 short-screen:px-3 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface-elevated)] shrink-0">
+                  <footer className="px-4 sm:px-6 py-2 sm:py-3.5 border-t border-[var(--color-border-subtle)] bg-[var(--color-bg-surface-elevated)] shrink-0">
                     {footer}
                   </footer>
                 )}
