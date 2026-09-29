@@ -66,6 +66,8 @@ export default function AdaptiveModal({
   /** Estado reactivo que indica si la tarjeta modal cabe completa en el espacio visible */
   const [modalFits, setModalFits] = useState<boolean>(true);
   const modalFitsRef = useRef<boolean>(true);
+  /** Estado reactivo del campo activo para recentrar únicamente con teclado abierto */
+  const [activeInput, setActiveInput] = useState<HTMLElement | null>(null);
 
   const lastWindowWidth = useRef<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
   /** Altura base del viewport sin teclado virtual activo */
@@ -85,6 +87,10 @@ export default function AdaptiveModal({
   /** Indicador de interacción activa con un campo para prevenir cierres involuntarios durante alternancia */
   const isInteractingWithInput = useRef<boolean>(false);
   const interactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Posición de scroll previa a la apertura del teclado para restaurar exactamente la intención del usuario */
+  const userScrollBeforeKeyboardRef = useRef<number>(0);
+  /** Indicador de si el usuario está realizando un desplazamiento táctil o con ratón directo */
+  const isUserDraggingScroll = useRef<boolean>(false);
 
   /**
    * Centra un elemento dentro del contenedor de scroll sin desplazar la ventana del navegador.
@@ -105,7 +111,10 @@ export default function AdaptiveModal({
     if (!isOpen || typeof window === 'undefined') {
       minStableHeight.current = null;
       activeInputRef.current = null;
+      setActiveInput(null);
       isInteractingWithInput.current = false;
+      userScrollBeforeKeyboardRef.current = 0;
+      isUserDraggingScroll.current = false;
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (resizeDebounceRef.current) clearTimeout(resizeDebounceRef.current);
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
@@ -136,7 +145,7 @@ export default function AdaptiveModal({
       }
 
       const keyboardHeight = Math.max(0, baselineHeightRef.current - currentHeight);
-      const isKeyboard = keyboardHeight > 60;
+      const isKeyboard = keyboardHeight > 80;
 
       // Neutralizar cualquier paneo involuntario de la ventana en navegadores móviles
       if (typeof window !== 'undefined' && (window.scrollX !== 0 || window.scrollY !== 0)) {
@@ -206,10 +215,16 @@ export default function AdaptiveModal({
         }
         minStableHeight.current = null;
         activeInputRef.current = null;
+        setActiveInput(null);
         setViewportMetrics({
           height: currentHeight,
           isKeyboardOpen: false,
         });
+
+        // Restaurar la posición de scroll exacta en la que el usuario dejó el modal antes del teclado
+        if (!modalFitsRef.current && scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = userScrollBeforeKeyboardRef.current;
+        }
       }
     };
 
@@ -289,7 +304,7 @@ export default function AdaptiveModal({
     scrollFocusedIntoView();
     const frameId = requestAnimationFrame(scrollFocusedIntoView);
     return () => cancelAnimationFrame(frameId);
-  }, [isOpen, modalFits, viewportMetrics.isKeyboardOpen, viewportMetrics.height]);
+  }, [isOpen, modalFits, viewportMetrics.isKeyboardOpen, viewportMetrics.height, activeInput]);
 
   // 4. Control de scroll manual cuando el modal excede la altura disponible
   const handleContainerScroll = () => {
@@ -299,34 +314,31 @@ export default function AdaptiveModal({
     // Solo si cabe completo se fuerza a 0; si no cabe completo, el scroll es 100% libre y natural
     if (modalFits && container.scrollTop !== 0) {
       container.scrollTop = 0;
+      return;
+    }
+
+    // Registrar la posición voluntaria del usuario cuando el teclado no está abierto
+    // o cuando el usuario arrastra intencionalmente con el dedo o ratón
+    if (!viewportMetrics.isKeyboardOpen || isUserDraggingScroll.current) {
+      userScrollBeforeKeyboardRef.current = container.scrollTop;
     }
   };
 
   /**
    * Manejador de foco sobre campos interactivos.
-   * Si el modal cabe completo, mantiene el contenedor 100% estático.
-   * Si no cabe completo (ej. horizontal), centra el campo enfocado en el contenedor aislado.
+   * Registra el campo activo para que el hook de viewport lo centre únicamente
+   * si el teclado virtual está desplegado, manteniendo el modal 100% inmóvil al tocar.
    */
   const handleInputFocus = (e: React.FocusEvent) => {
     const target = e.target as HTMLElement;
     if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
       activeInputRef.current = target;
+      setActiveInput(target);
       isInteractingWithInput.current = true;
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
       interactionTimerRef.current = setTimeout(() => {
         isInteractingWithInput.current = false;
       }, 300);
-
-      const container = scrollContainerRef.current;
-      if (container) {
-        if (modalFitsRef.current) {
-          if (container.scrollTop !== 0) {
-            container.scrollTop = 0;
-          }
-        } else {
-          centerElementInContainer(container, target);
-        }
-      }
     }
   };
 
@@ -364,6 +376,18 @@ export default function AdaptiveModal({
           <div
             ref={scrollContainerRef}
             onScroll={handleContainerScroll}
+            onTouchStart={() => {
+              isUserDraggingScroll.current = true;
+            }}
+            onTouchEnd={() => {
+              isUserDraggingScroll.current = false;
+            }}
+            onMouseDown={() => {
+              isUserDraggingScroll.current = true;
+            }}
+            onMouseUp={() => {
+              isUserDraggingScroll.current = false;
+            }}
             onFocusCapture={handleInputFocus}
             className="fixed inset-x-0 top-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="dialog"
