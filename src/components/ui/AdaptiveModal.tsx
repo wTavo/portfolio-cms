@@ -92,19 +92,7 @@ export default function AdaptiveModal({
   /** Indicador de si el usuario está realizando un desplazamiento táctil o con ratón directo */
   const isUserDraggingScroll = useRef<boolean>(false);
 
-  /**
-   * Centra un elemento dentro del contenedor de scroll sin desplazar la ventana del navegador.
-   */
-  const centerElementInContainer = (container: HTMLElement, target: HTMLElement) => {
-    const containerRect = container.getBoundingClientRect();
-    const targetRect = target.getBoundingClientRect();
-    const currentCenterOffset =
-      targetRect.top + targetRect.height / 2 - (containerRect.top + containerRect.height / 2);
-    container.scrollTo({
-      top: Math.max(0, container.scrollTop + currentCenterOffset),
-      behavior: 'smooth',
-    });
-  };
+
 
   // Bloqueo estricto del scroll del documento de fondo
   useBodyScrollLock(isOpen);
@@ -149,11 +137,6 @@ export default function AdaptiveModal({
 
       const keyboardHeight = Math.max(0, baselineHeightRef.current - currentHeight);
       const isKeyboard = keyboardHeight > 80;
-
-      // Neutralizar cualquier paneo involuntario de la ventana en navegadores móviles
-      if (typeof window !== 'undefined' && (window.scrollX !== 0 || window.scrollY !== 0)) {
-        window.scrollTo(0, 0);
-      }
 
       if (isKeyboard) {
         if (closeTimerRef.current) {
@@ -314,7 +297,11 @@ export default function AdaptiveModal({
       // Si ya está visible en pantalla, no mover el modal
       if (isAlreadyVisible) return;
 
-      centerElementInContainer(container, activeEl);
+      activeEl.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
     };
 
     scrollFocusedIntoView();
@@ -405,13 +392,12 @@ export default function AdaptiveModal({
               isUserDraggingScroll.current = false;
             }}
             onFocusCapture={handleInputFocus}
-            className="fixed inset-x-0 top-0 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="fixed inset-x-0 top-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="dialog"
             aria-modal="true"
             aria-labelledby={ariaLabelledBy}
             style={{
               height: `${viewportMetrics.height}px`,
-              transition: 'height var(--motion-duration-normal) var(--motion-easing-standard)',
               overflowY: modalFits ? 'hidden' : 'auto',
               WebkitOverflowScrolling: 'touch',
               overscrollBehavior: 'contain',
