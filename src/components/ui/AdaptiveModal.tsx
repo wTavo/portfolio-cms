@@ -4,7 +4,7 @@
  * Centra el modal en el espacio disponible sobre el teclado y ajusta la posición de los campos solo cuando el modal no cabe completo.
  */
 
-import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MOTION_DURATIONS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
@@ -54,20 +54,11 @@ export default function AdaptiveModal({
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  /** Hook de efecto de layout seguro para SSR */
-  const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
-
   /** Métricas reactivas del viewport visual en tiempo real */
   const [viewportMetrics, setViewportMetrics] = useState(() => ({
     height: typeof window !== 'undefined' ? window.innerHeight : 0,
     isKeyboardOpen: false,
   }));
-
-  /** Estado reactivo que indica si la tarjeta modal cabe completa en el espacio visible */
-  const [modalFits, setModalFits] = useState<boolean>(true);
-  const modalFitsRef = useRef<boolean>(true);
-  /** Estado reactivo del campo activo para recentrar únicamente con teclado abierto */
-  const [activeInput, setActiveInput] = useState<HTMLElement | null>(null);
 
   const lastWindowWidth = useRef<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
   /** Altura base del viewport sin teclado virtual activo */
@@ -87,12 +78,6 @@ export default function AdaptiveModal({
   /** Indicador de interacción activa con un campo para prevenir cierres involuntarios durante alternancia */
   const isInteractingWithInput = useRef<boolean>(false);
   const interactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /** Posición de scroll previa a la apertura del teclado para restaurar exactamente la intención del usuario */
-  const userScrollBeforeKeyboardRef = useRef<number>(0);
-  /** Indicador de si el usuario está realizando un desplazamiento táctil o con ratón directo */
-  const isUserDraggingScroll = useRef<boolean>(false);
-
-
 
   // Bloqueo estricto del scroll del documento de fondo
   useBodyScrollLock(isOpen);
@@ -102,10 +87,7 @@ export default function AdaptiveModal({
     if (!isOpen || typeof window === 'undefined') {
       minStableHeight.current = null;
       activeInputRef.current = null;
-      setActiveInput(null);
       isInteractingWithInput.current = false;
-      userScrollBeforeKeyboardRef.current = 0;
-      isUserDraggingScroll.current = false;
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (resizeDebounceRef.current) clearTimeout(resizeDebounceRef.current);
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
@@ -201,19 +183,10 @@ export default function AdaptiveModal({
         }
         minStableHeight.current = null;
         activeInputRef.current = null;
-        setActiveInput(null);
         setViewportMetrics({
           height: currentHeight,
           isKeyboardOpen: false,
         });
-
-        // Restaurar la posición de scroll exacta en la que el usuario dejó el modal antes del teclado
-        if (!modalFitsRef.current && scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTo({
-            top: userScrollBeforeKeyboardRef.current,
-            behavior: 'smooth',
-          });
-        }
       }
     };
 
@@ -235,108 +208,14 @@ export default function AdaptiveModal({
     };
   }, [isOpen]);
 
-  // 2. Comprobación precisa y dinámica de si la tarjeta modal cabe en el espacio disponible (ResizeObserver)
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const modal = modalRef.current;
-    if (!modal) return;
-
-    const checkFit = () => {
-      // 16px de margen de seguridad para respiración vertical de padding
-      const fits = modal.offsetHeight + 16 <= viewportMetrics.height;
-      modalFitsRef.current = fits;
-      setModalFits(fits);
-
-      // Si cabe completo, asegurar que el scroll se mantenga en 0
-      if (fits && scrollContainerRef.current && scrollContainerRef.current.scrollTop !== 0) {
-        scrollContainerRef.current.scrollTop = 0;
-      }
-    };
-
-    checkFit();
-
-    // Observar cambios dinámicos en el contenido del modal (errores, acordeones, campos dinámicos)
-    const observer = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(checkFit) : null;
-    observer?.observe(modal);
-
-    return () => {
-      observer?.disconnect();
-    };
-  }, [isOpen, viewportMetrics.height]);
-
-  // 3. Desplazamiento inteligente al input enfocado solo cuando el modal no cabe completo (Directiva 32)
-  useIsomorphicLayoutEffect(() => {
-    if (!isOpen || modalFits || !viewportMetrics.isKeyboardOpen) return;
-
-    const scrollFocusedIntoView = () => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-      const domActiveEl = document.activeElement as HTMLElement | null;
-      const activeEl =
-        (domActiveEl &&
-         container.contains(domActiveEl) &&
-         ['INPUT', 'TEXTAREA', 'SELECT'].includes(domActiveEl.tagName)
-          ? domActiveEl
-          : null) ||
-        (activeInputRef.current && container.contains(activeInputRef.current)
-          ? activeInputRef.current
-          : null) ||
-        container.querySelector<HTMLElement>('input:focus, textarea:focus, select:focus');
-
-      if (!activeEl || !container.contains(activeEl)) return;
-      if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName)) return;
-
-      // Verificar si el campo ya está cómodamente visible dentro del espacio disponible sobre el teclado
-      const targetRect = activeEl.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      const isAlreadyVisible =
-        targetRect.top >= containerRect.top + 16 &&
-        targetRect.bottom <= containerRect.bottom - 16;
-
-      // Si ya está visible en pantalla, no mover el modal
-      if (isAlreadyVisible) return;
-
-      activeEl.scrollIntoView({
-        block: 'nearest',
-        inline: 'nearest',
-        behavior: 'smooth',
-      });
-    };
-
-    scrollFocusedIntoView();
-    const frameId = requestAnimationFrame(scrollFocusedIntoView);
-    return () => cancelAnimationFrame(frameId);
-  }, [isOpen, modalFits, viewportMetrics.isKeyboardOpen, viewportMetrics.height, activeInput]);
-
-  // 4. Control de scroll manual cuando el modal excede la altura disponible
-  const handleContainerScroll = () => {
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    // Solo si cabe completo se fuerza a 0; si no cabe completo, el scroll es 100% libre y natural
-    if (modalFits && container.scrollTop !== 0) {
-      container.scrollTop = 0;
-      return;
-    }
-
-    // Registrar la posición voluntaria del usuario cuando el teclado no está abierto
-    // o cuando el usuario arrastra intencionalmente con el dedo o ratón
-    if (!viewportMetrics.isKeyboardOpen || isUserDraggingScroll.current) {
-      userScrollBeforeKeyboardRef.current = container.scrollTop;
-    }
-  };
-
   /**
    * Manejador de foco sobre campos interactivos.
-   * Registra el campo activo para que el hook de viewport lo centre únicamente
-   * si el teclado virtual está desplegado, manteniendo el modal 100% inmóvil al tocar.
+   * Evita fluctuaciones transitorias de altura al alternar entre campos.
    */
   const handleInputFocus = (e: React.FocusEvent) => {
     const target = e.target as HTMLElement;
     if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
       activeInputRef.current = target;
-      setActiveInput(target);
       isInteractingWithInput.current = true;
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
       interactionTimerRef.current = setTimeout(() => {
@@ -375,42 +254,22 @@ export default function AdaptiveModal({
             aria-hidden="true"
           />
 
-          {/* Capa 2: Contenedor sincronizado exactamente con el viewport visual sobre el teclado */}
+          {/* Capa 2: Contenedor sincronizado con el viewport visual sobre el teclado */}
           <div
             ref={scrollContainerRef}
-            onScroll={handleContainerScroll}
-            onTouchStart={() => {
-              isUserDraggingScroll.current = true;
-            }}
-            onTouchEnd={() => {
-              isUserDraggingScroll.current = false;
-            }}
-            onMouseDown={() => {
-              isUserDraggingScroll.current = true;
-            }}
-            onMouseUp={() => {
-              isUserDraggingScroll.current = false;
-            }}
             onFocusCapture={handleInputFocus}
-            className="fixed inset-x-0 top-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="fixed inset-x-0 top-0 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="dialog"
             aria-modal="true"
             aria-labelledby={ariaLabelledBy}
             style={{
               height: `${viewportMetrics.height}px`,
-              overflowY: modalFits ? 'hidden' : 'auto',
               WebkitOverflowScrolling: 'touch',
-              overscrollBehavior: 'contain',
-              touchAction: modalFits ? 'none' : 'pan-y',
             }}
           >
-            {/* Contenedor flexible: centrado absoluto si cabe; alineado arriba con scroll si excede */}
+            {/* Contenedor flexible: centrado natural con scroll fluido cuando se desborda */}
             <div
-              className={`w-full flex flex-col items-center text-center p-2 sm:p-4 ${
-                modalFits
-                  ? 'h-full justify-center'
-                  : 'min-h-full justify-start'
-              }`}
+              className="w-full min-h-full flex flex-col items-center text-center p-2 sm:p-4"
               onClick={(e) => {
                 if (e.target === e.currentTarget) {
                   onClose();
@@ -427,7 +286,7 @@ export default function AdaptiveModal({
                   duration: MOTION_DURATIONS.fast,
                   ease: [0.2, 0, 0, 1],
                 }}
-                className={`relative w-full ${maxWidthClass} m-0 bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
+                className={`relative w-full ${maxWidthClass} my-auto bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
               >
                 {/* Cabecera Fija de la Tarjeta */}
                 <header className="px-4 sm:px-6 py-2 sm:py-3.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
