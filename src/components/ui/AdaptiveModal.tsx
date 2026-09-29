@@ -298,6 +298,16 @@ export default function AdaptiveModal({
       if (!activeEl || !container.contains(activeEl)) return;
       if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(activeEl.tagName)) return;
 
+      // Verificar si el campo ya está cómodamente visible dentro del espacio disponible sobre el teclado
+      const targetRect = activeEl.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const isAlreadyVisible =
+        targetRect.top >= containerRect.top + 16 &&
+        targetRect.bottom <= containerRect.bottom - 16;
+
+      // Si ya está visible en pantalla, no mover el modal
+      if (isAlreadyVisible) return;
+
       centerElementInContainer(container, activeEl);
     };
 
