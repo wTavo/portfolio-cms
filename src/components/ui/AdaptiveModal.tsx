@@ -78,6 +78,10 @@ export default function AdaptiveModal({
   /** Indicador de interacción activa con un campo para prevenir cierres involuntarios durante alternancia */
   const isInteractingWithInput = useRef<boolean>(false);
   const interactionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Posición de scroll previa a la apertura del teclado para restaurar exactamente la intención del usuario */
+  const userScrollBeforeKeyboardRef = useRef<number>(0);
+  /** Indicador de si el usuario está realizando un desplazamiento táctil o con ratón directo */
+  const isUserDraggingScroll = useRef<boolean>(false);
 
   // Bloqueo estricto del scroll del documento de fondo
   useBodyScrollLock(isOpen);
@@ -88,6 +92,8 @@ export default function AdaptiveModal({
       minStableHeight.current = null;
       activeInputRef.current = null;
       isInteractingWithInput.current = false;
+      userScrollBeforeKeyboardRef.current = 0;
+      isUserDraggingScroll.current = false;
       if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
       if (resizeDebounceRef.current) clearTimeout(resizeDebounceRef.current);
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
@@ -187,6 +193,11 @@ export default function AdaptiveModal({
           height: currentHeight,
           isKeyboardOpen: false,
         });
+
+        // Restaurar de forma inmediata la posición voluntaria previa donde el usuario dejó el modal
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = userScrollBeforeKeyboardRef.current;
+        }
       }
     };
 
@@ -207,6 +218,19 @@ export default function AdaptiveModal({
       if (interactionTimerRef.current) clearTimeout(interactionTimerRef.current);
     };
   }, [isOpen]);
+
+  /**
+   * Registra la posición voluntaria de scroll del usuario cuando no hay teclado activo
+   * o cuando el usuario arrastra intencionalmente con el dedo o ratón.
+   */
+  const handleContainerScroll = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    if (!viewportMetrics.isKeyboardOpen || isUserDraggingScroll.current) {
+      userScrollBeforeKeyboardRef.current = container.scrollTop;
+    }
+  };
 
   /**
    * Manejador de foco sobre campos interactivos.
@@ -257,6 +281,19 @@ export default function AdaptiveModal({
           {/* Capa 2: Contenedor sincronizado con el viewport visual sobre el teclado */}
           <div
             ref={scrollContainerRef}
+            onScroll={handleContainerScroll}
+            onTouchStart={() => {
+              isUserDraggingScroll.current = true;
+            }}
+            onTouchEnd={() => {
+              isUserDraggingScroll.current = false;
+            }}
+            onMouseDown={() => {
+              isUserDraggingScroll.current = true;
+            }}
+            onMouseUp={() => {
+              isUserDraggingScroll.current = false;
+            }}
             onFocusCapture={handleInputFocus}
             className="fixed inset-x-0 top-0 overflow-y-auto overscroll-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="dialog"
