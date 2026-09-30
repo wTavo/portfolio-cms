@@ -5,8 +5,8 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
-import { MOTION_DURATIONS } from '../../lib/motion';
+import { motion, useReducedMotion } from 'motion/react';
+import { MOTION_DURATIONS, MOTION_EASINGS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
 import ModalDialog from './ModalDialog';
@@ -18,6 +18,7 @@ import {
 } from '../../lib/modalDiagnostics';
 import { getNextViewportMetrics, syncVisualViewportBounds } from '../../lib/visualViewportMetrics';
 import { getModalFrameLayout, getModalTouchAction } from '../../lib/modalFrameLayout';
+import { animateVerticalPosition } from '../../lib/modalPositionAnimation';
 
 export interface AdaptiveModalProps {
   /** Estado de visibilidad del modal */
@@ -59,9 +60,11 @@ export default function AdaptiveModal({
   ariaLabelledBy = 'adaptive-modal-title',
   contentClassName = '',
 }: AdaptiveModalProps) {
+  const prefersReducedMotion = useReducedMotion();
   const diagnosticsEnabled = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('modalDebug') === '1';
   const modalRef = useRef<HTMLDivElement>(null);
+  const modalPositionRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const modalFrameRef = useRef<HTMLDivElement>(null);
 
@@ -247,6 +250,27 @@ export default function AdaptiveModal({
         baselineHeightRef.current = Math.max(baselineHeightRef.current, currentHeight);
       }
       const isKeyboard = keyboardOpenRef.current;
+      const nextViewportMetrics = getNextViewportMetrics(
+        viewportMetricsRef.current,
+        { height: currentHeight, width: currentWidth },
+        isKeyboard,
+        isSwitchingInputRef.current,
+      );
+      viewportMetricsRef.current = nextViewportMetrics;
+      const modalPosition = modalPositionRef.current;
+      const previousModalTop = modalPosition?.getBoundingClientRect().top ?? null;
+      modalPosition?.getAnimations?.().forEach((animation) => animation.cancel());
+      syncVisualViewportBounds(scrollContainerRef.current, {
+        top: currentTop,
+        left: currentLeft,
+        width: nextViewportMetrics.width,
+        height: nextViewportMetrics.height,
+      });
+      animateVerticalPosition(modalPosition, previousModalTop, {
+        duration: MOTION_DURATIONS.normal * 1000,
+        easing: `cubic-bezier(${MOTION_EASINGS.standard.join(', ')})`,
+        prefersReducedMotion: prefersReducedMotion ?? false,
+      });
       recordDiagnostic(source, {
         handler: `updateMetrics (from ${source})`,
         visualHeight: currentHeight,
@@ -567,17 +591,18 @@ export default function AdaptiveModal({
               }}
             >
               {/* Tarjeta Modal Flotante */}
-              <motion.div
-                ref={modalRef}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{
-                  duration: MOTION_DURATIONS.fast,
-                  ease: [0.2, 0, 0, 1],
-                }}
-                className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
-              >
+              <div ref={modalPositionRef} className="w-full flex justify-center shrink-0">
+                <motion.div
+                  ref={modalRef}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{
+                    duration: MOTION_DURATIONS.fast,
+                    ease: MOTION_EASINGS.standard,
+                  }}
+                  className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
+                >
                 {/* Cabecera Fija de la Tarjeta */}
                 <header className="px-4 sm:px-6 py-2 sm:py-3.5 border-b border-[var(--color-border-subtle)] flex items-center justify-between bg-[var(--color-bg-surface-elevated)] shrink-0">
                   <div className="flex items-center gap-3 min-w-0">
@@ -624,7 +649,8 @@ export default function AdaptiveModal({
                     {footer}
                   </footer>
                 )}
-              </motion.div>
+                </motion.div>
+              </div>
             </div>
           </div>
     </ModalDialog>
