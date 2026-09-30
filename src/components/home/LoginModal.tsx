@@ -26,24 +26,28 @@ export default function LoginModal({
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Limpieza de estado al cerrar
+  // Reset after the exit animation, canceling it if the modal is reopened first.
   useEffect(() => {
-    if (!isOpen) {
-      setTimeout(() => {
-        setEmail('');
-        setPassword('');
-        setStatus('idle');
-        setErrorMessage('');
-      }, 250);
-      return;
-    }
+    if (isOpen) return;
 
-    if (initialError === 'account_suspended') {
-      setErrorMessage(i18n.auth.accountSuspended);
+    const timer = setTimeout(() => {
+      setEmail('');
+      setPassword('');
+      setStatus('idle');
+      setErrorMessage('');
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (isOpen) {
+      if (initialError === 'account_suspended') {
+        setErrorMessage(i18n.auth.accountSuspended);
+      }
     }
   }, [isOpen, initialError]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim() || !password) {
       setErrorMessage('Por favor completa todos los campos.');

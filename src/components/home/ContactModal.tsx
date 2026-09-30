@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { i18n } from '../../lib/i18n/es';
 import { MailIcon, CheckIcon } from '../icons/Icons';
 import AdaptiveModal from '../ui/AdaptiveModal';
-import { useIsMobile } from '../../lib/hooks/useKeyboardOffset';
+import { useIsMobile } from '../../lib/hooks/useIsMobile';
 
 interface ContactModalProps {
   isOpen: boolean;
@@ -24,18 +24,23 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
-  // Reset al cerrar y foco inicial en escritorio
+  // Reset after the exit animation, canceling it if the modal is reopened first.
   useEffect(() => {
-    if (!isOpen) {
-      setTimeout(() => {
-        setName('');
-        setEmail('');
-        setMessage('');
-        setStatus('idle');
-        setErrorMessage('');
-      }, 300);
-      return;
-    }
+    if (isOpen) return;
+
+    const resetTimer = setTimeout(() => {
+      setName('');
+      setEmail('');
+      setMessage('');
+      setStatus('idle');
+      setErrorMessage('');
+    }, 300);
+    return () => clearTimeout(resetTimer);
+  }, [isOpen]);
+
+  // Initial focus on desktop only; on mobile opening must follow an explicit tap.
+  useEffect(() => {
+    if (!isOpen) return;
 
     // Auto-focus únicamente en escritorio. En móviles la apertura del teclado
     // debe ser resultado directo del toque voluntario del usuario para evitar colisiones.
@@ -51,7 +56,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     };
   }, [isOpen, isMobile]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
       setErrorMessage(i18n.errors.validationFailed);

@@ -5,12 +5,11 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { MOTION_DURATIONS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
-import { useBodyScrollLock } from '../../lib/hooks/useKeyboardOffset';
+import ModalDialog from './ModalDialog';
 import {
   createDiagnosticBuffer,
   createModalDiagnosticGeometry,
@@ -61,7 +60,6 @@ export default function AdaptiveModal({
 }: AdaptiveModalProps) {
   const diagnosticsEnabled = typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('modalDebug') === '1';
-  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const modalFrameRef = useRef<HTMLDivElement>(null);
@@ -178,14 +176,6 @@ export default function AdaptiveModal({
 
     diagnosticFrameRef.current = window.requestAnimationFrame(sample);
   };
-
-  // Bloqueo estricto del scroll del documento de fondo
-  useBodyScrollLock(isOpen);
-
-  // Keep the dialog outside page containers that clip or scroll focused descendants.
-  useEffect(() => {
-    setPortalTarget(document.body);
-  }, []);
 
   // Sincroniza el modal con el viewport visual, que puede cambiar de tamaño y posición con el teclado.
   useEffect(() => {
@@ -471,32 +461,14 @@ export default function AdaptiveModal({
     schedulePositionSample('input-blur');
   };
 
-  // 5. Cierre accesible con tecla Escape
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!portalTarget) return null;
-
   const frameLayout = getModalFrameLayout(
     modalFits,
     keyboardAnchorTop,
     viewportMetrics.isKeyboardOpen,
   );
 
-  return createPortal((
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50">
+  return (
+    <ModalDialog isOpen={isOpen} onClose={onClose} labelledBy={ariaLabelledBy}>
           {diagnosticsEnabled && (
             <button
               type="button"
@@ -508,19 +480,7 @@ export default function AdaptiveModal({
               Guardar diagnóstico
             </button>
           )}
-          {/* Capa 1: Backdrop Fijo Inmóvil (fondo y desenfoque permanecen 100% estáticos) */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: MOTION_DURATIONS.fast }}
-            className="fixed inset-0 bg-black/65 backdrop-blur-sm pointer-events-auto touch-none"
-            onClick={onClose}
-            onTouchMove={(e) => e.preventDefault()}
-            aria-hidden="true"
-          />
-
-          {/* Capa 2: Contenedor sincronizado con el viewport visual sobre el teclado */}
+          {/* Contenedor sincronizado con el viewport visual sobre el teclado */}
           <div
             ref={scrollContainerRef}
             onScroll={handleContainerScroll}
@@ -544,12 +504,11 @@ export default function AdaptiveModal({
                 ? 'overflow-y-clip overscroll-none'
                 : 'overflow-y-auto overscroll-contain touch-pan-y'
             }`}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={ariaLabelledBy}
+            data-modal-scroll-container
             style={{
               WebkitOverflowScrolling: 'touch',
               touchAction: getModalTouchAction(modalFits),
+              pointerEvents: 'auto',
             }}
           >
             {/* Contenedor flexible: centrado natural cuando cabe, o alineación superior para scroll fluido */}
@@ -629,8 +588,6 @@ export default function AdaptiveModal({
               </motion.div>
             </div>
           </div>
-        </div>
-      )}
-    </AnimatePresence>
-  ), portalTarget);
+    </ModalDialog>
+  );
 }
