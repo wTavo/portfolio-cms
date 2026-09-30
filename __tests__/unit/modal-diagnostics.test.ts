@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createDiagnosticBuffer,
+  createDiagnosticEventIdGenerator,
   createModalDiagnosticGeometry,
   createModalScrollDiagnostic,
 } from '../../src/lib/modalDiagnostics';
@@ -25,6 +26,16 @@ describe('createDiagnosticBuffer', () => {
 
     expect(JSON.stringify(buffer.getEvents())).not.toContain('value');
     expect(JSON.stringify(buffer.getEvents())).not.toContain('secret');
+  });
+});
+
+describe('createDiagnosticEventIdGenerator', () => {
+  it('creates ordered identifiers that correlate events from the same capture', () => {
+    const nextId = createDiagnosticEventIdGenerator();
+
+    expect(nextId('viewport')).toBe('viewport-1');
+    expect(nextId('layout')).toBe('layout-2');
+    expect(nextId('viewport')).toBe('viewport-3');
   });
 });
 

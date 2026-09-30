@@ -12,6 +12,7 @@ import { XIcon } from '../icons/Icons';
 import ModalDialog from './ModalDialog';
 import {
   createDiagnosticBuffer,
+  createDiagnosticEventIdGenerator,
   createModalDiagnosticGeometry,
   createModalScrollDiagnostic,
 } from '../../lib/modalDiagnostics';
@@ -94,6 +95,9 @@ export default function AdaptiveModal({
   const isUserDraggingScroll = useRef<boolean>(false);
   const diagnosticsRef = useRef<ReturnType<typeof createDiagnosticBuffer> | null>(null);
   diagnosticsRef.current ??= createDiagnosticBuffer();
+  const diagnosticEventIdRef = useRef<ReturnType<typeof createDiagnosticEventIdGenerator> | null>(null);
+  diagnosticEventIdRef.current ??= createDiagnosticEventIdGenerator();
+  const diagnosticCauseIdRef = useRef<string | null>(null);
   const diagnosticFrameRef = useRef<number | null>(null);
   const diagnosticFramesRemainingRef = useRef(0);
   const diagnosticSampleSourceRef = useRef('interaction');
@@ -101,9 +105,24 @@ export default function AdaptiveModal({
   const keyboardAnchorTopRef = useRef(keyboardAnchorTop);
   modalFitsRef.current = modalFits;
   keyboardAnchorTopRef.current = keyboardAnchorTop;
+  const frameLayout = getModalFrameLayout(
+    modalFits,
+    keyboardAnchorTop,
+    viewportMetrics.isKeyboardOpen,
+  );
 
   const recordDiagnostic = (event: string, details: Record<string, string | number | boolean | null> = {}) => {
-    if (diagnosticsEnabled) diagnosticsRef.current?.record(event, details);
+    if (!diagnosticsEnabled) return null;
+    const eventId = diagnosticEventIdRef.current?.(event) ?? event;
+    if (['modal-open', 'input-focus', 'input-pointerdown', 'input-blur', 'visualviewport-resize', 'visualviewport-scroll', 'window-resize', 'window-scroll'].includes(event)) {
+      diagnosticCauseIdRef.current = eventId;
+    }
+    diagnosticsRef.current?.record(event, {
+      eventId,
+      causeId: diagnosticCauseIdRef.current,
+      ...details,
+    });
+    return eventId;
   };
 
   const saveDiagnostics = () => {
@@ -126,6 +145,7 @@ export default function AdaptiveModal({
   const schedulePositionSample = (event: string) => {
     if (!diagnosticsEnabled) return;
     diagnosticSampleSourceRef.current = event;
+    const causeId = diagnosticCauseIdRef.current;
     diagnosticFramesRemainingRef.current = 45;
     if (diagnosticFrameRef.current !== null) return;
 
@@ -145,6 +165,7 @@ export default function AdaptiveModal({
       const vv = window.visualViewport;
       recordDiagnostic('animation-frame-sample', {
         source: diagnosticSampleSourceRef.current,
+        causeId,
         ...createModalDiagnosticGeometry({
           modalTop: rect.top,
           modalHeight: rect.height,
@@ -206,6 +227,14 @@ export default function AdaptiveModal({
       const currentWidth = Math.round(vv?.width ?? window.innerWidth);
       const currentTop = Math.round(vv?.offsetTop ?? 0);
       const currentLeft = Math.round(vv?.offsetLeft ?? 0);
+      const previousMetrics = viewportMetricsRef.current;
+      const container = scrollContainerRef.current;
+      const previousInlineBounds = container ? {
+        top: container.style.top,
+        left: container.style.left,
+        width: container.style.width,
+        height: container.style.height,
+      } : null;
 
       // Detección de rotación de pantalla (Directiva 32)
       if (Math.abs(window.innerWidth - lastWindowWidth.current) > 20) {
@@ -225,21 +254,8 @@ export default function AdaptiveModal({
         baselineHeightRef.current = Math.max(baselineHeightRef.current, currentHeight);
       }
       const isKeyboard = keyboardOpenRef.current;
-      const nextViewportMetrics = getNextViewportMetrics(
-        viewportMetricsRef.current,
-        { height: currentHeight, width: currentWidth },
-        isKeyboard,
-        isSwitchingInputRef.current,
-      );
-      viewportMetricsRef.current = nextViewportMetrics;
-      syncVisualViewportBounds(scrollContainerRef.current, {
-        top: currentTop,
-        left: currentLeft,
-        width: nextViewportMetrics.width,
-        height: nextViewportMetrics.height,
-      });
-      if (!isKeyboard) setKeyboardAnchorTop(null);
       recordDiagnostic(source, {
+        handler: `updateMetrics (from ${source})`,
         visualHeight: currentHeight,
         visualWidth: currentWidth,
         visualTop: currentTop,
@@ -255,7 +271,52 @@ export default function AdaptiveModal({
             : null,
         containerScrollTop: scrollContainerRef.current?.scrollTop ?? null,
       });
+      const nextViewportMetrics = getNextViewportMetrics(
+        viewportMetricsRef.current,
+        { height: currentHeight, width: currentWidth },
+        isKeyboard,
+        isSwitchingInputRef.current,
+      );
+      viewportMetricsRef.current = nextViewportMetrics;
+      syncVisualViewportBounds(scrollContainerRef.current, {
+        top: currentTop,
+        left: currentLeft,
+        width: nextViewportMetrics.width,
+        height: nextViewportMetrics.height,
+      });
+      const nextInlineBounds = scrollContainerRef.current ? {
+        top: scrollContainerRef.current.style.top,
+        left: scrollContainerRef.current.style.left,
+        width: scrollContainerRef.current.style.width,
+        height: scrollContainerRef.current.style.height,
+      } : null;
+      recordDiagnostic('viewport-style-write', {
+        handler: 'updateMetrics → syncVisualViewportBounds',
+        trigger: source,
+        previousHeight: previousMetrics.height,
+        nextHeight: nextViewportMetrics.height,
+        previousKeyboardOpen: previousMetrics.isKeyboardOpen,
+        nextKeyboardOpen: nextViewportMetrics.isKeyboardOpen,
+        inlineHeightBefore: previousInlineBounds?.height ?? null,
+        inlineHeightAfter: nextInlineBounds?.height ?? null,
+        inlineTopBefore: previousInlineBounds?.top ?? null,
+        inlineTopAfter: nextInlineBounds?.top ?? null,
+      });
+      if (!isKeyboard) setKeyboardAnchorTop(null);
       schedulePositionSample(source);
+      const metricsUnchanged = previousMetrics.height === nextViewportMetrics.height &&
+        previousMetrics.width === nextViewportMetrics.width &&
+        previousMetrics.isKeyboardOpen === nextViewportMetrics.isKeyboardOpen;
+      recordDiagnostic('react-viewport-state-decision', {
+        handler: 'updateMetrics → setViewportMetrics',
+        trigger: source,
+        decision: metricsUnchanged ? 'skip-render' : 'update-state',
+        decisionBasis: 'synchronous viewport metrics ref',
+        heightBefore: previousMetrics.height,
+        heightAfter: nextViewportMetrics.height,
+        keyboardBefore: previousMetrics.isKeyboardOpen,
+        keyboardAfter: nextViewportMetrics.isKeyboardOpen,
+      });
       setViewportMetrics((previous) => {
         if (previous.height === nextViewportMetrics.height &&
           previous.width === nextViewportMetrics.width &&
@@ -308,6 +369,8 @@ export default function AdaptiveModal({
     const frameRect = frame.getBoundingClientRect();
     const vv = window.visualViewport;
     recordDiagnostic('rendered-modal-position', {
+      handler: 'AdaptiveModal viewport/layout effect',
+      cause: 'React committed viewportMetrics/modalFits/keyboardAnchorTop',
       modalTop: Math.round(rect.top * 100) / 100,
       modalHeight: Math.round(rect.height * 100) / 100,
       frameTop: Math.round(frameRect.top * 100) / 100,
@@ -322,12 +385,31 @@ export default function AdaptiveModal({
   }, [isOpen, diagnosticsEnabled, modalFits, viewportMetrics, keyboardAnchorTop]);
 
   useEffect(() => {
+    if (!isOpen || !diagnosticsEnabled) return;
+    recordDiagnostic('frame-layout-applied', {
+      handler: 'getModalFrameLayout → AdaptiveModal render',
+      decision: frameLayout.justifyContent,
+      paddingTop: frameLayout.paddingTop,
+      modalFits,
+      keyboardOpen: viewportMetrics.isKeyboardOpen,
+      keyboardAnchorTop,
+    });
+  }, [isOpen, diagnosticsEnabled, frameLayout.justifyContent, frameLayout.paddingTop,
+    modalFits, viewportMetrics.isKeyboardOpen, keyboardAnchorTop]);
+
+  useEffect(() => {
     if (!isOpen) {
       if (keyboardAnchorTop !== null) setKeyboardAnchorTop(null);
       return;
     }
     if (!viewportMetrics.isKeyboardOpen) return;
     if (keyboardAnchorTop !== null) return;
+
+    recordDiagnostic('keyboard-anchor-scheduled', {
+      handler: 'keyboard-anchor effect',
+      delayMs: 120,
+      trigger: 'keyboard opened or viewport height changed',
+    });
 
     const timer = window.setTimeout(() => {
       const modal = modalRef.current;
@@ -339,6 +421,8 @@ export default function AdaptiveModal({
       ));
       setKeyboardAnchorTop(modalTop);
       recordDiagnostic('keyboard-anchor-captured', {
+        handler: 'keyboard-anchor effect timer → setKeyboardAnchorTop',
+        decision: 'capture current modal top',
         modalTop,
         visualHeight: Math.round(window.visualViewport?.height ?? window.innerHeight),
       });
@@ -361,6 +445,7 @@ export default function AdaptiveModal({
         Number.parseFloat(frameStyle.paddingBottom);
       const availableHeight = Math.max(0, scrollContainer.clientHeight - verticalPadding);
       recordDiagnostic('fit-check', {
+        handler: 'checkFit (ResizeObserver/viewport effect)',
         modalHeight: modal.offsetHeight,
         containerHeight: scrollContainer.clientHeight,
         paddingTop: Number.parseFloat(frameStyle.paddingTop),
@@ -368,6 +453,7 @@ export default function AdaptiveModal({
         availableHeight,
         fits: modal.offsetHeight <= availableHeight,
         previousFits: modalFitsRef.current,
+        decision: modal.offsetHeight <= availableHeight ? 'fits/center-or-anchor' : 'does-not-fit/scroll',
         keyboardAnchorTop: keyboardAnchorTopRef.current,
         visualHeight: window.visualViewport?.height ?? window.innerHeight,
       });
@@ -460,12 +546,6 @@ export default function AdaptiveModal({
     });
     schedulePositionSample('input-blur');
   };
-
-  const frameLayout = getModalFrameLayout(
-    modalFits,
-    keyboardAnchorTop,
-    viewportMetrics.isKeyboardOpen,
-  );
 
   return (
     <ModalDialog isOpen={isOpen} onClose={onClose} labelledBy={ariaLabelledBy}>

@@ -6,6 +6,11 @@ export interface ModalDiagnosticEvent {
   details: ModalDiagnosticDetails;
 }
 
+export function createDiagnosticEventIdGenerator(): (source: string) => string {
+  let sequence = 0;
+  return (source) => `${source}-${++sequence}`;
+}
+
 export interface ModalDiagnosticGeometry {
   modalTop: number;
   modalHeight: number;
