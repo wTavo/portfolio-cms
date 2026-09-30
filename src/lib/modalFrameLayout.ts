@@ -1,13 +1,5 @@
-export interface ModalFrameLayout {
-  justifyContent: 'safe center' | 'flex-start';
-  paddingTop: string | null;
-}
+/** Stable frame alignment that safely falls back to the start when content overflows. */
+export const MODAL_FRAME_JUSTIFY_CONTENT = 'safe center' as const;
 
-export function getModalTouchAction(modalFits: boolean): 'pinch-zoom' | 'pan-y pinch-zoom' {
-  return modalFits ? 'pinch-zoom' : 'pan-y pinch-zoom';
-}
-
-export function getModalFrameLayout(modalFits: boolean): ModalFrameLayout {
-  if (!modalFits) return { justifyContent: 'flex-start', paddingTop: null };
-  return { justifyContent: 'safe center', paddingTop: null };
-}
+/** Keep vertical gestures and pinch zoom inside the modal's own scroll surface. */
+export const MODAL_SCROLL_TOUCH_ACTION = 'pan-y pinch-zoom' as const;
