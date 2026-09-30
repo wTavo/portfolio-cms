@@ -12,29 +12,15 @@ describe('getModalTouchAction', () => {
 });
 
 describe('getModalFrameLayout', () => {
-  it('keeps the captured keyboard-open position instead of recentering on viewport height changes', () => {
-    expect(getModalFrameLayout(true, 39)).toEqual({
-      justifyContent: 'flex-start',
-      paddingTop: '39px',
-    });
-  });
-
-  it('centers a fitting modal before the keyboard position has been captured', () => {
-    expect(getModalFrameLayout(true, null)).toEqual({
-      justifyContent: 'safe center',
-      paddingTop: null,
-    });
-  });
-
-  it('ignores a stale keyboard anchor as soon as the keyboard is closed', () => {
-    expect(getModalFrameLayout(true, 39, false)).toEqual({
+  it('keeps a fitting modal centered in the current visual viewport', () => {
+    expect(getModalFrameLayout(true)).toEqual({
       justifyContent: 'safe center',
       paddingTop: null,
     });
   });
 
   it('keeps an oversized modal scrollable from the top', () => {
-    expect(getModalFrameLayout(false, 39)).toEqual({
+    expect(getModalFrameLayout(false)).toEqual({
       justifyContent: 'flex-start',
       paddingTop: null,
     });

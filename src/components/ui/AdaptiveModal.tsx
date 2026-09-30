@@ -75,8 +75,6 @@ export default function AdaptiveModal({
 
   /** Estado que indica si la tarjeta modal cabe en la altura visible disponible */
   const [modalFits, setModalFits] = useState<boolean>(true);
-  /** Captura el anclaje vertical al asentarse la apertura del teclado para evitar recentrados intermedios. */
-  const [keyboardAnchorTop, setKeyboardAnchorTop] = useState<number | null>(null);
 
   const lastWindowWidth = useRef<number>(typeof window !== 'undefined' ? window.innerWidth : 0);
   const keyboardOpenRef = useRef(false);
@@ -102,14 +100,7 @@ export default function AdaptiveModal({
   const diagnosticFramesRemainingRef = useRef(0);
   const diagnosticSampleSourceRef = useRef('interaction');
   const modalFitsRef = useRef(modalFits);
-  const keyboardAnchorTopRef = useRef(keyboardAnchorTop);
   modalFitsRef.current = modalFits;
-  keyboardAnchorTopRef.current = keyboardAnchorTop;
-  const frameLayout = getModalFrameLayout(
-    modalFits,
-    keyboardAnchorTop,
-    viewportMetrics.isKeyboardOpen,
-  );
 
   const recordDiagnostic = (event: string, details: Record<string, string | number | boolean | null> = {}) => {
     if (!diagnosticsEnabled) return null;
@@ -179,7 +170,7 @@ export default function AdaptiveModal({
           paddingTop: Number.parseFloat(frameStyle.paddingTop) || 0,
           paddingBottom: Number.parseFloat(frameStyle.paddingBottom) || 0,
           modalFits: modalFitsRef.current,
-          keyboardAnchorTop: keyboardAnchorTopRef.current,
+          keyboardAnchorTop: null,
           transform: modalStyle.transform,
           animationName: modalStyle.animationName,
           transitionProperty: modalStyle.transitionProperty,
@@ -201,7 +192,6 @@ export default function AdaptiveModal({
   // Sincroniza el modal con el viewport visual, que puede cambiar de tamaño y posición con el teclado.
   useEffect(() => {
     if (!isOpen || typeof window === 'undefined') {
-      setKeyboardAnchorTop(null);
       userScrollBeforeKeyboardRef.current = 0;
       isUserDraggingScroll.current = false;
       keyboardOpenRef.current = false;
@@ -220,6 +210,9 @@ export default function AdaptiveModal({
     if (baselineHeightRef.current === 0 || currentInitHeight > baselineHeightRef.current) {
       baselineHeightRef.current = currentInitHeight;
     }
+
+    let viewportUpdateFrame: number | null = null;
+    let pendingViewportUpdateSource = 'viewport-update';
 
     const updateMetrics = (source = 'viewport-update') => {
       const vv = window.visualViewport;
@@ -329,14 +322,22 @@ export default function AdaptiveModal({
       }
     };
 
-    const onVisualViewportResize = () => updateMetrics('visualviewport-resize');
-    const onVisualViewportScroll = () => updateMetrics('visualviewport-scroll');
-    const onWindowScroll = () => updateMetrics('window-scroll');
+    const scheduleViewportUpdate = (source: string) => {
+      pendingViewportUpdateSource = source;
+      if (viewportUpdateFrame !== null) return;
+      viewportUpdateFrame = window.requestAnimationFrame(() => {
+        viewportUpdateFrame = null;
+        updateMetrics(pendingViewportUpdateSource);
+      });
+    };
+    const onVisualViewportResize = () => scheduleViewportUpdate('visualviewport-resize');
+    const onVisualViewportScroll = () => scheduleViewportUpdate('visualviewport-scroll');
+    const onWindowScroll = () => scheduleViewportUpdate('window-scroll');
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', onVisualViewportResize);
       window.visualViewport.addEventListener('scroll', onVisualViewportScroll);
     }
-    const onWindowResize = () => updateMetrics('window-resize');
+    const onWindowResize = () => scheduleViewportUpdate('window-resize');
     window.addEventListener('resize', onWindowResize);
     window.addEventListener('scroll', onWindowScroll, { passive: true });
 
@@ -350,6 +351,10 @@ export default function AdaptiveModal({
       }
       window.removeEventListener('resize', onWindowResize);
       window.removeEventListener('scroll', onWindowScroll);
+      if (viewportUpdateFrame !== null) {
+        window.cancelAnimationFrame(viewportUpdateFrame);
+        viewportUpdateFrame = null;
+      }
       if (diagnosticFrameRef.current !== null) {
         window.cancelAnimationFrame(diagnosticFrameRef.current);
         diagnosticFrameRef.current = null;
@@ -382,54 +387,7 @@ export default function AdaptiveModal({
       visualTop: Math.round(vv?.offsetTop ?? 0),
       windowScrollY: window.scrollY,
     });
-  }, [isOpen, diagnosticsEnabled, modalFits, viewportMetrics, keyboardAnchorTop]);
-
-  useEffect(() => {
-    if (!isOpen || !diagnosticsEnabled) return;
-    recordDiagnostic('frame-layout-applied', {
-      handler: 'getModalFrameLayout → AdaptiveModal render',
-      decision: frameLayout.justifyContent,
-      paddingTop: frameLayout.paddingTop,
-      modalFits,
-      keyboardOpen: viewportMetrics.isKeyboardOpen,
-      keyboardAnchorTop,
-    });
-  }, [isOpen, diagnosticsEnabled, frameLayout.justifyContent, frameLayout.paddingTop,
-    modalFits, viewportMetrics.isKeyboardOpen, keyboardAnchorTop]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      if (keyboardAnchorTop !== null) setKeyboardAnchorTop(null);
-      return;
-    }
-    if (!viewportMetrics.isKeyboardOpen) return;
-    if (keyboardAnchorTop !== null) return;
-
-    recordDiagnostic('keyboard-anchor-scheduled', {
-      handler: 'keyboard-anchor effect',
-      delayMs: 120,
-      trigger: 'keyboard opened or viewport height changed',
-    });
-
-    const timer = window.setTimeout(() => {
-      const modal = modalRef.current;
-      const container = scrollContainerRef.current;
-      if (!modal || !container) return;
-
-      const modalTop = Math.max(0, Math.round(
-        modal.getBoundingClientRect().top - container.getBoundingClientRect().top
-      ));
-      setKeyboardAnchorTop(modalTop);
-      recordDiagnostic('keyboard-anchor-captured', {
-        handler: 'keyboard-anchor effect timer → setKeyboardAnchorTop',
-        decision: 'capture current modal top',
-        modalTop,
-        visualHeight: Math.round(window.visualViewport?.height ?? window.innerHeight),
-      });
-    }, 120);
-
-    return () => window.clearTimeout(timer);
-  }, [isOpen, viewportMetrics.isKeyboardOpen, viewportMetrics.height, keyboardAnchorTop]);
+  }, [isOpen, diagnosticsEnabled, modalFits, viewportMetrics]);
 
   // Incluye el padding del marco al decidir si centrar o permitir scroll desde arriba.
   useEffect(() => {
@@ -453,8 +411,7 @@ export default function AdaptiveModal({
         availableHeight,
         fits: modal.offsetHeight <= availableHeight,
         previousFits: modalFitsRef.current,
-        decision: modal.offsetHeight <= availableHeight ? 'fits/center-or-anchor' : 'does-not-fit/scroll',
-        keyboardAnchorTop: keyboardAnchorTopRef.current,
+        keyboardAnchorTop: null,
         visualHeight: window.visualViewport?.height ?? window.innerHeight,
       });
       setModalFits(modal.offsetHeight <= availableHeight);
@@ -470,7 +427,7 @@ export default function AdaptiveModal({
     return () => {
       observer?.disconnect();
     };
-  }, [isOpen, viewportMetrics.height, keyboardAnchorTop]);
+  }, [isOpen, viewportMetrics.height]);
 
   /**
    * Registra la posición voluntaria de scroll del usuario cuando no hay teclado activo
@@ -546,6 +503,8 @@ export default function AdaptiveModal({
     });
     schedulePositionSample('input-blur');
   };
+
+  const frameLayout = getModalFrameLayout(modalFits);
 
   return (
     <ModalDialog isOpen={isOpen} onClose={onClose} labelledBy={ariaLabelledBy}>
