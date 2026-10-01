@@ -5,7 +5,6 @@
 
 export interface ModalFrameLayout {
   justifyContent: 'safe center' | 'flex-start';
-  paddingTop: string | null;
 }
 
 /**
@@ -32,8 +31,7 @@ export function getModalFrameLayout(
   keyboardOpen = false,
 ): ModalFrameLayout {
   if (keyboardOpen || !modalFits) {
-    return { justifyContent: 'flex-start', paddingTop: null };
+    return { justifyContent: 'flex-start' };
   }
-  return { justifyContent: 'safe center', paddingTop: null };
+  return { justifyContent: 'safe center' };
 }
-

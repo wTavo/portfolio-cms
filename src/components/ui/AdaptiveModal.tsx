@@ -1,8 +1,8 @@
 /**
  * @file AdaptiveModal.tsx
- * @description Modal flotante y accesible con adaptación en tiempo real al teclado virtual (Directivas 3, 5, 12, 14, 31, 32).
- * Centra la tarjeta cuando cabe en el viewport visible, anima fluidamente su posición al abrir/cerrar teclado
- * y permite desplazarse limpiamente cuando el contenido excede la altura visible sin afectar el fondo.
+ * @description Modal flotante y accesible con adaptación en tiempo real al teclado virtual (Directivas 3, 5, 7, 12, 14, 31, 32).
+ * Centra la tarjeta cuando cabe en el viewport visible, alinea al inicio de forma estable ante el teclado virtual
+ * y permite desplazarse limpiamente cuando el contenido excede la altura disponible sin alterar el fondo.
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -11,11 +11,6 @@ import { MOTION_DURATIONS, MOTION_EASINGS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
 import ModalDialog from './ModalDialog';
-import {
-  createDiagnosticBuffer,
-  createModalDiagnosticGeometry,
-  createModalScrollDiagnostic,
-} from '../../lib/modalDiagnostics';
 import { getNextViewportMetrics, syncVisualViewportBounds } from '../../lib/visualViewportMetrics';
 import { getModalFrameLayout, getModalTouchAction } from '../../lib/modalFrameLayout';
 
@@ -59,8 +54,6 @@ export default function AdaptiveModal({
   ariaLabelledBy = 'adaptive-modal-title',
   contentClassName = '',
 }: AdaptiveModalProps) {
-  const diagnosticsEnabled = typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('modalDebug') === '1';
   const modalRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const modalFrameRef = useRef<HTMLDivElement>(null);
@@ -89,95 +82,12 @@ export default function AdaptiveModal({
       ? Math.max(window.innerHeight, Math.round(window.visualViewport?.height ?? 0))
       : 0
   );
-  /** Posición de scroll previa a la apertura del teclado para restaurar exactamente la intención del usuario */
+  /** Posición de scroll previa a la apertura del teclado para restaurar la intención del usuario */
   const userScrollBeforeKeyboardRef = useRef<number>(0);
   /** Indicador de si el usuario está realizando un desplazamiento táctil o con ratón directo */
   const isUserDraggingScroll = useRef<boolean>(false);
 
-  const diagnosticsRef = useRef<ReturnType<typeof createDiagnosticBuffer> | null>(null);
-  diagnosticsRef.current ??= createDiagnosticBuffer();
-  const diagnosticFrameRef = useRef<number | null>(null);
-  const diagnosticFramesRemainingRef = useRef(0);
-  const diagnosticSampleSourceRef = useRef('interaction');
-  const modalFitsRef = useRef(modalFits);
-  modalFitsRef.current = modalFits;
-
-  const recordDiagnostic = (event: string, details: Record<string, string | number | boolean | null> = {}) => {
-    if (diagnosticsEnabled) diagnosticsRef.current?.record(event, details);
-  };
-
-  const saveDiagnostics = () => {
-    const payload = {
-      capturedAt: new Date().toISOString(),
-      userAgent: navigator.userAgent,
-      screen: { width: window.screen.width, height: window.screen.height },
-      devicePixelRatio: window.devicePixelRatio,
-      events: diagnosticsRef.current?.getEvents() ?? [],
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `modal-diagnostic-${Date.now()}.json`;
-    link.click();
-    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-  };
-
-  const schedulePositionSample = (event: string) => {
-    if (!diagnosticsEnabled) return;
-    diagnosticSampleSourceRef.current = event;
-    diagnosticFramesRemainingRef.current = 45;
-    if (diagnosticFrameRef.current !== null) return;
-
-    const sample = () => {
-      const modal = modalRef.current;
-      const frame = modalFrameRef.current;
-      const container = scrollContainerRef.current;
-      if (!modal || !frame || !container || diagnosticFramesRemainingRef.current <= 0) {
-        diagnosticFrameRef.current = null;
-        return;
-      }
-      const rect = modal.getBoundingClientRect();
-      const frameRect = frame.getBoundingClientRect();
-      const containerRect = container.getBoundingClientRect();
-      const modalStyle = window.getComputedStyle(modal);
-      const frameStyle = window.getComputedStyle(frame);
-      const vv = window.visualViewport;
-      recordDiagnostic('animation-frame-sample', {
-        source: diagnosticSampleSourceRef.current,
-        ...createModalDiagnosticGeometry({
-          modalTop: rect.top,
-          modalHeight: rect.height,
-          frameTop: frameRect.top,
-          frameHeight: frameRect.height,
-          containerTop: containerRect.top,
-          containerHeight: container.clientHeight,
-          containerScrollTop: container.scrollTop,
-          visualHeight: vv?.height ?? window.innerHeight,
-          visualTop: vv?.offsetTop ?? 0,
-          paddingTop: Number.parseFloat(frameStyle.paddingTop) || 0,
-          paddingBottom: Number.parseFloat(frameStyle.paddingBottom) || 0,
-          modalFits: modalFitsRef.current,
-          keyboardAnchorTop: null,
-          transform: modalStyle.transform,
-          animationName: modalStyle.animationName,
-          transitionProperty: modalStyle.transitionProperty,
-          opacity: modalStyle.opacity,
-        }),
-        windowScrollY: window.scrollY,
-      });
-      diagnosticFramesRemainingRef.current -= 1;
-      if (diagnosticFramesRemainingRef.current > 0) {
-        diagnosticFrameRef.current = window.requestAnimationFrame(sample);
-      } else {
-        diagnosticFrameRef.current = null;
-      }
-    };
-
-    diagnosticFrameRef.current = window.requestAnimationFrame(sample);
-  };
-
-  // Sincroniza el modal con el viewport visual, que puede cambiar de tamaño y posición con el teclado.
+  // Sincroniza el modal con el viewport visual ante aperturas y cierres del teclado virtual
   useEffect(() => {
     if (!isOpen || typeof window === 'undefined') {
       userScrollBeforeKeyboardRef.current = 0;
@@ -189,17 +99,13 @@ export default function AdaptiveModal({
       return;
     }
 
-    diagnosticsRef.current?.clear();
-    recordDiagnostic('modal-open');
-
-    // Inicializar o sincronizar altura base del viewport al abrir el modal
     const vvInit = window.visualViewport;
     const currentInitHeight = vvInit ? Math.round(vvInit.height) : window.innerHeight;
     if (baselineHeightRef.current === 0 || currentInitHeight > baselineHeightRef.current) {
       baselineHeightRef.current = currentInitHeight;
     }
 
-    const updateMetrics = (source = 'viewport-update') => {
+    const updateMetrics = () => {
       const vv = window.visualViewport;
       const currentHeight = Math.round(vv?.height ?? window.innerHeight);
       const currentWidth = Math.round(vv?.width ?? window.innerWidth);
@@ -211,7 +117,6 @@ export default function AdaptiveModal({
         lastWindowWidth.current = window.innerWidth;
         baselineHeightRef.current = Math.max(window.innerHeight, currentHeight);
       } else if (!keyboardOpenRef.current && currentHeight > baselineHeightRef.current) {
-        // Si el viewport crece más allá de la base conocida (ej. se ocultó barra del navegador o cerró teclado), actualizar base
         baselineHeightRef.current = currentHeight;
       }
 
@@ -233,8 +138,6 @@ export default function AdaptiveModal({
       if (rawKeyboardOpen) {
         if (!keyboardOpenRef.current) {
           keyboardOpenRef.current = true;
-          // Fijar la alineación superior de inmediato en el DOM antes del cambio de altura
-          // para que el modal y el input activo queden visibles al instante en la parte superior
           if (modalFrameRef.current) {
             modalFrameRef.current.style.justifyContent = 'flex-start';
           }
@@ -267,24 +170,6 @@ export default function AdaptiveModal({
         });
       }
 
-      recordDiagnostic(source, {
-        visualHeight: currentHeight,
-        visualWidth: currentWidth,
-        visualTop: currentTop,
-        visualLeft: currentLeft,
-        keyboardHeight,
-        keyboardOpen: isKeyboard,
-        windowInnerHeight: window.innerHeight,
-        windowScrollY: window.scrollY,
-        focusedInputType: document.activeElement instanceof HTMLInputElement
-          ? document.activeElement.type
-          : document.activeElement instanceof HTMLTextAreaElement
-            ? 'textarea'
-            : null,
-        containerScrollTop: scrollContainerRef.current?.scrollTop ?? null,
-      });
-      schedulePositionSample(source);
-
       setViewportMetrics((previous) => {
         if (
           previous.height === nextViewportMetrics.height &&
@@ -301,35 +186,28 @@ export default function AdaptiveModal({
       }
     };
 
-    const onVisualViewportResize = () => updateMetrics('visualviewport-resize');
-    const onVisualViewportScroll = () => updateMetrics('visualviewport-scroll');
-    const onWindowScroll = () => updateMetrics('window-scroll');
+    const onVisualViewportChange = () => updateMetrics();
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', onVisualViewportResize);
-      window.visualViewport.addEventListener('scroll', onVisualViewportScroll);
+      window.visualViewport.addEventListener('resize', onVisualViewportChange);
+      window.visualViewport.addEventListener('scroll', onVisualViewportChange);
     }
-    const onWindowResize = () => updateMetrics('window-resize');
-    window.addEventListener('resize', onWindowResize);
-    window.addEventListener('scroll', onWindowScroll, { passive: true });
+    window.addEventListener('resize', onVisualViewportChange);
+    window.addEventListener('scroll', onVisualViewportChange, { passive: true });
 
     updateMetrics();
 
     return () => {
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', onVisualViewportResize);
-        window.visualViewport.removeEventListener('scroll', onVisualViewportScroll);
+        window.visualViewport.removeEventListener('resize', onVisualViewportChange);
+        window.visualViewport.removeEventListener('scroll', onVisualViewportChange);
       }
-      window.removeEventListener('resize', onWindowResize);
-      window.removeEventListener('scroll', onWindowScroll);
-      if (diagnosticFrameRef.current !== null) {
-        window.cancelAnimationFrame(diagnosticFrameRef.current);
-        diagnosticFrameRef.current = null;
-      }
+      window.removeEventListener('resize', onVisualViewportChange);
+      window.removeEventListener('scroll', onVisualViewportChange);
       if (focusSettleTimerRef.current) clearTimeout(focusSettleTimerRef.current);
     };
   }, [isOpen]);
 
-  // Incluye el padding del marco al decidir si centrar o permitir scroll desde arriba cuando la tarjeta no cabe.
+  // Determina si la tarjeta modal cabe en la altura visible actual o si requiere scroll
   useEffect(() => {
     if (!isOpen) return;
     const modal = modalRef.current;
@@ -343,19 +221,7 @@ export default function AdaptiveModal({
         Number.parseFloat(frameStyle.paddingTop) +
         Number.parseFloat(frameStyle.paddingBottom);
       const availableHeight = Math.max(0, scrollContainer.clientHeight - verticalPadding);
-      const currentHeight = modal.offsetHeight;
-
-      recordDiagnostic('fit-check', {
-        modalHeight: currentHeight,
-        containerHeight: scrollContainer.clientHeight,
-        paddingTop: Number.parseFloat(frameStyle.paddingTop),
-        paddingBottom: Number.parseFloat(frameStyle.paddingBottom),
-        availableHeight,
-        fits: currentHeight <= availableHeight,
-        previousFits: modalFitsRef.current,
-        visualHeight: window.visualViewport?.height ?? window.innerHeight,
-      });
-      setModalFits(currentHeight <= availableHeight);
+      setModalFits(modal.offsetHeight <= availableHeight);
     };
 
     checkFit();
@@ -370,44 +236,20 @@ export default function AdaptiveModal({
     };
   }, [isOpen, viewportMetrics.height]);
 
-  /**
-   * Registra la posición voluntaria de scroll del usuario cuando no hay teclado activo
-   * o cuando el usuario arrastra intencionalmente con el dedo o ratón.
-   */
+  /** Registra la posición voluntaria de scroll del usuario cuando no hay teclado activo */
   const handleContainerScroll = () => {
     const container = scrollContainerRef.current;
     if (!container) return;
-
-    if (diagnosticsEnabled) {
-      const viewport = window.visualViewport;
-      recordDiagnostic('modal-container-scroll', createModalScrollDiagnostic({
-        scrollTop: container.scrollTop,
-        scrollHeight: container.scrollHeight,
-        clientHeight: container.clientHeight,
-        overflowY: window.getComputedStyle(container).overflowY,
-        modalFits,
-        keyboardOpen: viewportMetrics.isKeyboardOpen,
-        visualHeight: viewport?.height ?? window.innerHeight,
-        visualTop: viewport?.offsetTop ?? 0,
-      }));
-    }
 
     if (!viewportMetrics.isKeyboardOpen || isUserDraggingScroll.current) {
       userScrollBeforeKeyboardRef.current = container.scrollTop;
     }
   };
 
+  /** Gestiona el cambio rápido de foco entre inputs para evitar parpadeos de viewport */
   const handleInputFocus = (event: React.FocusEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-
-    recordDiagnostic('input-focus', {
-      inputType: target instanceof HTMLInputElement ? target.type : target.tagName.toLowerCase(),
-      keyboardAlreadyOpen: keyboardOpenRef.current,
-      windowScrollY: window.scrollY,
-      containerScrollTop: scrollContainerRef.current?.scrollTop ?? null,
-    });
-    schedulePositionSample('input-focus');
 
     if (keyboardOpenRef.current && activeInputRef.current !== target) {
       isSwitchingInputRef.current = true;
@@ -415,57 +257,16 @@ export default function AdaptiveModal({
       focusSettleTimerRef.current = setTimeout(() => {
         isSwitchingInputRef.current = false;
         focusSettleTimerRef.current = null;
-      }, 400);
+      }, 250);
     }
     activeInputRef.current = target;
   };
 
-  const handleInputPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-
-    recordDiagnostic('input-pointerdown', {
-      pointerType: event.pointerType,
-      inputType: target instanceof HTMLInputElement ? target.type : target.tagName.toLowerCase(),
-      windowScrollY: window.scrollY,
-      containerScrollTop: scrollContainerRef.current?.scrollTop ?? null,
-    });
-    schedulePositionSample('input-pointerdown');
-  };
-
-  const handleInputBlur = (event: React.FocusEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-    const nextTarget = event.relatedTarget as HTMLElement | null;
-    recordDiagnostic('input-blur', {
-      inputType: target instanceof HTMLInputElement ? target.type : target.tagName.toLowerCase(),
-      nextTargetTag: nextTarget?.tagName.toLowerCase() ?? null,
-      windowScrollY: window.scrollY,
-      containerScrollTop: scrollContainerRef.current?.scrollTop ?? null,
-    });
-    schedulePositionSample('input-blur');
-  };
-
-  const frameLayout = getModalFrameLayout(
-    modalFits,
-    viewportMetrics.isKeyboardOpen,
-  );
-
+  const frameLayout = getModalFrameLayout(modalFits, viewportMetrics.isKeyboardOpen);
   const isScrollable = !modalFits;
 
   return (
     <ModalDialog isOpen={isOpen} onClose={onClose} labelledBy={ariaLabelledBy}>
-      {diagnosticsEnabled && (
-        <button
-          type="button"
-          onClick={saveDiagnostics}
-          className="fixed bottom-2 right-2 z-[60] rounded-full border border-white/20 bg-black/85 px-3 py-2 text-xs font-semibold text-white shadow-lg"
-          style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
-          aria-label="Guardar registro de diagnóstico del modal"
-        >
-          Guardar diagnóstico
-        </button>
-      )}
       {/* Contenedor sincronizado con el viewport visual sobre el teclado */}
       <div
         ref={scrollContainerRef}
@@ -483,8 +284,6 @@ export default function AdaptiveModal({
           isUserDraggingScroll.current = false;
         }}
         onFocusCapture={handleInputFocus}
-        onBlurCapture={handleInputBlur}
-        onPointerDownCapture={handleInputPointerDown}
         className={`fixed [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
           isScrollable
             ? 'overflow-y-auto overscroll-contain touch-pan-y'
@@ -505,7 +304,6 @@ export default function AdaptiveModal({
           }`}
           style={{
             justifyContent: frameLayout.justifyContent,
-            paddingTop: frameLayout.paddingTop ?? undefined,
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {

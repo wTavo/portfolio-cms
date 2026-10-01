@@ -68,7 +68,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     setErrorMessage('');
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      // Directiva 3: Respuesta inmediata sin delay() artificiales
       setStatus('success');
     } catch {
       setStatus('error');

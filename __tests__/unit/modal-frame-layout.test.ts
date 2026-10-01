@@ -15,29 +15,24 @@ describe('getModalFrameLayout', () => {
   it('aligns to flex-start at top when the virtual keyboard is open', () => {
     expect(getModalFrameLayout(true, true)).toEqual({
       justifyContent: 'flex-start',
-      paddingTop: null,
     });
   });
 
   it('keeps alignment at flex-start without layout shift when autocomplete opens and modal needs scrolling', () => {
     expect(getModalFrameLayout(false, true)).toEqual({
       justifyContent: 'flex-start',
-      paddingTop: null,
     });
   });
 
   it('centers a fitting modal when the keyboard is closed', () => {
     expect(getModalFrameLayout(true, false)).toEqual({
       justifyContent: 'safe center',
-      paddingTop: null,
     });
   });
 
   it('keeps an oversized modal scrollable from the top when the keyboard is closed', () => {
     expect(getModalFrameLayout(false, false)).toEqual({
       justifyContent: 'flex-start',
-      paddingTop: null,
     });
   });
 });
-
