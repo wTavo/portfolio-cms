@@ -22,8 +22,18 @@ export function animateVerticalPosition(
     return () => {};
   }
 
-  const finalTop = element.getBoundingClientRect().top;
-  const delta = previousTop - finalTop;
+  const scrollContainer = element.closest<HTMLElement>('[data-modal-scroll-container]');
+  const containerRectTop = scrollContainer?.getBoundingClientRect().top ?? 0;
+  const elementRectTop = element.getBoundingClientRect().top;
+  const finalTop = scrollContainer ? (elementRectTop - containerRectTop) : elementRectTop;
+  let delta = previousTop - finalTop;
+  if (Math.abs(delta) < MINIMUM_POSITION_DELTA) return () => {};
+
+  const minAllowedDelta = -finalTop;
+  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 1000;
+  const maxAllowedDelta = Math.max(0, viewportHeight - finalTop);
+  delta = Math.min(Math.max(delta, minAllowedDelta), maxAllowedDelta);
+
   if (Math.abs(delta) < MINIMUM_POSITION_DELTA) return () => {};
 
   const animation = element.animate(

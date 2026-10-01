@@ -16,7 +16,11 @@ import {
   createModalScrollDiagnostic,
 } from '../../lib/modalDiagnostics';
 import { observeViewportBounds, syncVisualViewportBounds } from '../../lib/visualViewportMetrics';
-import { MODAL_FRAME_JUSTIFY_CONTENT, MODAL_SCROLL_TOUCH_ACTION } from '../../lib/modalFrameLayout';
+import {
+  MODAL_FRAME_JUSTIFY_CONTENT,
+  MODAL_FRAME_KEYBOARD_JUSTIFY_CONTENT,
+  MODAL_SCROLL_TOUCH_ACTION,
+} from '../../lib/modalFrameLayout';
 import { createModalViewportController, MODAL_KEYBOARD_HEIGHT_THRESHOLD } from '../../lib/modalViewportController';
 import { animateVerticalPosition } from '../../lib/modalPositionAnimation';
 
@@ -88,6 +92,9 @@ export default function AdaptiveModal({
   const diagnosticSampleSourceRef = useRef('interaction');
   const lastFocusedEditableRef = useRef<HTMLElement | null>(null);
   const editableInputFocusedRef = useRef(false);
+  const isKeyboardSettledRef = useRef(false);
+  const focusSwitchLockedRef = useRef(false);
+  const blurTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const viewportControllerRef = useRef<ReturnType<typeof createModalViewportController> | null>(null);
   const cancelPositionAnimationRef = useRef<(() => void) | null>(null);
 
@@ -129,7 +136,9 @@ export default function AdaptiveModal({
       const rect = modal.getBoundingClientRect();
       const frameRect = frame.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
+      const posWrapper = modalPositionRef.current;
       const modalStyle = window.getComputedStyle(modal);
+      const posStyle = posWrapper ? window.getComputedStyle(posWrapper) : null;
       const frameStyle = window.getComputedStyle(frame);
       const vv = window.visualViewport;
       recordDiagnostic('animation-frame-sample', {
@@ -148,7 +157,7 @@ export default function AdaptiveModal({
           paddingBottom: Number.parseFloat(frameStyle.paddingBottom) || 0,
           modalFits: container.scrollHeight <= container.clientHeight,
           keyboardAnchorTop: null,
-          transform: modalStyle.transform,
+          transform: (posStyle && posStyle.transform !== 'none') ? posStyle.transform : modalStyle.transform,
           animationName: modalStyle.animationName,
           transitionProperty: modalStyle.transitionProperty,
           opacity: modalStyle.opacity,
@@ -174,6 +183,7 @@ export default function AdaptiveModal({
       keyboardOpenRef.current = false;
       lastFocusedEditableRef.current = null;
       editableInputFocusedRef.current = false;
+      if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
       return;
     }
 
@@ -202,6 +212,12 @@ export default function AdaptiveModal({
       initialEditableInputFocused;
     keyboardOpenRef.current = initialKeyboardOpen;
     editableInputFocusedRef.current = initialEditableInputFocused;
+    if (modalFrameRef.current) {
+      modalFrameRef.current.style.justifyContent = initialKeyboardOpen
+        ? MODAL_FRAME_KEYBOARD_JUSTIFY_CONTENT
+        : MODAL_FRAME_JUSTIFY_CONTENT;
+      modalFrameRef.current.style.paddingBottom = initialKeyboardOpen ? '5rem' : '';
+    }
 
     const controller = createModalViewportController({
       initialBounds,
@@ -217,23 +233,47 @@ export default function AdaptiveModal({
         const positionWrapper = modalPositionRef.current;
         if (!container || !card || !positionWrapper) return;
 
-        const previousTop = card.getBoundingClientRect().top;
-        syncVisualViewportBounds(container, bounds);
-        const finalTop = card.getBoundingClientRect().top;
-        if (transition === 'keyboard-open') keyboardOpenRef.current = true;
-        if (transition === 'keyboard-close') {
+        const previousContainerTop = container.getBoundingClientRect().top;
+        const previousTop = card.getBoundingClientRect().top - previousContainerTop;
+
+        if (transition === 'keyboard-open') {
+          keyboardOpenRef.current = true;
+          isKeyboardSettledRef.current = true;
+          focusSwitchLockedRef.current = false;
+          if (modalFrameRef.current) {
+            modalFrameRef.current.style.justifyContent = MODAL_FRAME_KEYBOARD_JUSTIFY_CONTENT;
+            modalFrameRef.current.style.paddingBottom = '5rem';
+          }
+          if (container.scrollHeight <= container.clientHeight + 2) {
+            container.scrollTop = 0;
+          }
+        } else if (transition === 'keyboard-close') {
           keyboardOpenRef.current = false;
+          isKeyboardSettledRef.current = false;
+          focusSwitchLockedRef.current = false;
+          editableInputFocusedRef.current = false;
+          if (modalFrameRef.current) {
+            modalFrameRef.current.style.justifyContent = MODAL_FRAME_JUSTIFY_CONTENT;
+            modalFrameRef.current.style.paddingBottom = '';
+          }
           baselineHeightRef.current = Math.max(baselineHeightRef.current, window.innerHeight, bounds.height);
           container.scrollTop = userScrollBeforeKeyboardRef.current;
         } else if (transition === 'viewport-resize' && !keyboardOpenRef.current) {
           baselineHeightRef.current = Math.max(baselineHeightRef.current, window.innerHeight, bounds.height);
         }
-        cancelPositionAnimationRef.current?.();
-        cancelPositionAnimationRef.current = animateVerticalPosition(positionWrapper, previousTop, {
-          duration: MOTION_DURATIONS.normal,
-          easing: `cubic-bezier(${MOTION_EASINGS.standard.join(', ')})`,
-          prefersReducedMotion: prefersReducedMotionRef.current ?? false,
-        });
+
+        syncVisualViewportBounds(container, bounds);
+        const nextContainerTop = container.getBoundingClientRect().top;
+        const finalTop = card.getBoundingClientRect().top - nextContainerTop;
+
+        if (transition !== 'viewport-resize') {
+          cancelPositionAnimationRef.current?.();
+          cancelPositionAnimationRef.current = animateVerticalPosition(positionWrapper, previousTop, {
+            duration: MOTION_DURATIONS.normal,
+            easing: `cubic-bezier(${MOTION_EASINGS.standard.join(', ')})`,
+            prefersReducedMotion: prefersReducedMotionRef.current ?? false,
+          });
+        }
         recordDiagnostic('viewport-transition-settled', {
           transition,
           visualHeight: bounds.height,
@@ -256,10 +296,33 @@ export default function AdaptiveModal({
         return;
       }
 
-      if (editableInputFocusedRef.current &&
-        baselineHeightRef.current - bounds.height > MODAL_KEYBOARD_HEIGHT_THRESHOLD) {
+      const isKeyboardActive = (editableInputFocusedRef.current || keyboardOpenRef.current) &&
+        baselineHeightRef.current - bounds.height > MODAL_KEYBOARD_HEIGHT_THRESHOLD;
+
+      if (isKeyboardActive) {
+        if (!keyboardOpenRef.current) {
+          isKeyboardSettledRef.current = false;
+        }
         keyboardOpenRef.current = true;
+        if (modalFrameRef.current) {
+          modalFrameRef.current.style.justifyContent = MODAL_FRAME_KEYBOARD_JUSTIFY_CONTENT;
+          modalFrameRef.current.style.paddingBottom = '5rem';
+        }
+      } else if (bounds.height >= baselineHeightRef.current - MODAL_KEYBOARD_HEIGHT_THRESHOLD) {
+        if (keyboardOpenRef.current) {
+          isKeyboardSettledRef.current = false;
+        }
       }
+
+      // Si el visualViewport se desplaza mientras el teclado ya está asentado y no se cambia de input,
+      // mantener top y left anclados a la cámara para que el modal nunca se despegue de la pantalla
+      if (keyboardOpenRef.current && isKeyboardSettledRef.current && !focusSwitchLockedRef.current && sources.includes('visualviewport-scroll') && !sources.includes('visualviewport-resize') && !sources.includes('window-resize')) {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.style.top = `${bounds.top}px`;
+          scrollContainerRef.current.style.left = `${bounds.left}px`;
+        }
+      }
+
       controller.observe(bounds, sources);
       recordDiagnostic('viewport-observation', {
         sources: sources.join(','),
@@ -285,6 +348,10 @@ export default function AdaptiveModal({
       stopObservingViewport();
       controller.dispose();
       viewportControllerRef.current = null;
+      if (blurTimerRef.current) {
+        clearTimeout(blurTimerRef.current);
+        blurTimerRef.current = null;
+      }
       cancelPositionAnimationRef.current?.();
       cancelPositionAnimationRef.current = null;
       if (diagnosticFrameRef.current !== null) {
@@ -348,10 +415,18 @@ export default function AdaptiveModal({
   const handleInputFocus = (event: React.FocusEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+    if (blurTimerRef.current) {
+      clearTimeout(blurTimerRef.current);
+      blurTimerRef.current = null;
+    }
+
     const previousTarget = lastFocusedEditableRef.current;
     const focusedInputChanged = keyboardOpenRef.current && previousTarget !== null && previousTarget !== target;
     lastFocusedEditableRef.current = target;
     editableInputFocusedRef.current = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+    if (focusedInputChanged) {
+      focusSwitchLockedRef.current = true;
+    }
     const viewport = window.visualViewport;
     viewportControllerRef.current?.observe(
       viewport
@@ -377,6 +452,9 @@ export default function AdaptiveModal({
   const handleInputPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+    editableInputFocusedRef.current = true;
+    lastFocusedEditableRef.current = target;
+    target.focus({ preventScroll: true });
     recordDiagnostic('input-pointerdown', {
       pointerType: event.pointerType,
       inputType: target instanceof HTMLInputElement ? target.type : target.tagName.toLowerCase(),
@@ -389,22 +467,41 @@ export default function AdaptiveModal({
   const handleInputBlur = (event: React.FocusEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
     if (!['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
-    const nextTarget = event.relatedTarget as HTMLElement | null;
-    editableInputFocusedRef.current = nextTarget instanceof HTMLInputElement || nextTarget instanceof HTMLTextAreaElement;
-    const viewport = window.visualViewport;
-    viewportControllerRef.current?.observe(
-      viewport
-        ? { top: viewport.offsetTop, left: viewport.offsetLeft, width: viewport.width, height: viewport.height }
-        : { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight },
-      [],
-      {
-        editableInputFocused: nextTarget instanceof HTMLInputElement || nextTarget instanceof HTMLTextAreaElement,
-        changed: keyboardOpenRef.current,
-      },
-    );
+    if (blurTimerRef.current) clearTimeout(blurTimerRef.current);
+
+    const related = event.relatedTarget as HTMLElement | null;
+    const isSwitchingToInternalInput = related instanceof HTMLElement &&
+      modalRef.current?.contains(related) &&
+      ['INPUT', 'TEXTAREA', 'SELECT'].includes(related.tagName);
+
+    if (isSwitchingToInternalInput) {
+      editableInputFocusedRef.current = true;
+    } else {
+      blurTimerRef.current = setTimeout(() => {
+        const active = document.activeElement;
+        const isStillInput = Boolean(
+          active instanceof HTMLElement &&
+          modalRef.current?.contains(active) &&
+          ['INPUT', 'TEXTAREA', 'SELECT'].includes(active.tagName)
+        );
+        editableInputFocusedRef.current = isStillInput;
+        const viewport = window.visualViewport;
+        viewportControllerRef.current?.observe(
+          viewport
+            ? { top: viewport.offsetTop, left: viewport.offsetLeft, width: viewport.width, height: viewport.height }
+            : { top: 0, left: 0, width: window.innerWidth, height: window.innerHeight },
+          [],
+          {
+            editableInputFocused: isStillInput,
+            changed: keyboardOpenRef.current,
+          },
+        );
+      }, 60);
+    }
+
     recordDiagnostic('input-blur', {
       inputType: target instanceof HTMLInputElement ? target.type : target.tagName.toLowerCase(),
-      nextTargetTag: nextTarget?.tagName.toLowerCase() ?? null,
+      nextTargetTag: related?.tagName.toLowerCase() ?? null,
       windowScrollY: window.scrollY,
       containerScrollTop: scrollContainerRef.current?.scrollTop ?? null,
     });
@@ -454,7 +551,7 @@ export default function AdaptiveModal({
             {/* El centrado seguro es constante: cuando excede el viewport, el overflow empieza arriba. */}
             <div
               ref={modalFrameRef}
-              className="w-full min-h-full flex flex-col items-center text-center p-2 sm:p-4"
+              className="w-full min-h-full flex flex-col items-center text-center pt-4 [@media(max-height:540px)]:pt-2 pb-2 px-2 sm:p-4"
               style={{
                 justifyContent: MODAL_FRAME_JUSTIFY_CONTENT,
               }}

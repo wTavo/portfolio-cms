@@ -28,6 +28,11 @@ async function flushFrames(count: number): Promise<void> {
   }
 }
 
+function useControlledFrameClock(): void {
+  vi.useFakeTimers();
+  vi.spyOn(window.performance, 'now').mockImplementation(() => Date.now());
+}
+
 function mockTop(top: number): DOMRect {
   return { top, bottom: top, left: 0, right: 0, width: 0, height: 0, x: 0, y: top, toJSON: () => ({}) } as DOMRect;
 }
@@ -65,7 +70,7 @@ describe('AdaptiveModal', () => {
   });
 
   it('applies one final keyboard geometry and starts one fluid reposition after multi-frame opening', async () => {
-    vi.useFakeTimers();
+    useControlledFrameClock();
     const originalVisualViewport = Object.getOwnPropertyDescriptor(window, 'visualViewport');
     const viewport = createVisualViewport();
     Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
@@ -104,6 +109,7 @@ describe('AdaptiveModal', () => {
       expect(animate).not.toHaveBeenCalled();
 
       await flushFrames(3);
+      await flushFrames(3);
 
       expect(container?.style.top).toBe('48px');
       expect(container?.style.height).toBe('500px');
@@ -117,8 +123,8 @@ describe('AdaptiveModal', () => {
     }
   });
 
-  it('keeps the card still when switching inputs while the keyboard remains open', async () => {
-    vi.useFakeTimers();
+  it('does not apply another layout offset when switching inputs while the keyboard remains open', async () => {
+    useControlledFrameClock();
     const originalVisualViewport = Object.getOwnPropertyDescriptor(window, 'visualViewport');
     const viewport = createVisualViewport();
     Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
@@ -143,7 +149,7 @@ describe('AdaptiveModal', () => {
         viewport.height = 500;
         viewport.dispatchEvent(new Event('resize'));
       });
-      await flushFrames(4);
+      await flushFrames(8);
       expect(container?.style.height).toBe('500px');
       animate.mockClear();
 
@@ -170,8 +176,59 @@ describe('AdaptiveModal', () => {
     }
   });
 
+  it('waits through native viewport panning before resizing and centering once', async () => {
+    useControlledFrameClock();
+    const originalVisualViewport = Object.getOwnPropertyDescriptor(window, 'visualViewport');
+    const viewport = createVisualViewport();
+    Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
+
+    try {
+      render(
+        <AdaptiveModal isOpen onClose={() => {}} title="Inicio de sesión">
+          <input aria-label="Correo" />
+          <input aria-label="Contraseña" type="password" />
+        </AdaptiveModal>,
+      );
+      const password = document.querySelector<HTMLInputElement>('input[aria-label="Contraseña"]');
+      const container = document.querySelector<HTMLElement>('[data-modal-scroll-container]');
+      const wrapper = container?.querySelector<HTMLElement>('[data-modal-position-wrapper]');
+      const animate = vi.fn(() => ({ cancel: vi.fn() }) as unknown as Animation);
+      if (wrapper) Object.defineProperty(wrapper, 'animate', { configurable: true, value: animate });
+      if (wrapper) vi.spyOn(wrapper, 'getBoundingClientRect').mockReturnValue(mockTop(120));
+
+      fireEvent.focus(password!);
+      act(() => {
+        viewport.height = 500;
+        viewport.dispatchEvent(new Event('resize'));
+      });
+      await flushFrames(1);
+
+      for (const offsetTop of [24, 120, 244]) {
+        act(() => {
+          viewport.offsetTop = offsetTop;
+          viewport.dispatchEvent(new Event('scroll'));
+        });
+        await flushFrames(1);
+        expect(container?.style.top).toBe('0px');
+        expect(container?.style.height).toBe('825px');
+        expect(animate).not.toHaveBeenCalled();
+      }
+
+      await flushFrames(8);
+      expect(container?.style.top).toBe('244px');
+      expect(container?.style.height).toBe('500px');
+      expect(animate).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalVisualViewport) {
+        Object.defineProperty(window, 'visualViewport', originalVisualViewport);
+      } else {
+        Reflect.deleteProperty(window, 'visualViewport');
+      }
+    }
+  });
+
   it('does not run the positional animation when reduced motion is preferred', async () => {
-    vi.useFakeTimers();
+    useControlledFrameClock();
     motionPreference.reduce = true;
     const originalVisualViewport = Object.getOwnPropertyDescriptor(window, 'visualViewport');
     const viewport = createVisualViewport();
@@ -194,7 +251,7 @@ describe('AdaptiveModal', () => {
         viewport.height = 500;
         viewport.dispatchEvent(new Event('resize'));
       });
-      await flushFrames(4);
+      await flushFrames(8);
 
       expect(container?.style.height).toBe('500px');
       expect(animate).not.toHaveBeenCalled();
@@ -208,7 +265,7 @@ describe('AdaptiveModal', () => {
   });
 
   it('animates each keyboard open/close cycle once and restores the saved modal scroll', async () => {
-    vi.useFakeTimers();
+    useControlledFrameClock();
     const originalVisualViewport = Object.getOwnPropertyDescriptor(window, 'visualViewport');
     const viewport = createVisualViewport();
     Object.defineProperty(window, 'visualViewport', { configurable: true, value: viewport });
@@ -237,14 +294,14 @@ describe('AdaptiveModal', () => {
       expect(container?.style.height).toBe('825px');
       container!.scrollTop = 82;
       fireEvent.scroll(container!);
-      await flushFrames(3);
+      await flushFrames(7);
       expect(animate).toHaveBeenCalledTimes(1);
 
       act(() => {
         viewport.height = 825;
         viewport.dispatchEvent(new Event('resize'));
       });
-      await flushFrames(4);
+      await flushFrames(8);
       expect(container?.scrollTop).toBe(35);
       expect(animate).toHaveBeenCalledTimes(2);
 
@@ -252,7 +309,7 @@ describe('AdaptiveModal', () => {
         viewport.height = 500;
         viewport.dispatchEvent(new Event('resize'));
       });
-      await flushFrames(4);
+      await flushFrames(8);
       expect(animate).toHaveBeenCalledTimes(3);
     } finally {
       if (originalVisualViewport) {

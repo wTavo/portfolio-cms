@@ -102,4 +102,59 @@ describe('animateVerticalPosition', () => {
     cancelSecond();
     expect(secondAnimation.cancel).toHaveBeenCalledOnce();
   });
+
+  it('clamps positive delta to avoid translating element beyond layout viewport', () => {
+    const container = document.createElement('div');
+    container.setAttribute('data-modal-scroll-container', '');
+    Object.defineProperty(container, 'clientHeight', { value: 320 });
+    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ top: 100 } as DOMRect);
+
+    const element = document.createElement('div');
+    Object.defineProperty(element, 'offsetHeight', { value: 290 });
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ top: 110 } as DOMRect); // finalTop = 10 inside container
+    container.appendChild(element);
+    document.body.appendChild(container);
+
+    const animation = { cancel: vi.fn() } as unknown as Animation;
+    const animate = vi.fn(() => animation);
+    Object.defineProperty(element, 'animate', { configurable: true, value: animate });
+
+    // In jsdom, window.innerHeight defaults to 768.
+    // For previousTop = 1000, unconstrained delta = 990.
+    // Clamped maxAllowedDelta = window.innerHeight (768) - finalTop (10) = 758.
+    animateVerticalPosition(element, 1000, { duration: 0.25, easing: 'linear', prefersReducedMotion: false });
+
+    expect(animate).toHaveBeenCalledExactlyOnceWith(
+      [{ transform: `translateY(${window.innerHeight - 10}px)` }, { transform: 'translateY(0)' }],
+      { duration: 250, easing: 'linear', fill: 'both' },
+    );
+    document.body.removeChild(container);
+  });
+
+  it('clamps negative delta to avoid pulling element above container top', () => {
+    const container = document.createElement('div');
+    container.setAttribute('data-modal-scroll-container', '');
+    Object.defineProperty(container, 'clientHeight', { value: 500 });
+    vi.spyOn(container, 'getBoundingClientRect').mockReturnValue({ top: 0 } as DOMRect);
+
+    const element = document.createElement('div');
+    Object.defineProperty(element, 'offsetHeight', { value: 200 });
+    vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ top: 50 } as DOMRect); // finalTop = 50 inside container
+    container.appendChild(element);
+    document.body.appendChild(container);
+
+    const animation = { cancel: vi.fn() } as unknown as Animation;
+    const animate = vi.fn(() => animation);
+    Object.defineProperty(element, 'animate', { configurable: true, value: animate });
+
+    // previousTop inside container was -100, unconstrained delta = -150.
+    // minAllowedDelta = -finalTop = -50.
+    animateVerticalPosition(element, -100, { duration: 0.25, easing: 'linear', prefersReducedMotion: false });
+
+    expect(animate).toHaveBeenCalledExactlyOnceWith(
+      [{ transform: 'translateY(-50px)' }, { transform: 'translateY(0)' }],
+      { duration: 250, easing: 'linear', fill: 'both' },
+    );
+    document.body.removeChild(container);
+  });
 });

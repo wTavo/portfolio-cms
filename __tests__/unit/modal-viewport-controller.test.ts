@@ -56,7 +56,7 @@ function createHarness(initialBounds = closedBounds) {
 
 function openKeyboard(harness: ReturnType<typeof createHarness>) {
   harness.controller.observe({ ...closedBounds, height: 500 }, visualResize, { editableInputFocused: true });
-  harness.tick(4);
+  harness.tick(8);
 }
 
 describe('createModalViewportController', () => {
@@ -71,7 +71,7 @@ describe('createModalViewportController', () => {
     const resized = { ...closedBounds, height: 700 };
 
     harness.controller.observe(resized, ['window-resize']);
-    harness.tick(3);
+    harness.tick(8);
 
     expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(resized, 'viewport-resize');
   });
@@ -88,7 +88,27 @@ describe('createModalViewportController', () => {
     harness.tick(3);
     expect(harness.onStableBounds).not.toHaveBeenCalled();
     harness.tick(1);
+    expect(harness.onStableBounds).not.toHaveBeenCalled();
+    harness.tick(3);
 
+    expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(finalBounds, 'keyboard-open');
+  });
+
+  it('waits for late VisualViewport panning instead of settling in the gap after resize', () => {
+    const harness = createHarness();
+    const keyboardBounds = { ...closedBounds, height: 500 };
+    const finalBounds = { ...keyboardBounds, top: 244 };
+
+    harness.controller.observe(keyboardBounds, visualResize, { editableInputFocused: true });
+    harness.tick(4);
+
+    expect(harness.onStableBounds).not.toHaveBeenCalled();
+
+    harness.controller.observe(finalBounds, visualScroll);
+    harness.tick(6);
+    expect(harness.onStableBounds).not.toHaveBeenCalled();
+
+    harness.tick(2);
     expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(finalBounds, 'keyboard-open');
   });
 
@@ -99,12 +119,12 @@ describe('createModalViewportController', () => {
     const closedAgain = { ...closedBounds, top: 0 };
 
     harness.controller.observe(closedAgain, visualResize);
-    harness.tick(4);
+    harness.tick(8);
 
     expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(closedAgain, 'keyboard-close');
   });
 
-  it('ignores offset-only VisualViewport panning while the keyboard is stable', () => {
+  it('does not apply a second layout offset when VisualViewport pans while the keyboard is stable', () => {
     const harness = createHarness();
     openKeyboard(harness);
     harness.onStableBounds.mockClear();
@@ -113,6 +133,23 @@ describe('createModalViewportController', () => {
 
     expect(harness.pendingFrames()).toBe(0);
     expect(harness.onStableBounds).not.toHaveBeenCalled();
+  });
+
+  it('waits for native auto-pan to finish before settling keyboard geometry', () => {
+    const harness = createHarness();
+    const openingBounds = { ...closedBounds, height: 500 };
+    harness.controller.observe(openingBounds, visualResize, { editableInputFocused: true });
+
+    for (const top of [24, 120, 244]) {
+      harness.controller.observe({ ...openingBounds, top }, visualScroll);
+      expect(harness.onStableBounds).not.toHaveBeenCalled();
+    }
+
+    harness.tick(8);
+    expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(
+      { ...openingBounds, top: 244 },
+      'keyboard-open',
+    );
   });
 
   it('keeps the card stable when switching inputs changes visual viewport height', () => {
@@ -139,14 +176,14 @@ describe('createModalViewportController', () => {
     harness.setLayoutViewport({ width: 844, height: 390 });
 
     harness.controller.observe(resized, windowResize);
-    harness.tick(4);
+    harness.tick(8);
 
     expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(resized, 'viewport-resize');
 
     harness.onStableBounds.mockClear();
     const keyboardClosedInLandscape = { top: 0, left: 0, width: 844, height: 390 };
     harness.controller.observe(keyboardClosedInLandscape, visualResize);
-    harness.tick(4);
+    harness.tick(8);
 
     expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(keyboardClosedInLandscape, 'keyboard-close');
   });
@@ -160,6 +197,8 @@ describe('createModalViewportController', () => {
     const closedInLandscape = { top: 0, left: 0, width: 844, height: 390 };
 
     harness.controller.observe(closedInLandscape, visualResize);
+    harness.tick(4);
+    expect(harness.onStableBounds).not.toHaveBeenCalled();
     harness.tick(4);
 
     expect(harness.onStableBounds).toHaveBeenCalledExactlyOnceWith(closedInLandscape, 'keyboard-close');

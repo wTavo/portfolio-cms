@@ -3,6 +3,8 @@ import type { ViewportBounds, ViewportEventSourceName } from './visualViewportMe
 export const MODAL_KEYBOARD_HEIGHT_THRESHOLD = 80;
 const BOUNDS_STABILITY_TOLERANCE = 1;
 const STABLE_FRAME_COUNT = 3;
+// Android browsers may resize the VisualViewport before their automatic pan begins.
+const GEOMETRY_QUIET_DURATION_MS = 100;
 const MAX_SETTLE_DURATION_MS = 500;
 
 export type ModalViewportTransition = 'keyboard-open' | 'keyboard-close' | 'viewport-resize';
@@ -45,6 +47,7 @@ export function createModalViewportController(
   let pendingTransition: ModalViewportTransition | null = null;
   let pendingFrame: number | null = null;
   let settleStartedAt = 0;
+  let lastGeometryChangeAt = 0;
   let stableFrameCount = 0;
   let previousSample = bounds;
   let disposed = false;
@@ -88,8 +91,10 @@ export function createModalViewportController(
     }
     previousSample = bounds;
 
-    if (stableFrameCount >= STABLE_FRAME_COUNT ||
-      options.now() - settleStartedAt >= MAX_SETTLE_DURATION_MS) {
+    const now = options.now();
+    const geometryIsQuiet = now - lastGeometryChangeAt >= GEOMETRY_QUIET_DURATION_MS;
+    if ((stableFrameCount >= STABLE_FRAME_COUNT && geometryIsQuiet) ||
+      now - settleStartedAt >= MAX_SETTLE_DURATION_MS) {
       finishTransition();
       return;
     }
@@ -101,6 +106,7 @@ export function createModalViewportController(
     if (disposed) return;
     pendingTransition = transition;
     settleStartedAt = options.now();
+    lastGeometryChangeAt = settleStartedAt;
     stableFrameCount = 0;
     previousSample = bounds;
     if (pendingFrame === null) {
@@ -115,6 +121,11 @@ export function createModalViewportController(
     bounds = nextBounds;
     if (sources.includes('initial')) return;
 
+    if (pendingTransition && !boundsAreClose(nextBounds, previousBounds)) {
+      lastGeometryChangeAt = options.now();
+      stableFrameCount = 0;
+    }
+
     if (focusState) {
       editableInputFocused = focusState.editableInputFocused;
       if (focusState.changed && keyboardOpen) focusSwitchLock = true;
@@ -126,7 +137,6 @@ export function createModalViewportController(
 
     const geometryIndicatesKeyboard = baselineHeight - nextBounds.height > MODAL_KEYBOARD_HEIGHT_THRESHOLD;
     const keyboardIsPresent = geometryIndicatesKeyboard && (keyboardOpen || editableInputFocused);
-
     if (pendingTransition) {
       if (pendingTransition === 'keyboard-open' && !keyboardIsPresent && !keyboardOpen) {
         clearPendingTransition();
