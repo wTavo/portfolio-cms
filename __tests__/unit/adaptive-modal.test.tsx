@@ -28,4 +28,48 @@ describe('AdaptiveModal', () => {
     expect(document.querySelector('[data-modal-scroll-container]')).not.toBeNull();
     expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
+
+  it('restaura la posición voluntaria de scroll del usuario al cerrar el teclado virtual', () => {
+    Object.defineProperty(window, 'visualViewport', {
+      writable: true,
+      configurable: true,
+      value: {
+        height: 800,
+        width: 400,
+        offsetTop: 0,
+        offsetLeft: 0,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+    });
+
+    render(
+      <AdaptiveModal isOpen onClose={() => {}} title="Formulario largo" ariaLabelledBy="test-title">
+        <div style={{ height: '1200px' }}>
+          <input aria-label="Campo de prueba" />
+        </div>
+      </AdaptiveModal>,
+    );
+
+    const scrollContainer = document.querySelector('[data-modal-scroll-container]') as HTMLElement;
+    expect(scrollContainer).not.toBeNull();
+
+    // El usuario se desplaza voluntariamente a 180px con el teclado cerrado
+    scrollContainer.scrollTop = 180;
+    scrollContainer.dispatchEvent(new Event('scroll'));
+
+    // Se simula la apertura del teclado virtual (altura se reduce drásticamente)
+    window.visualViewport!.height = 320;
+    window.dispatchEvent(new Event('resize'));
+
+    // Al abrirse el teclado, el scroll programático va a 0 para mostrar el tope
+    expect(scrollContainer.scrollTop).toBe(0);
+
+    // Se simula el cierre del teclado virtual (altura vuelve a 800)
+    window.visualViewport!.height = 800;
+    window.dispatchEvent(new Event('resize'));
+
+    // Al cerrarse el teclado, se restaura exactamente la posición previa del usuario (180px)
+    expect(scrollContainer.scrollTop).toBe(180);
+  });
 });

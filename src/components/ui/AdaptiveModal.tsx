@@ -137,6 +137,10 @@ export default function AdaptiveModal({
 
       if (rawKeyboardOpen) {
         if (!keyboardOpenRef.current) {
+          // Capturar la posición voluntaria de scroll del usuario antes de que el teclado modifique el viewport
+          if (scrollContainerRef.current) {
+            userScrollBeforeKeyboardRef.current = scrollContainerRef.current.scrollTop;
+          }
           keyboardOpenRef.current = true;
           if (modalFrameRef.current) {
             modalFrameRef.current.style.justifyContent = 'flex-start';
@@ -157,9 +161,6 @@ export default function AdaptiveModal({
           baselineHeightRef.current = Math.max(baselineHeightRef.current, currentHeight);
           if (modalFrameRef.current) {
             modalFrameRef.current.style.justifyContent = 'safe center';
-          }
-          if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = userScrollBeforeKeyboardRef.current;
           }
         }
         syncVisualViewportBounds(scrollContainerRef.current, {
@@ -182,7 +183,13 @@ export default function AdaptiveModal({
       });
 
       if (!isKeyboard && scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = userScrollBeforeKeyboardRef.current;
+        const targetScroll = userScrollBeforeKeyboardRef.current;
+        scrollContainerRef.current.scrollTop = targetScroll;
+        window.requestAnimationFrame(() => {
+          if (scrollContainerRef.current && !keyboardOpenRef.current) {
+            scrollContainerRef.current.scrollTop = targetScroll;
+          }
+        });
       }
     };
 
@@ -236,12 +243,12 @@ export default function AdaptiveModal({
     };
   }, [isOpen, viewportMetrics.height]);
 
-  /** Registra la posición voluntaria de scroll del usuario cuando no hay teclado activo */
+  /** Registra la posición voluntaria de scroll del usuario cuando no hay teclado activo o cuando arrastra intencionalmente */
   const handleContainerScroll = () => {
     const container = scrollContainerRef.current;
     if (!container) return;
 
-    if (!viewportMetrics.isKeyboardOpen || isUserDraggingScroll.current) {
+    if (!keyboardOpenRef.current || isUserDraggingScroll.current) {
       userScrollBeforeKeyboardRef.current = container.scrollTop;
     }
   };
