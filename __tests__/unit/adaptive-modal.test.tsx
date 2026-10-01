@@ -59,14 +59,14 @@ describe('AdaptiveModal', () => {
     scrollContainer.dispatchEvent(new Event('scroll'));
 
     // Se simula la apertura del teclado virtual (altura se reduce drásticamente)
-    window.visualViewport!.height = 320;
+    (window.visualViewport as unknown as { height: number }).height = 320;
     window.dispatchEvent(new Event('resize'));
 
-    // Al abrirse el teclado, el scroll programático va a 0 para mostrar el tope
-    expect(scrollContainer.scrollTop).toBe(0);
+    // Al abrirse el teclado, el scroll no salta a 0 forzadamente, manteniéndose en la posición del usuario
+    expect(scrollContainer.scrollTop).toBe(180);
 
     // Se simula el cierre del teclado virtual (altura vuelve a 800)
-    window.visualViewport!.height = 800;
+    (window.visualViewport as unknown as { height: number }).height = 800;
     window.dispatchEvent(new Event('resize'));
 
     // Al cerrarse el teclado, se restaura exactamente la posición previa del usuario (180px)

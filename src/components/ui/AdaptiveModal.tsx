@@ -145,9 +145,6 @@ export default function AdaptiveModal({
           if (modalFrameRef.current) {
             modalFrameRef.current.style.justifyContent = 'flex-start';
           }
-          if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = 0;
-          }
         }
         syncVisualViewportBounds(scrollContainerRef.current, {
           top: currentTop,
