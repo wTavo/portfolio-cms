@@ -1,16 +1,32 @@
 /**
  * @file TopographicBackground.tsx
- * @description Fondo de líneas topográficas dinámicas y curvas de trayectoria profesional con ondulación armónica y halo ambiental.
+ * @description Fondo de líneas topográficas dinámicas y curvas de trayectoria profesional
+ * con ondulación armónica, halo ambiental y optimización de energía para batería móvil (Directivas 3, 13 y 32).
  */
 
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
+
+/** Propiedades para el control del ciclo de vida del fondo topográfico */
+export interface TopographicBackgroundProps {
+  /** Si es true, congela el bucle de animación para ahorrar batería cuando el fondo no es visible */
+  isPaused?: boolean;
+}
 
 /**
  * Componente de fondo con curvas topográficas y de nivel (Topographic Contour Lines).
  * Representa la trayectoria, relieve y crecimiento profesional mediante líneas fluidas elegantes en el lienzo.
+ * Incluye cadencia adaptativa de FPS para móviles, pausa por visibilidad de pestaña y control de reposo.
+ *
+ * @param props - Propiedades de configuración y control de pausa
+ * @returns Elemento JSX con lienzo dinámico y halo ambiental
  */
-export default function TopographicBackground() {
+export default function TopographicBackground({ isPaused = false }: TopographicBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isPausedRef = useRef(isPaused);
+
+  useEffect(() => {
+    isPausedRef.current = isPaused;
+  }, [isPaused]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -20,9 +36,12 @@ export default function TopographicBackground() {
     if (!ctx) return;
 
     let animationFrameId: number;
-    let lastTime = 0;
-    // Cadencia nativa fluida a 60 FPS sincronizada en todos los dispositivos
-    const fpsInterval = 1000 / 60;
+    let lastTime = performance.now();
+
+    // Cadencia adaptativa: 30 FPS en móviles para reducir el consumo de GPU/batería en un 50%, 60 FPS en escritorio
+    const isMobile = window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches;
+    const targetFps = isMobile ? 30 : 60;
+    const fpsInterval = 1000 / targetFps;
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -43,42 +62,13 @@ export default function TopographicBackground() {
       (document.documentElement.getAttribute('data-theme') === 'dark' ||
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-    const themeObserver = new MutationObserver(() => {
-      const themeAttr = document.documentElement.getAttribute('data-theme');
-      isDark = themeAttr === 'dark' || (!themeAttr && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    });
-    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-    const handleResize = () => {
-      if (!canvas) return;
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width * dpr;
-      canvas.height = height * dpr;
-      canvas.style.width = `${width}px`;
-      canvas.style.height = `${height}px`;
-      ctx.scale(dpr, dpr);
-    };
-
-    window.addEventListener('resize', handleResize, { passive: true });
-
-    const render = (time: number) => {
-      if (!prefersReduced) {
-        animationFrameId = requestAnimationFrame(render);
-      }
-
-      const delta = time - lastTime;
-      if (delta < fpsInterval && !prefersReduced) return;
-      lastTime = time - (delta % fpsInterval);
-
+    const drawFrame = (time: number) => {
       ctx.clearRect(0, 0, width, height);
 
-      // Parámetros unificados idénticos para móvil y PC: 7 líneas orgánicas con ondulación fluida
       const lineCount = 7;
       const segmentCount = 16;
       const t = prefersReduced ? 1000 : time * 0.0006;
 
-      // Amplitud de ondas y dispersión vertical simétricas y proporcionales en toda resolución
       const amp1 = 28;
       const amp2 = 14;
       const amp3 = 18;
@@ -86,32 +76,28 @@ export default function TopographicBackground() {
 
       for (let i = 0; i < lineCount; i++) {
         const progress = i / (lineCount - 1);
-        // Franja vertical central simétrica respecto al centro del viewport
         const baseY = height * 0.5 + (progress - 0.5) * spread;
 
-        // Color y transparencia de la curva
         const alpha = Math.sin(progress * Math.PI) * (isDark ? 0.28 : 0.38) + (isDark ? 0.08 : 0.14);
         const strokeColor = isDark
           ? i % 3 === 0
-            ? `rgba(56, 189, 248, ${alpha * 1.25})` // Cian acento
+            ? `rgba(56, 189, 248, ${alpha * 1.25})`
             : i % 3 === 1
-            ? `rgba(99, 102, 241, ${alpha * 0.95})` // Índigo
-            : `rgba(224, 242, 254, ${alpha * 0.75})` // Blanco suave
+            ? `rgba(99, 102, 241, ${alpha * 0.95})`
+            : `rgba(224, 242, 254, ${alpha * 0.75})`
           : i % 3 === 0
-            ? `rgba(37, 99, 235, ${alpha * 1.35})` // Azul vibrante
+            ? `rgba(37, 99, 235, ${alpha * 1.35})`
             : i % 3 === 1
-            ? `rgba(79, 70, 229, ${alpha * 1.15})` // Índigo
-            : `rgba(100, 116, 139, ${alpha * 0.9})`; // Pizarra
+            ? `rgba(79, 70, 229, ${alpha * 1.15})`
+            : `rgba(100, 116, 139, ${alpha * 0.9})`;
 
         ctx.beginPath();
-
         const points: { x: number; y: number }[] = [];
 
         for (let j = 0; j <= segmentCount; j++) {
           const segProgress = j / segmentCount;
           const x = segProgress * width;
 
-          // Ondulación armónica topográfica fluida y elegante
           const wave1 = Math.sin(segProgress * Math.PI * 2.5 + t + i * 0.4) * amp1;
           const wave2 = Math.cos(segProgress * Math.PI * 4 - t * 0.8 + i * 0.25) * amp2;
           const wave3 = Math.sin(segProgress * Math.PI * 1.2 + t * 0.5) * amp3;
@@ -120,7 +106,6 @@ export default function TopographicBackground() {
           points.push({ x, y });
         }
 
-        // Trazado suave con curvas de Bezier cuadráticas continuas
         ctx.moveTo(points[0].x, points[0].y);
         for (let j = 0; j < points.length - 1; j++) {
           const curr = points[j];
@@ -138,18 +123,83 @@ export default function TopographicBackground() {
       }
     };
 
-    if (prefersReduced) {
-      render(0);
-    } else {
+    const themeObserver = new MutationObserver(() => {
+      const themeAttr = document.documentElement.getAttribute('data-theme');
+      isDark = themeAttr === 'dark' || (!themeAttr && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      drawFrame(lastTime || 1000);
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+    // Redimensionamiento con debouncing y umbral vertical para evitar reasignar búfer GPU al ocultarse la barra URL en móvil
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
+    const handleResize = () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (!canvas) return;
+        const newWidth = window.innerWidth;
+        const newHeight = window.innerHeight;
+        // Ignorar variaciones verticales menores a 75px si el ancho no cambió (comportamiento de scroll móvil)
+        if (newWidth === width && Math.abs(newHeight - height) < 75) return;
+
+        width = newWidth;
+        height = newHeight;
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.scale(dpr, dpr);
+
+        drawFrame(lastTime || 1000);
+      }, 150);
+    };
+
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    const render = (time: number) => {
+      if (isPausedRef.current || prefersReduced) return;
+
       animationFrameId = requestAnimationFrame(render);
-    }
+
+      const delta = time - lastTime;
+      if (delta < fpsInterval) return;
+      lastTime = time - (delta % fpsInterval);
+
+      drawFrame(time);
+    };
+
+    const startAnimation = () => {
+      cancelAnimationFrame(animationFrameId);
+      if (prefersReduced) {
+        drawFrame(1000);
+      } else if (!isPausedRef.current && !document.hidden) {
+        lastTime = performance.now();
+        animationFrameId = requestAnimationFrame(render);
+      } else {
+        drawFrame(lastTime || 1000);
+      }
+    };
+
+    // Pausa inmediata cuando la pestaña o aplicación móvil pasa a segundo plano
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        cancelAnimationFrame(animationFrameId);
+      } else if (!isPausedRef.current) {
+        startAnimation();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    startAnimation();
 
     return () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
       themeObserver.disconnect();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, []);
+  }, [isPaused]);
 
   return (
     <div

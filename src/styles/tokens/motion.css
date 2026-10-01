@@ -47,5 +47,41 @@
   z-index: 9999;
 }
 
+/* Animaciones continuas aceleradas exclusivamente por GPU Compositor (Directivas 3 y 13) */
+@keyframes floatSubtle {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
 
+@keyframes bounceIndicator {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(6px);
+  }
+}
 
+.animate-float-subtle {
+  animation: floatSubtle 6.5s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
+}
+
+.animate-bounce-indicator {
+  animation: bounceIndicator 1.8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-subtle,
+  .animate-bounce-indicator {
+    animation: none;
+    will-change: auto;
+  }
+}

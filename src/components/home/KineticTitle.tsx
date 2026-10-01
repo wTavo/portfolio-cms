@@ -188,17 +188,9 @@ export default function KineticTitle({
     <div
       className={`relative w-full flex flex-col items-center justify-center select-none overflow-visible ${className}`}
     >
-      {/* Contenedor central con sutil flotación orgánica acelerada por hardware */}
-      <motion.div
-        animate={{
-          y: [0, -4, 0, 4, 0],
-        }}
-        transition={{
-          duration: 6.5,
-          repeat: Infinity,
-          ease: 'easeInOut',
-        }}
-        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1 sm:gap-y-2 md:gap-y-4 [@media(max-height:540px)]:gap-y-1 z-10 overflow-visible transform-gpu will-change-transform"
+      {/* Contenedor central con sutil flotación orgánica acelerada por hardware (GPU Compositor) */}
+      <div
+        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1 sm:gap-y-2 md:gap-y-4 [@media(max-height:540px)]:gap-y-1 z-10 overflow-visible transform-gpu animate-float-subtle"
       >
         {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
@@ -319,7 +311,7 @@ export default function KineticTitle({
             </svg>
           );
         })}
-      </motion.div>
+      </div>
     </div>
   );
 }

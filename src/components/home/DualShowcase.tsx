@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { motion, AnimatePresence, useAnimate } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
 import { ArrowRightIcon, BrandLogoIcon, ChevronDownIcon, MailIcon, CodeIcon, PaletteIcon, UserIcon } from '../icons/Icons';
@@ -66,12 +66,10 @@ function getCreatorBadge(slug: string, role: string) {
 
 export default function DualShowcase({ data }: DualShowcaseProps) {
   const [currentView, setCurrentView] = useState<'hero' | 'portfolios'>('hero');
-  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loginRedirect, setLoginRedirect] = useState('');
   const [loginInitialError, setLoginInitialError] = useState('');
-  const [arrowScope, animateArrow] = useAnimate();
 
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
@@ -102,38 +100,6 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       }
     }
   }, []);
-
-  // Animación continua y reactiva de la flecha con cadencia armónica idéntica al rebote
-  useEffect(() => {
-    if (!arrowScope.current || currentView !== 'hero') return;
-
-    if (isButtonHovered) {
-      animateArrow(
-        arrowScope.current,
-        { y: 6 },
-        { duration: 0.35, ease: 'easeOut' }
-      );
-    } else {
-      let isCancelled = false;
-      animateArrow(
-        arrowScope.current,
-        { y: 0 },
-        { duration: 0.8, ease: 'easeInOut' }
-      ).then(() => {
-        if (!isCancelled && arrowScope.current) {
-          animateArrow(
-            arrowScope.current,
-            { y: [0, 6, 0] },
-            { repeat: Infinity, duration: 1.6, ease: 'easeInOut' }
-          );
-        }
-      });
-
-      return () => {
-        isCancelled = true;
-      };
-    }
-  }, [isButtonHovered, currentView, animateArrow, arrowScope]);
 
   // Detección bidireccional por IntersectionObserver de alto rendimiento en GPU compositor
   useEffect(() => {
@@ -193,8 +159,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   return (
     <div className="relative w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
-      {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional */}
-      <TopographicBackground />
+      {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional con ahorro de energía */}
+      <TopographicBackground isPaused={currentView !== 'hero' || isContactOpen || isLoginOpen} />
 
       {/* Barra de Navegación Superior Fija */}
       <header
@@ -282,15 +248,12 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           <button
             type="button"
             onClick={scrollToPortfolios}
-            onMouseEnter={() => setIsButtonHovered(true)}
-            onMouseLeave={() => setIsButtonHovered(false)}
-            className="absolute bottom-6 sm:bottom-8 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-(--size-touch-target) sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1.5 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl group active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
+            className="group absolute bottom-6 sm:bottom-8 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-(--size-touch-target) sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1.5 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
             aria-label={i18n.showcase.goToPortfolios}
           >
             <span>{i18n.showcase.goToPortfolios}</span>
             <div
-              ref={arrowScope}
-              className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5"
+              className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5 animate-bounce-indicator group-hover:translate-y-1 group-hover:animate-none transition-transform duration-150"
             >
               <ChevronDownIcon size={20} className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 [@media(max-height:540px)]:w-3.5 [@media(max-height:540px)]:h-3.5" />
             </div>
