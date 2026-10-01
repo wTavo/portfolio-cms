@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { MOTION_DURATIONS } from '../../lib/motion';
+import { MOTION_DURATIONS, MOTION_EASINGS } from '../../lib/motion';
 import { useDocumentScrollLock } from '../../lib/hooks/useDocumentScrollLock';
 
 export interface ModalDialogProps {
@@ -85,7 +85,10 @@ function ModalDialogLayer({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: prefersReducedMotion ? 0 : MOTION_DURATIONS.fast }}
+      transition={{
+        duration: prefersReducedMotion ? 0 : MOTION_DURATIONS.normal,
+        ease: MOTION_EASINGS.standard,
+      }}
       className={`fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none overflow-visible border-0 bg-transparent p-0 text-inherit [&::backdrop]:bg-transparent ${className}`}
       style={{
         position: 'fixed',

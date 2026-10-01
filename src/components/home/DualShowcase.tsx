@@ -274,7 +274,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           id="hero"
           ref={heroRef}
           aria-hidden={isPortfolios}
-          className="w-full h-full min-h-[100dvh] min-h-[100lvh] max-h-[100lvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
+          className="w-full h-full min-h-[100dvh] max-h-[100dvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
         >
           <KineticTitle text={i18n.showcase.title} />
 

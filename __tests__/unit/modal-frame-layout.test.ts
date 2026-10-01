@@ -1,20 +1,43 @@
 import { describe, expect, it } from 'vitest';
-import {
-  MODAL_FRAME_JUSTIFY_CONTENT,
-  MODAL_FRAME_KEYBOARD_JUSTIFY_CONTENT,
-  MODAL_SCROLL_TOUCH_ACTION,
-} from '../../src/lib/modalFrameLayout';
+import { getModalFrameLayout, getModalTouchAction } from '../../src/lib/modalFrameLayout';
 
-describe('modal frame layout', () => {
-  it('uses safe centering as the default layout policy', () => {
-    expect(MODAL_FRAME_JUSTIFY_CONTENT).toBe('safe center');
+describe('getModalTouchAction', () => {
+  it('blocks one-finger browser panning while the modal fits and preserves pinch zoom', () => {
+    expect(getModalTouchAction(true)).toBe('pinch-zoom');
   });
 
-  it('uses top alignment when keyboard is active to ensure a single target position', () => {
-    expect(MODAL_FRAME_KEYBOARD_JUSTIFY_CONTENT).toBe('flex-start');
-  });
-
-  it('allows vertical scrolling and pinch zoom in the modal viewport', () => {
-    expect(MODAL_SCROLL_TOUCH_ACTION).toBe('pan-y pinch-zoom');
+  it('allows vertical panning and pinch zoom when the modal needs scrolling', () => {
+    expect(getModalTouchAction(false)).toBe('pan-y pinch-zoom');
   });
 });
+
+describe('getModalFrameLayout', () => {
+  it('aligns to flex-start at top when the virtual keyboard is open', () => {
+    expect(getModalFrameLayout(true, true)).toEqual({
+      justifyContent: 'flex-start',
+      paddingTop: null,
+    });
+  });
+
+  it('keeps alignment at flex-start without layout shift when autocomplete opens and modal needs scrolling', () => {
+    expect(getModalFrameLayout(false, true)).toEqual({
+      justifyContent: 'flex-start',
+      paddingTop: null,
+    });
+  });
+
+  it('centers a fitting modal when the keyboard is closed', () => {
+    expect(getModalFrameLayout(true, false)).toEqual({
+      justifyContent: 'safe center',
+      paddingTop: null,
+    });
+  });
+
+  it('keeps an oversized modal scrollable from the top when the keyboard is closed', () => {
+    expect(getModalFrameLayout(false, false)).toEqual({
+      justifyContent: 'flex-start',
+      paddingTop: null,
+    });
+  });
+});
+

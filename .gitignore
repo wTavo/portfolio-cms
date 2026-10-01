@@ -26,7 +26,6 @@ worker-configuration.d.ts
 # Dependencies & Package Managers
 # ==============================================================================
 node_modules/
-.pnpm-store/
 .pnp
 .pnp.js
 
