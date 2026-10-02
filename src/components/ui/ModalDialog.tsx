@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { MOTION_DURATIONS, MOTION_EASINGS } from '../../lib/motion';
+import { AnimatePresence, motion, useReducedMotion, useIsPresent } from 'motion/react';
 import { useDocumentScrollLock } from '../../lib/hooks/useDocumentScrollLock';
 
 export interface ModalDialogProps {
@@ -28,6 +27,8 @@ function ModalDialogLayer({
   const openerRef = useRef<HTMLElement | null>(null);
   const backdropPointerIdRef = useRef<number | null>(null);
   const prefersReducedMotion = useReducedMotion();
+  const isPresent = useIsPresent();
+  const [hasEntered, setHasEntered] = useState(false);
 
   // Esta capa permanece montada mientras Motion completa su animación de salida.
   useDocumentScrollLock(true);
@@ -43,7 +44,13 @@ function ModalDialogLayer({
 
     if (!dialog.open) dialog.showModal();
 
+    // Siguiente tick para garantizar que el navegador reconozca el punto de partida blur(0px)
+    const rafId = requestAnimationFrame(() => {
+      setHasEntered(true);
+    });
+
     return () => {
+      cancelAnimationFrame(rafId);
       if (dialog.open) dialog.close();
 
       const opener = openerRef.current;
@@ -76,18 +83,19 @@ function ModalDialogLayer({
     backdropPointerIdRef.current = null;
   };
 
+  const isBackdropActive = hasEntered && isPresent;
+
   return (
     <motion.dialog
       ref={dialogRef}
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       onCancel={handleCancel}
-      initial={{ opacity: 0 }}
+      initial={{ opacity: 1 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{
-        duration: prefersReducedMotion ? 0 : MOTION_DURATIONS.normal,
-        ease: MOTION_EASINGS.standard,
+        duration: prefersReducedMotion ? 0 : 0.5,
       }}
       className={`fixed inset-0 z-50 m-0 h-full w-full max-h-none max-w-none overflow-visible border-0 bg-transparent p-0 text-inherit [&::backdrop]:bg-transparent ${className}`}
       style={{
@@ -104,46 +112,36 @@ function ModalDialogLayer({
         background: 'transparent',
       }}
     >
-      {/* Capa de oscurecimiento y desenfoque óptico progresivo pixel a pixel (Directivas 1, 3, 4, 13) */}
-      <motion.div
+      {/* Capa de oscurecimiento y desenfoque óptico nativo interpolado por GPU (Directivas 1, 3, 4, 13) */}
+      <div
         aria-hidden="true"
         data-modal-backdrop
         onPointerDown={handleBackdropPointerDown}
         onPointerUp={handleBackdropPointerUp}
         onPointerLeave={resetBackdropPointer}
         onPointerCancel={resetBackdropPointer}
-        initial={{
-          opacity: 0,
-          backdropFilter: 'blur(0px)',
-          WebkitBackdropFilter: 'blur(0px)',
+        className="fixed inset-0 touch-none will-change-[backdrop-filter,background-color,opacity]"
+        style={{
+          backdropFilter: isBackdropActive ? 'blur(16px)' : 'blur(0px)',
+          WebkitBackdropFilter: isBackdropActive ? 'blur(16px)' : 'blur(0px)',
+          backgroundColor: isBackdropActive ? 'rgba(0, 0, 0, 0.65)' : 'rgba(0, 0, 0, 0)',
+          opacity: isBackdropActive ? 1 : 0,
+          transition: prefersReducedMotion
+            ? 'none'
+            : 'backdrop-filter 0.5s cubic-bezier(0.16, 1, 0.3, 1), -webkit-backdrop-filter 0.5s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
-        animate={{
-          opacity: 1,
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-        }}
-        exit={{
-          opacity: 0,
-          backdropFilter: 'blur(0px)',
-          WebkitBackdropFilter: 'blur(0px)',
-        }}
-        transition={{
-          duration: prefersReducedMotion ? 0 : 0.35,
-          ease: [0.16, 1, 0.3, 1],
-        }}
-        className="fixed inset-0 touch-none bg-black/65 will-change-[backdrop-filter,opacity]"
       />
       {/* Resplandor radial de difusión que se expande suavemente desde el centro del modal */}
-      <motion.div
+      <div
         aria-hidden="true"
-        initial={{ opacity: 0, scale: 0.6 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
-        transition={{
-          duration: prefersReducedMotion ? 0 : 0.35,
-          ease: [0.16, 1, 0.3, 1],
+        className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,var(--color-brand-accent)/15_0%,transparent_70%)] will-change-[transform,opacity]"
+        style={{
+          transform: isBackdropActive ? 'scale(1)' : 'scale(0.5)',
+          opacity: isBackdropActive ? 1 : 0,
+          transition: prefersReducedMotion
+            ? 'none'
+            : 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
         }}
-        className="fixed inset-0 pointer-events-none bg-[radial-gradient(circle_at_center,var(--color-brand-accent)/10_0%,transparent_70%)] will-change-[transform,opacity]"
       />
       <div className="relative z-10 h-full w-full pointer-events-none [&>*]:pointer-events-auto">
         {children}
