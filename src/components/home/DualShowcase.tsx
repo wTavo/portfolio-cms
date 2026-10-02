@@ -440,21 +440,10 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                 </div>
               </div>
 
-              {/* Pie de Página con Botón de Retorno Accesible */}
-              <div className="pt-2 pb-1 flex flex-col items-center justify-center gap-1.5 shrink-0 select-none">
-                <button
-                  type="button"
-                  onClick={() => changeView('hero')}
-                  className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-bg-subtle)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border-subtle)] hover:border-[var(--color-brand-accent)] text-[11px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-brand-accent)] transition-all duration-150 cursor-pointer shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
-                  aria-label="Volver al inicio"
-                >
-                  <ChevronDownIcon size={13} className="rotate-180 text-[var(--color-brand-accent)] group-hover:-translate-y-0.5 transition-transform duration-150" />
-                  <span>Volver al inicio</span>
-                </button>
-                <footer className="text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70">
-                  <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
-                </footer>
-              </div>
+              {/* Pie de Página */}
+              <footer className="pt-2 pb-1 text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70 shrink-0 select-none">
+                <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
+              </footer>
             </motion.section>
           )}
         </AnimatePresence>
