@@ -86,6 +86,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const [loginInitialError, setLoginInitialError] = useState('');
 
   const isTransitioningRef = useRef(false);
+  const portfoliosContainerRef = useRef<HTMLElement>(null);
   const { creators } = data;
 
   const changeView = useCallback(
@@ -116,17 +117,32 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     }
   }, []);
 
-  // Transición cinemática por rueda de ratón en PC (un solo impulso natural)
+  // Transición cinemática por rueda de ratón en PC (soporta ambas direcciones para máxima intuición)
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (isContactOpen || isLoginOpen) return;
       if (isTransitioningRef.current) return;
-      if (Math.abs(e.deltaY) < 15) return;
+      if (Math.abs(e.deltaY) < 10) return;
 
-      if (e.deltaY > 0 && currentView === 'hero') {
-        changeView('portfolios');
-      } else if (e.deltaY < 0 && currentView === 'portfolios') {
-        changeView('hero');
+      const container = portfoliosContainerRef.current;
+
+      if (currentView === 'hero') {
+        if (e.deltaY > 0) {
+          changeView('portfolios');
+        }
+      } else if (currentView === 'portfolios') {
+        // 1. Rueda hacia arriba en el tope de portafolios regresa a la portada
+        if (e.deltaY < -10) {
+          if (!container || container.scrollTop <= 10) {
+            changeView('hero');
+          }
+        }
+        // 2. Rueda hacia abajo cuando ya se llegó al final de portafolios regresa a la portada (ciclo continuo)
+        else if (e.deltaY > 10) {
+          if (!container || container.scrollHeight - container.scrollTop - container.clientHeight <= 15) {
+            changeView('hero');
+          }
+        }
       }
     };
 
@@ -134,20 +150,60 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     return () => window.removeEventListener('wheel', handleWheel);
   }, [currentView, changeView, isContactOpen, isLoginOpen]);
 
-  // Transición cinemática por gestos táctiles en móvil (preserva pull-to-refresh nativo)
+  // Transición cinemática por gestos táctiles en móvil (detección reactiva en touchmove y touchend)
   useEffect(() => {
     let touchStartY = 0;
     let touchStartX = 0;
+    let hasTriggered = false;
 
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
       touchStartY = e.touches[0].clientY;
       touchStartX = e.touches[0].clientX;
+      hasTriggered = false;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isContactOpen || isLoginOpen || isTransitioningRef.current || hasTriggered) return;
+      if (e.touches.length !== 1) return;
+
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const diffY = touchStartY - currentY;
+      const diffX = touchStartX - currentX;
+
+      // Descartar si el gesto no es predominantemente vertical
+      if (Math.abs(diffY) < Math.abs(diffX) * 1.1) return;
+
+      const container = portfoliosContainerRef.current;
+
+      if (currentView === 'hero') {
+        // En portada: swipe hacia arriba (diffY > 30) avanza a portafolios
+        if (diffY > 30) {
+          hasTriggered = true;
+          changeView('portfolios');
+        }
+        // Swipe hacia abajo en portada: diffY < 0 -> no hace nada para permitir pull-to-refresh nativo
+      } else if (currentView === 'portfolios') {
+        // En portafolios: swipe hacia abajo (diffY < -30) estando en el tope regresa al título
+        if (diffY < -30) {
+          if (!container || container.scrollTop <= 10) {
+            hasTriggered = true;
+            changeView('hero');
+          }
+        }
+        // En portafolios: swipe hacia arriba (diffY > 35) al final del contenedor regresa al título (ciclo continuo)
+        else if (diffY > 35) {
+          if (!container || container.scrollHeight - container.scrollTop - container.clientHeight <= 15) {
+            hasTriggered = true;
+            changeView('hero');
+          }
+        }
+      }
     };
 
     const handleTouchEnd = (e: TouchEvent) => {
-      if (isContactOpen || isLoginOpen) return;
-      if (isTransitioningRef.current) return;
+      if (isContactOpen || isLoginOpen || isTransitioningRef.current || hasTriggered) return;
       if (e.changedTouches.length !== 1) return;
 
       const touchEndY = e.changedTouches[0].clientY;
@@ -155,22 +211,37 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       const diffY = touchStartY - touchEndY;
       const diffX = touchStartX - touchEndX;
 
-      // Descartar si el gesto no es predominantemente vertical
-      if (Math.abs(diffY) < Math.abs(diffX) * 1.2 || Math.abs(diffY) < 30) return;
+      if (Math.abs(diffY) < Math.abs(diffX) * 1.1 || Math.abs(diffY) < 25) return;
 
-      if (diffY > 30 && currentView === 'hero') {
-        changeView('portfolios');
-      } else if (diffY < -30 && currentView === 'portfolios') {
-        changeView('hero');
+      const container = portfoliosContainerRef.current;
+
+      if (currentView === 'hero') {
+        if (diffY > 25) {
+          changeView('portfolios');
+        }
+      } else if (currentView === 'portfolios') {
+        if (diffY < -25) {
+          if (!container || container.scrollTop <= 10) {
+            changeView('hero');
+          }
+        } else if (diffY > 30) {
+          if (!container || container.scrollHeight - container.scrollTop - container.clientHeight <= 15) {
+            changeView('hero');
+          }
+        }
       }
     };
 
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
     window.addEventListener('touchend', handleTouchEnd, { passive: true });
+    window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
     return () => {
       window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('touchcancel', handleTouchEnd);
     };
   }, [currentView, changeView, isContactOpen, isLoginOpen]);
 
@@ -297,6 +368,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             /* Vista 2: Portafolios Gateway */
             <motion.section
               key="portfolios-view"
+              ref={portfoliosContainerRef}
               initial={{ opacity: 0, y: 25 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 25 }}
@@ -379,10 +451,21 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                 </div>
               </div>
 
-              {/* Pie de Página */}
-              <footer className="pt-2 pb-1 text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70 shrink-0 select-none">
-                <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
-              </footer>
+              {/* Pie de Página con Botón de Retorno Accesible */}
+              <div className="pt-2 pb-1 flex flex-col items-center justify-center gap-1.5 shrink-0 select-none">
+                <button
+                  type="button"
+                  onClick={() => changeView('hero')}
+                  className="group inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[var(--color-bg-subtle)] hover:bg-[var(--color-bg-muted)] border border-[var(--color-border-subtle)] hover:border-[var(--color-brand-accent)] text-[11px] font-semibold text-[var(--color-text-secondary)] hover:text-[var(--color-brand-accent)] transition-all duration-150 cursor-pointer shadow-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] active:scale-95"
+                  aria-label="Volver al inicio"
+                >
+                  <ChevronDownIcon size={13} className="rotate-180 text-[var(--color-brand-accent)] group-hover:-translate-y-0.5 transition-transform duration-150" />
+                  <span>Volver al inicio</span>
+                </button>
+                <footer className="text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70">
+                  <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
+                </footer>
+              </div>
             </motion.section>
           )}
         </AnimatePresence>
