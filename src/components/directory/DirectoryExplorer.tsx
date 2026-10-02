@@ -81,7 +81,7 @@ export default function DirectoryExplorer({ initialProfiles = [] }: DirectoryExp
             <button
               onClick={() => setSearchQuery('')}
               className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] cursor-pointer"
-              aria-label="Limpiar búsqueda"
+              aria-label={i18n.directory.clearSearch}
             >
               <XIcon size={16} />
             </button>

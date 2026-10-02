@@ -99,9 +99,9 @@ export default function ThemeToggle() {
       title={isDark ? i18n.theme.light : i18n.theme.dark}
     >
       {isDark ? (
-        <SunIcon size={16} className="text-amber-400" />
+        <SunIcon size={16} className="text-[var(--color-brand-accent)]" />
       ) : (
-        <MoonIcon size={16} className="text-indigo-500" />
+        <MoonIcon size={16} className="text-[var(--color-brand-accent)]" />
       )}
     </button>
   );

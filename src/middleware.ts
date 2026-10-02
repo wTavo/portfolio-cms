@@ -7,6 +7,7 @@ import { defineMiddleware } from 'astro:middleware';
 import { createSupabaseServerClient } from './lib/supabase/client';
 import { ROLES, type UserRole } from './lib/constants';
 import type { GuardUser } from './lib/guards/auth.guard';
+import { securityConfig, buildCspHeader } from './lib/security.config';
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const { url, cookies, redirect, locals } = context;
@@ -78,12 +79,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 6. Ejecutar petición siguiente en la cadena
   const response = await next();
 
-  // 7. Aplicar Security Headers obligatorios (DIR-09)
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+  // 7. Aplicar Security Headers obligatorios y Content-Security-Policy (Directiva 9)
+  for (const [headerName, headerValue] of Object.entries(securityConfig.headers)) {
+    response.headers.set(headerName, headerValue);
+  }
+  response.headers.set('Content-Security-Policy', buildCspHeader());
 
   // 8. Control de Cache por zona de ruta (DIR-18)
   if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/api')) {
