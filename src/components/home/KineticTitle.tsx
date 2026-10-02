@@ -124,12 +124,12 @@ export default function KineticTitle({
   // Constantes de coreografía simultánea:
   // 1. Fase de Dibujo: TODAS las letras se trazan simultáneamente como cables/filamentos iluminados
   const initialDelay = 0.25;
-  const strokeDuration = 2.4; // Ritmo lento, constante y visible de inicio a fin
-  const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s (Momento exacto en que los cables se conectan y cierran el circuito)
+  const strokeDuration = 2.4; // Ritmo constante y visible de inicio a fin
+  const totalStrokeEndTime = initialDelay + strokeDuration; // 2.65s (Momento en que los cables cierran el circuito)
 
-  // 2. Encendido del foco: parpadeo rápido inicial de corriente seguido de una subida lenta de menor a mayor brillo
-  const fillStartDelay = totalStrokeEndTime + 0.10; // La corriente llega de inmediato al completarse la conexión del circuito
-  const fillIgnitionDuration = 1.65; // Duración equilibrada: parpadeo inicial rápido + subida gradual y visible de menor a mayor brillo
+  // 2. Establecimiento de Conexión: La energía fluye y pulsa suavemente mientras el circuito se conecta y estabiliza sin apagarse
+  const fillStartDelay = totalStrokeEndTime; // La corriente fluye de inmediato al completarse el circuito
+  const fillIgnitionDuration = 1.35; // Transición orgánica: pulsaciones de estabilización de energía sin corte ni parpadeo
 
   const [isIntroComplete, setIsIntroComplete] = useState(alreadyPlayed);
 
@@ -246,19 +246,19 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. RESPLANDOR DEL FOCO (Shader compilado por GPU en <defs>) */}
+                    {/* 1. RESPLANDOR DE CONEXIÓN (Shader compilado por GPU en <defs>) */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
                       fill={colors.glowColor}
                       initial={{ opacity: 0 }}
                       animate={{
-                        opacity: [0, 0.95, 0.05, 0.95, 0.12, 0.35, 0.62, 0.88, 1],
+                        opacity: [0, 0.42, 0.32, 0.74, 0.64, 0.88, 1],
                       }}
                       transition={{
                         duration: fillIgnitionDuration,
                         delay: fillDelay,
-                        times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
+                        times: [0, 0.18, 0.32, 0.52, 0.68, 0.84, 1],
                         ease: 'easeInOut',
                       }}
                       filter={`url(#bulb-glow-${wordIdx})`}
@@ -316,18 +316,18 @@ export default function KineticTitle({
                       </g>
                     ))}
 
-                    {/* 3. RELLENO SÓLIDO NÍTIDO (Parpadeo eléctrico y corriente con opacidad en GPU) */}
+                    {/* 3. RELLENO SÓLIDO (Corriente eléctrica que fluye, pulsa y consolida la conexión sin apagarse) */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
                       initial={{ opacity: 0 }}
                       animate={{
-                        opacity: [0, 0.85, 0.08, 0.90, 0.16, 0.35, 0.58, 0.82, 1],
+                        opacity: [0, 0.48, 0.38, 0.78, 0.68, 0.92, 1],
                       }}
                       transition={{
                         duration: fillIgnitionDuration,
                         delay: fillDelay,
-                        times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
+                        times: [0, 0.18, 0.32, 0.52, 0.68, 0.84, 1],
                         ease: 'easeInOut',
                       }}
                       fill={colors.primary}
