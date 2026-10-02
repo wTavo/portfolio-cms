@@ -132,19 +132,28 @@ export default function KineticTitle({
   const fillDuration = 1.6; // Duración gradual y continua de la iluminación suave de 0% a 100%
 
   const [isIntroComplete, setIsIntroComplete] = useState(alreadyPlayed);
+  const [isFloatingActive, setIsFloatingActive] = useState(alreadyPlayed);
 
   useEffect(() => {
-    if (alreadyPlayed) return;
+    if (alreadyPlayed) {
+      setIsIntroComplete(true);
+      setIsFloatingActive(true);
+      return;
+    }
 
+    // El movimiento y la finalización de la intro ocurren ESTRICTAMENTE después de que las letras se iluminaron por completo
+    const totalTimeMs = (fillStartDelay + fillDuration) * 1000;
     const timer = setTimeout(() => {
       hasCompletedKineticIntro = true;
       setIsIntroComplete(true);
-    }, (fillStartDelay + fillDuration) * 1000);
+      // Breve pausa con el texto completamente iluminado antes de iniciar la sutil flotación orgánica
+      setTimeout(() => {
+        setIsFloatingActive(true);
+      }, 300);
+    }, totalTimeMs);
 
     return () => {
       clearTimeout(timer);
-      hasCompletedKineticIntro = true;
-      setIsIntroComplete(true);
     };
   }, [alreadyPlayed, fillStartDelay, fillDuration]);
 
@@ -186,10 +195,10 @@ export default function KineticTitle({
     <div
       className={`relative w-full flex flex-col items-center justify-center select-none overflow-visible ${className}`}
     >
-      {/* Contenedor central con sutil flotación orgánica que se activa una vez iluminado el título (Directivas 3 y 13) */}
+      {/* Contenedor central: la flotación orgánica solo inicia ESTRICTAMENTE después de que las letras están iluminadas (Directivas 3 y 13) */}
       <div
         className={`relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1 sm:gap-y-2 md:gap-y-4 [@media(max-height:540px)]:gap-y-1 z-10 overflow-visible transform-gpu ${
-          isIntroComplete ? 'animate-float-subtle' : ''
+          isFloatingActive ? 'animate-float-subtle' : ''
         }`}
       >
         {wordsLayout.map((wordLayout, wordIdx) => {
