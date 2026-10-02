@@ -6,10 +6,17 @@ on:
   pull_request:
     branches: [main, dev]
 
+permissions:
+  contents: read
+
 jobs:
   validate:
     name: Typecheck, Test & Build
     runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: "https://mock.supabase.co"
+      SUPABASE_ANON_KEY: "mock-anon-key"
+      PUBLIC_SITE_URL: "https://portfolio-builder.pages.dev"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,7 +24,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22.x
+          node-version: 22
           cache: 'npm'
 
       - name: Install dependencies
@@ -31,3 +38,4 @@ jobs:
 
       - name: Production build (Astro Cloudflare)
         run: npm run build
+
