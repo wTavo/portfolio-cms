@@ -75,6 +75,7 @@ export default function AdaptiveModal({
   const isSwitchingInputRef = useRef(false);
   const activeInputRef = useRef<HTMLElement | null>(null);
   const focusSettleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const updateMetricsRef = useRef<(() => void) | null>(null);
 
   /** Altura base del viewport sin teclado virtual activo */
   const baselineHeightRef = useRef<number>(
@@ -198,9 +199,11 @@ export default function AdaptiveModal({
     window.addEventListener('resize', onVisualViewportChange);
     window.addEventListener('scroll', onVisualViewportChange, { passive: true });
 
+    updateMetricsRef.current = updateMetrics;
     updateMetrics();
 
     return () => {
+      updateMetricsRef.current = null;
       if (window.visualViewport) {
         window.visualViewport.removeEventListener('resize', onVisualViewportChange);
         window.visualViewport.removeEventListener('scroll', onVisualViewportChange);
@@ -225,7 +228,14 @@ export default function AdaptiveModal({
         Number.parseFloat(frameStyle.paddingTop) +
         Number.parseFloat(frameStyle.paddingBottom);
       const availableHeight = Math.max(0, scrollContainer.clientHeight - verticalPadding);
-      setModalFits(modal.offsetHeight <= availableHeight);
+      const fits = modal.offsetHeight <= availableHeight;
+      setModalFits(fits);
+
+      // Si el scroll supera el rango máximo permitido por la nueva altura, acotarlo
+      const maxScroll = Math.max(0, scrollContainer.scrollHeight - scrollContainer.clientHeight);
+      if (scrollContainer.scrollTop > maxScroll) {
+        scrollContainer.scrollTop = maxScroll;
+      }
     };
 
     checkFit();
@@ -261,7 +271,8 @@ export default function AdaptiveModal({
       focusSettleTimerRef.current = setTimeout(() => {
         isSwitchingInputRef.current = false;
         focusSettleTimerRef.current = null;
-      }, 250);
+        updateMetricsRef.current?.();
+      }, 100);
     }
     activeInputRef.current = target;
   };
