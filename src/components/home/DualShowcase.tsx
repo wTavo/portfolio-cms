@@ -74,6 +74,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const portfoliosRef = useRef<HTMLElement>(null);
+  const navBackdropRef = useRef<HTMLDivElement>(null);
 
   const { creators } = data;
 
@@ -83,6 +84,39 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
   const scrollToPortfolios = useCallback(() => {
     portfoliosRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  // Desenfoque y fondo progresivo gradual en GPU compositor vinculado al desplazamiento (Directivas 1, 3, 13)
+  useEffect(() => {
+    const container = containerRef.current;
+    const navBackdrop = navBackdropRef.current;
+    if (!container || !navBackdrop) return;
+
+    let rafId: number | null = null;
+
+    const updateBlurProgress = () => {
+      const scrollTop = container.scrollTop;
+      // Umbral de transición: de 0px (0% blur) a 140px (100% blur) de forma suave y proporcional
+      const maxDistance = 140;
+      const progress = Math.min(1, Math.max(0, scrollTop / maxDistance));
+      
+      navBackdrop.style.opacity = progress.toString();
+      rafId = null;
+    };
+
+    const handleScroll = () => {
+      if (rafId === null) {
+        rafId = requestAnimationFrame(updateBlurProgress);
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    updateBlurProgress();
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   // Detección de apertura de modal por URL (?login=true o ?error=...)
@@ -168,12 +202,12 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           isPortfolios ? 'py-2 sm:py-3' : 'py-2 sm:py-3.5 md:py-5'
         }`}
       >
-        {/* Capa de fondo con desenfoque (blur) y sombra con transición de opacidad suave acelerada por GPU (Directivas 1, 3, 4) */}
+        {/* Capa de fondo con desenfoque (blur) y sombra progresiva en GPU vinculada al desplazamiento (Directivas 1, 3, 4, 13) */}
         <div
+          ref={navBackdropRef}
           aria-hidden="true"
-          className={`absolute inset-0 pointer-events-none bg-[var(--color-bg-base)]/90 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] transition-opacity duration-300 ease-out ${
-            isPortfolios ? 'opacity-100' : 'opacity-0'
-          }`}
+          className="absolute inset-0 pointer-events-none bg-[var(--color-bg-base)]/90 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] will-change-[opacity]"
+          style={{ opacity: 0 }}
         />
 
         <div className="relative z-10 max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
