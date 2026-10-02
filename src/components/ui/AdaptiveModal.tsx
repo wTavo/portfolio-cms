@@ -328,15 +328,15 @@ export default function AdaptiveModal({
             }
           }}
         >
-          {/* Tarjeta Modal Flotante */}
+          {/* Tarjeta Modal Flotante (Directivas 1, 3, 4, 12) */}
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 6 }}
+            exit={{ opacity: 0, scale: 0.97, y: 4 }}
             transition={{
-              duration: prefersReducedMotion ? 0 : 0.35,
-              ease: [0.16, 1, 0.3, 1],
+              duration: prefersReducedMotion ? 0 : 0.25,
+              ease: [0.2, 0, 0, 1],
             }}
             className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
           >

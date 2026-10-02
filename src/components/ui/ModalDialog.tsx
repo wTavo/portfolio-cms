@@ -104,6 +104,7 @@ function ModalDialogLayer({
         background: 'transparent',
       }}
     >
+      {/* Capa de oscurecimiento y desenfoque óptico ultra-suave (Directivas 1, 3, 4, 13) */}
       <motion.div
         aria-hidden="true"
         data-modal-backdrop
@@ -111,23 +112,26 @@ function ModalDialogLayer({
         onPointerUp={handleBackdropPointerUp}
         onPointerLeave={resetBackdropPointer}
         onPointerCancel={resetBackdropPointer}
-        initial={{
-          opacity: 0,
-          clipPath: 'circle(10% at 50% 50%)',
-        }}
-        animate={{
-          opacity: 1,
-          clipPath: 'circle(150% at 50% 50%)',
-        }}
-        exit={{
-          opacity: 0,
-          clipPath: 'circle(10% at 50% 50%)',
-        }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={{
-          duration: prefersReducedMotion ? 0 : 0.4,
-          ease: [0.16, 1, 0.3, 1],
+          duration: prefersReducedMotion ? 0 : 0.28,
+          ease: [0.2, 0, 0, 1],
         }}
-        className="fixed inset-0 touch-none bg-black/65 backdrop-blur-md will-change-[clip-path,opacity]"
+        className="fixed inset-0 touch-none bg-black/65 backdrop-blur-md will-change-[opacity]"
+      />
+      {/* Resplandor radial de difusión que se expande suavemente detrás de la tarjeta */}
+      <motion.div
+        aria-hidden="true"
+        initial={{ opacity: 0, scale: 0.7 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.85 }}
+        transition={{
+          duration: prefersReducedMotion ? 0 : 0.32,
+          ease: [0.2, 0, 0, 1],
+        }}
+        className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_center,var(--color-brand-accent)/10_0%,transparent_70%)] will-change-[transform,opacity]"
       />
       <div className="relative z-10 h-full w-full pointer-events-none [&>*]:pointer-events-auto">
         {children}
