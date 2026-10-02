@@ -3,7 +3,7 @@
  * @description Portal interactivo con animación cinemática fluida basada en scroll-snap nativo por hardware (120 FPS) y título con física cinética.
  */
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
@@ -11,9 +11,11 @@ import { ArrowRightIcon, BrandLogoIcon, ChevronDownIcon, MailIcon, CodeIcon, Pal
 import KineticTitle from './KineticTitle';
 import TopographicBackground from './TopographicBackground';
 import ThemeToggle from '../ui/ThemeToggle';
-import ContactModal from './ContactModal';
-import LoginModal from './LoginModal';
 import { MOTION_DURATIONS, MOTION_EASINGS } from '../../lib/motion';
+
+// Carga diferida (code-splitting) de modales para acelerar el primer render en móviles y PC
+const ContactModal = lazy(() => import('./ContactModal'));
+const LoginModal = lazy(() => import('./LoginModal'));
 
 interface DualShowcaseProps {
   data: ShowcaseData;
@@ -101,6 +103,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       const progress = Math.min(1, Math.max(0, scrollTop / maxDistance));
       
       navBackdrop.style.opacity = progress.toString();
+      // Ocultar completamente el backdrop cuando la opacidad es 0 para que la GPU no gaste ciclos de desenfoque
+      navBackdrop.style.visibility = progress > 0 ? 'visible' : 'hidden';
       rafId = null;
     };
 
@@ -194,7 +198,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   return (
     <div className="relative w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
       {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional con animación continua fluida */}
-      <TopographicBackground />
+      <TopographicBackground isPaused={isContactOpen || isLoginOpen} />
 
       {/* Barra de Navegación Superior Fija */}
       <header
@@ -207,7 +211,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           ref={navBackdropRef}
           aria-hidden="true"
           className="absolute inset-0 pointer-events-none bg-[var(--color-bg-base)]/90 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] will-change-[opacity]"
-          style={{ opacity: 0 }}
+          style={{ opacity: 0, visibility: 'hidden' }}
         />
 
         <div className="relative z-10 max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -316,7 +320,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                   <a
                     key={creator.id}
                     href={`/${creator.slug}`}
-                    className={`group relative flex flex-col justify-between p-4.5 sm:p-6 md:p-8 [@media(max-height:540px)]:p-3.5 rounded-[var(--radius-2xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-md hover:shadow-xl ${badge.hoverShadow} ${badge.hoverBorder} transition-all duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
+                    className={`group relative flex flex-col justify-between p-4.5 sm:p-6 md:p-8 [@media(max-height:540px)]:p-3.5 rounded-[var(--radius-2xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-md hover:shadow-xl ${badge.hoverShadow} ${badge.hoverBorder} transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
                   >
                     {/* Contenido Superior de la Tarjeta */}
                     <div className="relative z-10 space-y-2.5 sm:space-y-4 [@media(max-height:540px)]:space-y-1.5">
@@ -380,14 +384,16 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </section>
       </div>
 
-      {/* Modales Accesibles de Contacto e Inicio de Sesión */}
-      <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
-      <LoginModal
-        isOpen={isLoginOpen}
-        onClose={() => setIsLoginOpen(false)}
-        redirectUrl={loginRedirect}
-        initialError={loginInitialError}
-      />
+      {/* Modales Accesibles de Contacto e Inicio de Sesión cargados bajo demanda */}
+      <Suspense fallback={null}>
+        <ContactModal isOpen={isContactOpen} onClose={() => setIsContactOpen(false)} />
+        <LoginModal
+          isOpen={isLoginOpen}
+          onClose={() => setIsLoginOpen(false)}
+          redirectUrl={loginRedirect}
+          initialError={loginInitialError}
+        />
+      </Suspense>
     </div>
   );
 }

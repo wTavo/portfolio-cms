@@ -23,9 +23,15 @@ export interface TopographicBackgroundProps {
 export default function TopographicBackground({ isPaused = false }: TopographicBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isPausedRef = useRef(isPaused);
+  const resumeAnimationRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
+    const wasPaused = isPausedRef.current;
     isPausedRef.current = isPaused;
+    // Si se despausa y existe una función de reanudación registrada, reactivar el bucle
+    if (wasPaused && !isPaused && resumeAnimationRef.current) {
+      resumeAnimationRef.current();
+    }
   }, [isPaused]);
 
   useEffect(() => {
@@ -63,11 +69,15 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
       (document.documentElement.getAttribute('data-theme') === 'dark' ||
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
+    // Búferes tipados estáticos pre-asignados para erradicar el memory churn y evitar pausas de Garbage Collection (GC) en móviles
+    const lineCount = 7;
+    const segmentCount = 16;
+    const pointsX = new Float32Array(segmentCount + 1);
+    const pointsY = new Float32Array(segmentCount + 1);
+
     const drawFrame = (virtualTime: number) => {
       ctx.clearRect(0, 0, width, height);
 
-      const lineCount = 7;
-      const segmentCount = 16;
       const t = prefersReduced ? 1000 : virtualTime * 0.0006;
 
       const amp1 = 28;
@@ -92,30 +102,30 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
             ? `rgba(79, 70, 229, ${alpha * 1.15})`
             : `rgba(100, 116, 139, ${alpha * 0.9})`;
 
-        ctx.beginPath();
-        const points: { x: number; y: number }[] = [];
-
+        // Cálculo in-place sin crear objetos ni arrays intermedios en el heap de JavaScript
         for (let j = 0; j <= segmentCount; j++) {
           const segProgress = j / segmentCount;
-          const x = segProgress * width;
+          pointsX[j] = segProgress * width;
 
           const wave1 = Math.sin(segProgress * Math.PI * 2.5 + t + i * 0.4) * amp1;
           const wave2 = Math.cos(segProgress * Math.PI * 4 - t * 0.8 + i * 0.25) * amp2;
           const wave3 = Math.sin(segProgress * Math.PI * 1.2 + t * 0.5) * amp3;
 
-          const y = baseY + wave1 + wave2 + wave3;
-          points.push({ x, y });
+          pointsY[j] = baseY + wave1 + wave2 + wave3;
         }
 
-        ctx.moveTo(points[0].x, points[0].y);
-        for (let j = 0; j < points.length - 1; j++) {
-          const curr = points[j];
-          const next = points[j + 1];
-          const midX = (curr.x + next.x) / 2;
-          const midY = (curr.y + next.y) / 2;
-          ctx.quadraticCurveTo(curr.x, curr.y, midX, midY);
+        ctx.beginPath();
+        ctx.moveTo(pointsX[0], pointsY[0]);
+        for (let j = 0; j < segmentCount; j++) {
+          const currX = pointsX[j];
+          const currY = pointsY[j];
+          const nextX = pointsX[j + 1];
+          const nextY = pointsY[j + 1];
+          const midX = (currX + nextX) * 0.5;
+          const midY = (currY + nextY) * 0.5;
+          ctx.quadraticCurveTo(currX, currY, midX, midY);
         }
-        ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+        ctx.lineTo(pointsX[segmentCount], pointsY[segmentCount]);
 
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = i % 4 === 0 ? (isDark ? 1.5 : 1.7) : (isDark ? 0.9 : 1.15);
@@ -195,9 +205,11 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    resumeAnimationRef.current = startAnimation;
     startAnimation();
 
     return () => {
+      resumeAnimationRef.current = null;
       if (resizeTimer) clearTimeout(resizeTimer);
       themeObserver.disconnect();
       document.removeEventListener('visibilitychange', handleVisibilityChange);

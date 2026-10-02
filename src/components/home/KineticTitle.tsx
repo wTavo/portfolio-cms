@@ -204,7 +204,7 @@ export default function KineticTitle({
             ? 'w-full max-w-5xl max-h-[min(15dvh,160px)] [@media(max-height:540px)]:max-h-[46px] h-auto object-contain'
             : 'w-[90%] max-w-4xl max-h-[min(13dvh,140px)] [@media(max-height:540px)]:max-h-[38px] h-auto object-contain';
 
-          return (
+            return (
             <svg
               key={`word-svg-${wordLayout.word}-${wordIdx}`}
               viewBox={`0 75 ${wordLayout.totalWidth} 750`}
@@ -223,24 +223,18 @@ export default function KineticTitle({
                 </filter>
               </defs>
 
-              {wordLayout.letters.map((letter) => {
-                // Tiempos coordinados de trazado y posterior iluminación suave
+              {/* Tiempos coordinados de trazado y posterior iluminación suave */}
+              {(() => {
                 const strokeDelay = alreadyPlayed ? 0 : initialDelay;
                 const fillDelay = alreadyPlayed ? 0 : fillStartDelay;
                 const activeStrokeDuration = alreadyPlayed ? 0 : strokeDuration;
                 const activeFillDuration = alreadyPlayed ? 0 : fillDuration;
 
                 return (
-                  <g
-                    key={`letter-group-${wordIdx}-${letter.charIndex}-${letter.char}`}
-                    transform={`translate(${letter.x}, 0)`}
-                    className="overflow-visible"
-                  >
-                    {/* 1. RESPLANDOR (Se ilumina suavemente poco a poco) */}
-                    <motion.path
-                      d={letter.d}
-                      fillRule="nonzero"
-                      fill={colors.glowColor}
+                  <>
+                    {/* 1. CAPA DE RESPLANDOR AGRUPADA POR PALABRA (1 único pase de filtro GPU por palabra en vez de 7) */}
+                    <motion.g
+                      filter={`url(#bulb-glow-${wordIdx})`}
                       initial={alreadyPlayed ? false : { opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{
@@ -248,65 +242,80 @@ export default function KineticTitle({
                         delay: fillDelay,
                         ease: [0.2, 0, 0, 1],
                       }}
-                      filter={`url(#bulb-glow-${wordIdx})`}
                       className="pointer-events-none"
-                    />
+                    >
+                      {wordLayout.letters.map((letter) => (
+                        <path
+                          key={`glow-letter-${wordIdx}-${letter.charIndex}`}
+                          d={letter.d}
+                          transform={`translate(${letter.x}, 0)`}
+                          fillRule="nonzero"
+                          fill={colors.glowColor}
+                        />
+                      ))}
+                    </motion.g>
 
-                    {/* 2. SILUETA DEL MOLDE (Trazado de cables y filamentos iluminados con técnica Multi-Stroke a 120 FPS sin filtros lentos) */}
-                    {letter.subpaths.map((subD, subIdx) => (
-                      <g key={`mold-strokes-${subIdx}`}>
-                        {/* Resplandor exterior difuso */}
-                        <motion.path
-                          d={subD}
-                          initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: 0.45 }}
-                          transition={{
-                            pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
-                            opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
-                          }}
-                          stroke={colors.glowStroke}
-                          strokeWidth={7}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="transparent"
-                        />
-                        {/* Resplandor medio */}
-                        <motion.path
-                          d={subD}
-                          initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: 0.75 }}
-                          transition={{
-                            pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
-                            opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
-                          }}
-                          stroke={colors.glowStroke}
-                          strokeWidth={4}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="transparent"
-                        />
-                        {/* Núcleo del filamento nítido */}
-                        <motion.path
-                          d={subD}
-                          initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
-                          animate={{ pathLength: 1, opacity: 1 }}
-                          transition={{
-                            pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
-                            opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
-                          }}
-                          stroke={colors.stroke}
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          fill="transparent"
-                        />
+                    {/* 2. SILUETA DEL MOLDE (Trazado simultáneo de cables y filamentos con técnica Multi-Stroke a 120 FPS) */}
+                    {wordLayout.letters.map((letter) => (
+                      <g
+                        key={`letter-mold-${wordIdx}-${letter.charIndex}-${letter.char}`}
+                        transform={`translate(${letter.x}, 0)`}
+                        className="overflow-visible"
+                      >
+                        {letter.subpaths.map((subD, subIdx) => (
+                          <g key={`mold-strokes-${subIdx}`}>
+                            {/* Resplandor exterior difuso */}
+                            <motion.path
+                              d={subD}
+                              initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
+                              animate={{ pathLength: 1, opacity: 0.45 }}
+                              transition={{
+                                pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
+                                opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
+                              }}
+                              stroke={colors.glowStroke}
+                              strokeWidth={7}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              fill="transparent"
+                            />
+                            {/* Resplandor medio */}
+                            <motion.path
+                              d={subD}
+                              initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
+                              animate={{ pathLength: 1, opacity: 0.75 }}
+                              transition={{
+                                pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
+                                opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
+                              }}
+                              stroke={colors.glowStroke}
+                              strokeWidth={4}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              fill="transparent"
+                            />
+                            {/* Núcleo del filamento nítido */}
+                            <motion.path
+                              d={subD}
+                              initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
+                              animate={{ pathLength: 1, opacity: 1 }}
+                              transition={{
+                                pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
+                                opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
+                              }}
+                              stroke={colors.stroke}
+                              strokeWidth={2}
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              fill="transparent"
+                            />
+                          </g>
+                        ))}
                       </g>
                     ))}
 
-                    {/* 3. RELLENO SÓLIDO (Se ilumina suavemente poco a poco hasta el 100% de brillo) */}
-                    <motion.path
-                      d={letter.d}
-                      fillRule="nonzero"
+                    {/* 3. CAPA DE RELLENO SÓLIDO AGRUPADA POR PALABRA (Iluminación simultánea suave sin carga múltiple de observers) */}
+                    <motion.g
                       initial={alreadyPlayed ? false : { opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{
@@ -314,13 +323,22 @@ export default function KineticTitle({
                         delay: fillDelay,
                         ease: [0.2, 0, 0, 1],
                       }}
-                      fill={colors.primary}
-                      stroke={colors.primary}
-                      strokeWidth={1}
-                    />
-                  </g>
+                    >
+                      {wordLayout.letters.map((letter) => (
+                        <path
+                          key={`fill-letter-${wordIdx}-${letter.charIndex}`}
+                          d={letter.d}
+                          transform={`translate(${letter.x}, 0)`}
+                          fillRule="nonzero"
+                          fill={colors.primary}
+                          stroke={colors.primary}
+                          strokeWidth={1}
+                        />
+                      ))}
+                    </motion.g>
+                  </>
                 );
-              })}
+              })()}
             </svg>
           );
         })}
