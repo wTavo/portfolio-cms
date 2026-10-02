@@ -131,12 +131,10 @@ export default function KineticTitle({
   const fillStartDelay = totalStrokeEndTime; // Inicia justo al completarse el trazado de las líneas
   const fillDuration = 1.6; // Duración gradual y continua de la iluminación suave de 0% a 100%
 
-  const [isIntroComplete, setIsIntroComplete] = useState(alreadyPlayed);
   const [isFloatingActive, setIsFloatingActive] = useState(alreadyPlayed);
 
   useEffect(() => {
     if (alreadyPlayed) {
-      setIsIntroComplete(true);
       setIsFloatingActive(true);
       return;
     }
@@ -145,7 +143,6 @@ export default function KineticTitle({
     const totalTimeMs = (fillStartDelay + fillDuration) * 1000;
     const timer = setTimeout(() => {
       hasCompletedKineticIntro = true;
-      setIsIntroComplete(true);
       // Breve pausa con el texto completamente iluminado antes de iniciar la sutil flotación orgánica
       setTimeout(() => {
         setIsFloatingActive(true);
