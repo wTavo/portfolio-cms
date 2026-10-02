@@ -78,13 +78,17 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const navBackdropRef = useRef<HTMLDivElement>(null);
 
   const { creators } = data;
+  const isTransitioningRef = useRef(false);
 
   const scrollToHero = useCallback(() => {
-    heroRef.current?.scrollIntoView({ behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
   const scrollToPortfolios = useCallback(() => {
-    portfoliosRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const portfolioElem = portfoliosRef.current;
+    if (portfolioElem) {
+      window.scrollTo({ top: portfolioElem.offsetTop, behavior: 'smooth' });
+    }
   }, []);
 
   // Desenfoque y fondo progresivo gradual en GPU compositor vinculado al desplazamiento del navegador (Directivas 1, 3, 13)
@@ -190,6 +194,91 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentView, scrollToHero, scrollToPortfolios, isContactOpen, isLoginOpen]);
 
+  // Transición automática suave en PC con rueda de ratón (un solo gesto natural)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (isContactOpen || isLoginOpen) return;
+      if (isTransitioningRef.current) return;
+
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
+
+      // En la zona del título/hero: cualquier impulso de rueda hacia abajo avanza automáticamente a portafolios
+      if (scrollTop < heroHeight * 0.45 && e.deltaY > 12) {
+        isTransitioningRef.current = true;
+        scrollToPortfolios();
+        setTimeout(() => {
+          isTransitioningRef.current = false;
+        }, 850);
+      }
+      // En la parte superior de portafolios: rueda hacia arriba regresa a la portada
+      else if (scrollTop <= heroHeight + 50 && scrollTop >= heroHeight * 0.5 && e.deltaY < -12) {
+        isTransitioningRef.current = true;
+        scrollToHero();
+        setTimeout(() => {
+          isTransitioningRef.current = false;
+        }, 850);
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: true });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [isContactOpen, isLoginOpen, scrollToHero, scrollToPortfolios]);
+
+  // Transición automática suave en móvil mediante gesto táctil sin interferir con pull-to-refresh
+  useEffect(() => {
+    let touchStartY = 0;
+    let touchStartX = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      touchStartY = e.touches[0].clientY;
+      touchStartX = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isContactOpen || isLoginOpen) return;
+      if (isTransitioningRef.current) return;
+      if (e.changedTouches.length !== 1) return;
+
+      const touchEndY = e.changedTouches[0].clientY;
+      const touchEndX = e.changedTouches[0].clientX;
+      const deltaY = touchStartY - touchEndY;
+      const deltaX = touchStartX - touchEndX;
+
+      // Descartar si el gesto no es predominantemente vertical
+      if (Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return;
+
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
+
+      // En portada: swipe hacia arriba de más de 30px avanza automáticamente a portafolios
+      if (scrollTop < heroHeight * 0.4 && deltaY > 30) {
+        isTransitioningRef.current = true;
+        scrollToPortfolios();
+        setTimeout(() => {
+          isTransitioningRef.current = false;
+        }, 850);
+      }
+      // En portafolios: swipe hacia abajo en el tope regresa a la portada
+      else if (scrollTop <= heroHeight + 50 && scrollTop >= heroHeight * 0.5 && deltaY < -35) {
+        isTransitioningRef.current = true;
+        scrollToHero();
+        setTimeout(() => {
+          isTransitioningRef.current = false;
+        }, 850);
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isContactOpen, isLoginOpen, scrollToHero, scrollToPortfolios]);
+
   const isPortfolios = currentView === 'portfolios';
 
   return (
@@ -270,7 +359,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           id="hero"
           ref={heroRef}
           aria-hidden={isPortfolios}
-          className="w-full min-h-[100dvh] max-h-[100dvh] snap-start snap-always relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
+          className="w-full min-h-[100dvh] max-h-[100dvh] snap-start relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
         >
           <KineticTitle text={i18n.showcase.title} />
 
@@ -295,7 +384,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           id="portafolios"
           ref={portfoliosRef}
           aria-hidden={!isPortfolios}
-          className="w-full min-h-[100dvh] snap-start snap-always relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-18 md:pt-20 pb-6 sm:pb-8 pb-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-3"
+          className="w-full min-h-[100dvh] snap-start relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-18 md:pt-20 pb-6 sm:pb-8 pb-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-3"
         >
           <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
