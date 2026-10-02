@@ -265,35 +265,35 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       {/* Fondo Topográfico Fijo con curvas dinámicas a 120 FPS */}
       <TopographicBackground isPaused={isContactOpen || isLoginOpen} />
 
-      {/* Barra de Navegación Superior Fija */}
+      {/* Barra de Navegación Superior Fija con Altura Constante Inmóvil */}
       <header
-        className={`fixed top-0 left-0 right-0 z-40 py-2 sm:py-3 transition-[background-color,border-color,box-shadow] duration-300 ${
+        className={`fixed top-0 left-0 right-0 z-40 h-14 sm:h-16 [@media(max-height:540px)]:h-12 transition-[background-color,border-color,box-shadow] duration-300 ${
           isPortfolios
             ? 'bg-[var(--color-bg-base)]/90 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[var(--shadow-card)]'
             : 'bg-transparent border-b border-transparent'
         }`}
       >
-        <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="w-full max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">
           {/* Título en la barra superior: Visible exclusivamente en la vista de portafolios */}
-          <div className="flex items-center min-h-[40px]">
+          <div className="flex items-center h-full min-w-0">
             <AnimatePresence mode="wait">
               {isPortfolios && (
                 <motion.button
                   key="header-brand"
                   type="button"
                   onClick={() => changeView('hero')}
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
-                  className="group flex items-center gap-3 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1 -ml-1"
+                  className="group flex items-center gap-2.5 sm:gap-3 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1 -ml-1 select-none"
                   aria-label="Volver al inicio"
                 >
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)]/60 shadow-[var(--shadow-card)] flex items-center justify-center transition-[border-color,transform] duration-150 group-hover:scale-105">
-                    <BrandLogoIcon size={20} className="w-5 h-5 text-[var(--color-text-primary)]" />
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)]/60 shadow-[var(--shadow-card)] flex items-center justify-center transition-[border-color,transform] duration-150 group-hover:scale-105 shrink-0">
+                    <BrandLogoIcon size={18} className="w-4.5 h-4.5 text-[var(--color-text-primary)]" />
                   </div>
 
-                  <span className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-none select-none">
+                  <span className="text-sm sm:text-base md:text-lg font-extrabold tracking-tight text-[var(--color-text-primary)] leading-none select-none truncate">
                     {i18n.showcase.title}
                   </span>
                 </motion.button>
@@ -301,8 +301,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             </AnimatePresence>
           </div>
 
-          {/* Acciones de la barra superior: Tema, Contacto y Acceso */}
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          {/* Acciones de la barra superior: Tema, Contacto y Acceso (Rígidamente inmóviles) */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 h-full">
             <ThemeToggle />
 
             <button
