@@ -110,8 +110,6 @@ export default function AdaptiveModal({
       const vv = window.visualViewport;
       const currentHeight = Math.round(vv?.height ?? window.innerHeight);
       const currentWidth = Math.round(vv?.width ?? window.innerWidth);
-      const currentTop = Math.round(vv?.offsetTop ?? 0);
-      const currentLeft = Math.round(vv?.offsetLeft ?? 0);
 
       // Detección de rotación de pantalla (Directiva 32)
       if (Math.abs(window.innerWidth - lastWindowWidth.current) > 20) {
@@ -148,8 +146,8 @@ export default function AdaptiveModal({
           }
         }
         syncVisualViewportBounds(scrollContainerRef.current, {
-          top: currentTop,
-          left: currentLeft,
+          top: 0,
+          left: 0,
           width: nextViewportMetrics.width,
           height: nextViewportMetrics.height,
         });
@@ -162,8 +160,8 @@ export default function AdaptiveModal({
           }
         }
         syncVisualViewportBounds(scrollContainerRef.current, {
-          top: currentTop,
-          left: currentLeft,
+          top: 0,
+          left: 0,
           width: nextViewportMetrics.width,
           height: nextViewportMetrics.height,
         });
@@ -275,6 +273,18 @@ export default function AdaptiveModal({
       }, 100);
     }
     activeInputRef.current = target;
+
+    // Desplazamiento exclusivamente interno dentro del contenedor del modal
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+    if (scrollContainerRef.current && typeof target.scrollIntoView === 'function') {
+      target.scrollIntoView({
+        block: 'nearest',
+        inline: 'nearest',
+        behavior: 'smooth',
+      });
+    }
   };
 
   const frameLayout = getModalFrameLayout(modalFits, viewportMetrics.isKeyboardOpen);
