@@ -4,7 +4,35 @@
  * con ondulación armónica, halo ambiental y optimización de energía para batería móvil (Directivas 3, 13 y 32).
  */
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, memo } from 'react';
+
+/** Cantidad total de curvas topográficas superpuestas */
+const LINE_COUNT = 7;
+const SEGMENT_COUNT = 16;
+
+/** Paleta de colores precalculada e inmutable para modo oscuro (0 B de asignación en tiempo de ejecución) */
+const DARK_STROKE_COLORS = Array.from({ length: LINE_COUNT }, (_, i) => {
+  const progress = i / (LINE_COUNT - 1);
+  const alpha = Math.sin(progress * Math.PI) * 0.28 + 0.08;
+  if (i % 3 === 0) return `rgba(56, 189, 248, ${(alpha * 1.25).toFixed(3)})`;
+  if (i % 3 === 1) return `rgba(99, 102, 241, ${(alpha * 0.95).toFixed(3)})`;
+  return `rgba(224, 242, 254, ${(alpha * 0.75).toFixed(3)})`;
+});
+
+/** Paleta de colores precalculada e inmutable para modo claro (0 B de asignación en tiempo de ejecución) */
+const LIGHT_STROKE_COLORS = Array.from({ length: LINE_COUNT }, (_, i) => {
+  const progress = i / (LINE_COUNT - 1);
+  const alpha = Math.sin(progress * Math.PI) * 0.38 + 0.14;
+  if (i % 3 === 0) return `rgba(37, 99, 235, ${(alpha * 1.35).toFixed(3)})`;
+  if (i % 3 === 1) return `rgba(79, 70, 229, ${(alpha * 1.15).toFixed(3)})`;
+  return `rgba(100, 116, 139, ${(alpha * 0.9).toFixed(3)})`;
+});
+
+/** Grosores de trazo precalculados para modo oscuro */
+const DARK_LINE_WIDTHS = Array.from({ length: LINE_COUNT }, (_, i) => (i % 4 === 0 ? 1.5 : 0.9));
+
+/** Grosores de trazo precalculados para modo claro */
+const LIGHT_LINE_WIDTHS = Array.from({ length: LINE_COUNT }, (_, i) => (i % 4 === 0 ? 1.7 : 1.15));
 
 /** Propiedades para el control del ciclo de vida del fondo topográfico */
 export interface TopographicBackgroundProps {
@@ -20,7 +48,7 @@ export interface TopographicBackgroundProps {
  * @param props - Propiedades de configuración y control de pausa
  * @returns Elemento JSX con lienzo dinámico y halo ambiental
  */
-export default function TopographicBackground({ isPaused = false }: TopographicBackgroundProps) {
+function TopographicBackgroundComponent({ isPaused = false }: TopographicBackgroundProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const isPausedRef = useRef(isPaused);
   const resumeAnimationRef = useRef<(() => void) | null>(null);
@@ -61,7 +89,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
     canvas.height = height * dpr;
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
-    ctx.scale(dpr, dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     // Estado reactivo del tema sin consultar el DOM en cada fotograma
     let isDark =
@@ -70,10 +98,8 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
     // Búferes tipados estáticos pre-asignados para erradicar el memory churn y evitar pausas de Garbage Collection (GC) en móviles
-    const lineCount = 7;
-    const segmentCount = 16;
-    const pointsX = new Float32Array(segmentCount + 1);
-    const pointsY = new Float32Array(segmentCount + 1);
+    const pointsX = new Float32Array(SEGMENT_COUNT + 1);
+    const pointsY = new Float32Array(SEGMENT_COUNT + 1);
 
     const drawFrame = (virtualTime: number) => {
       ctx.clearRect(0, 0, width, height);
@@ -85,26 +111,17 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
       const amp3 = 18;
       const spread = height * 0.44;
 
-      for (let i = 0; i < lineCount; i++) {
-        const progress = i / (lineCount - 1);
+      const strokeColors = isDark ? DARK_STROKE_COLORS : LIGHT_STROKE_COLORS;
+      const lineWidths = isDark ? DARK_LINE_WIDTHS : LIGHT_LINE_WIDTHS;
+      ctx.lineCap = 'round';
+
+      for (let i = 0; i < LINE_COUNT; i++) {
+        const progress = i / (LINE_COUNT - 1);
         const baseY = height * 0.5 + (progress - 0.5) * spread;
 
-        const alpha = Math.sin(progress * Math.PI) * (isDark ? 0.28 : 0.38) + (isDark ? 0.08 : 0.14);
-        const strokeColor = isDark
-          ? i % 3 === 0
-            ? `rgba(56, 189, 248, ${alpha * 1.25})`
-            : i % 3 === 1
-            ? `rgba(99, 102, 241, ${alpha * 0.95})`
-            : `rgba(224, 242, 254, ${alpha * 0.75})`
-          : i % 3 === 0
-            ? `rgba(37, 99, 235, ${alpha * 1.35})`
-            : i % 3 === 1
-            ? `rgba(79, 70, 229, ${alpha * 1.15})`
-            : `rgba(100, 116, 139, ${alpha * 0.9})`;
-
         // Cálculo in-place sin crear objetos ni arrays intermedios en el heap de JavaScript
-        for (let j = 0; j <= segmentCount; j++) {
-          const segProgress = j / segmentCount;
+        for (let j = 0; j <= SEGMENT_COUNT; j++) {
+          const segProgress = j / SEGMENT_COUNT;
           pointsX[j] = segProgress * width;
 
           const wave1 = Math.sin(segProgress * Math.PI * 2.5 + t + i * 0.4) * amp1;
@@ -116,7 +133,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
 
         ctx.beginPath();
         ctx.moveTo(pointsX[0], pointsY[0]);
-        for (let j = 0; j < segmentCount; j++) {
+        for (let j = 0; j < SEGMENT_COUNT; j++) {
           const currX = pointsX[j];
           const currY = pointsY[j];
           const nextX = pointsX[j + 1];
@@ -125,11 +142,10 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
           const midY = (currY + nextY) * 0.5;
           ctx.quadraticCurveTo(currX, currY, midX, midY);
         }
-        ctx.lineTo(pointsX[segmentCount], pointsY[segmentCount]);
+        ctx.lineTo(pointsX[SEGMENT_COUNT], pointsY[SEGMENT_COUNT]);
 
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = i % 4 === 0 ? (isDark ? 1.5 : 1.7) : (isDark ? 0.9 : 1.15);
-        ctx.lineCap = 'round';
+        ctx.strokeStyle = strokeColors[i];
+        ctx.lineWidth = lineWidths[i];
         ctx.stroke();
       }
     };
@@ -158,7 +174,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
         canvas.height = height * dpr;
         canvas.style.width = `${width}px`;
         canvas.style.height = `${height}px`;
-        ctx.scale(dpr, dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
         drawFrame(accumulatedTime);
       }, 150);
@@ -240,3 +256,6 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
     </div>
   );
 }
+
+const TopographicBackground = memo(TopographicBackgroundComponent);
+export default TopographicBackground;

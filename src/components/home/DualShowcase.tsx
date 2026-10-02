@@ -197,12 +197,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional con animación continua fluida */}
       <TopographicBackground isPaused={isContactOpen || isLoginOpen} />
 
-      {/* Barra de Navegación Superior Fija */}
-      <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-[padding] duration-300 ${
-          isPortfolios ? 'py-2 sm:py-3' : 'py-2 sm:py-3.5 md:py-5'
-        }`}
-      >
+      {/* Barra de Navegación Superior Fija con altura y espaciado consistente sin layout thrashing */}
+      <header className="fixed top-0 left-0 right-0 z-40 py-2 sm:py-3">
         {/* Capa de fondo con desenfoque (blur) y sombra progresiva en GPU vinculada al desplazamiento (Directivas 1, 3, 4, 13) */}
         <div
           ref={navBackdropRef}
@@ -357,7 +353,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                         {i18n.showcase.explorePortfolio}
                       </span>
 
-                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-all duration-150`}>
+                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-[transform,background-color,border-color,color] duration-150`}>
                         <ArrowRightIcon size={13} />
                       </div>
                     </div>

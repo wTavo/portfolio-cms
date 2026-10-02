@@ -5,7 +5,7 @@
  * la corriente eléctrica fluye y el color interior se enciende con un parpadeo de foco antes de quedar fijo.
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, memo } from 'react';
 import { motion } from 'motion/react';
 import { GLYPH_PATHS } from '../../lib/typography/glyphPaths';
 
@@ -25,10 +25,26 @@ interface LetterLayout {
   charIndex: number;
 }
 
+/** Paleta visual adaptativa inmutable (Modo Oscuro / Modo Claro) sin recreación en cada render */
+const THEME_COLORS = {
+  dark: {
+    primary: '#fafafa',
+    stroke: '#ffffff',
+    glowColor: 'rgba(186, 230, 253, 0.85)',
+    glowStroke: 'rgba(186, 230, 253, 0.65)',
+  },
+  light: {
+    primary: '#09090b',
+    stroke: '#18181b',
+    glowColor: 'rgba(37, 99, 235, 0.65)',
+    glowStroke: 'rgba(59, 130, 246, 0.55)',
+  },
+} as const;
+
 /** Variable en tiempo de ejecución para recordar que la animación introductoria ya se ejecutó y no repetirla al scrollear */
 let hasCompletedKineticIntro = false;
 
-export default function KineticTitle({
+function KineticTitleComponent({
   text = 'PORTAFOLIO PROFESIONAL',
   className = '',
 }: KineticTitleProps) {
@@ -173,20 +189,8 @@ export default function KineticTitle({
     );
   }
 
-  // Configuración de paleta visual adaptativa (Modo Oscuro / Modo Claro)
-  const colors = isDarkTheme
-    ? {
-        primary: '#fafafa',
-        stroke: '#ffffff',
-        glowColor: 'rgba(186, 230, 253, 0.85)',
-        glowStroke: 'rgba(186, 230, 253, 0.65)',
-      }
-    : {
-        primary: '#09090b',
-        stroke: '#18181b',
-        glowColor: 'rgba(37, 99, 235, 0.65)',
-        glowStroke: 'rgba(59, 130, 246, 0.55)',
-      };
+  // Consumir paleta visual inmutable adaptativa
+  const colors = isDarkTheme ? THEME_COLORS.dark : THEME_COLORS.light;
 
   return (
     <div
@@ -212,14 +216,10 @@ export default function KineticTitle({
               className={`overflow-visible select-none ${containerClasses}`}
               aria-label={wordLayout.word}
             >
-              {/* Filtro SVG compilado por hardware en GPU una sola vez en <defs> */}
+              {/* Filtro SVG optimizado de pase único en GPU en <defs> */}
               <defs>
                 <filter id={`bulb-glow-${wordIdx}`} x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="10" result="blur" />
-                  <feMerge>
-                    <feMergeNode in="blur" />
-                    <feMergeNode in="SourceGraphic" />
-                  </feMerge>
+                  <feGaussianBlur stdDeviation="8" />
                 </filter>
               </defs>
 
@@ -346,3 +346,6 @@ export default function KineticTitle({
     </div>
   );
 }
+
+const KineticTitle = memo(KineticTitleComponent);
+export default KineticTitle;
