@@ -164,13 +164,19 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
       {/* Barra de Navegación Superior Fija */}
       <header
-        className={`fixed top-0 left-0 right-0 z-40 transition-[background-color,border-color,padding,box-shadow] duration-300 ${
-          isPortfolios
-            ? 'bg-[var(--color-bg-base)]/95 backdrop-blur-md border-b border-[var(--color-border-subtle)] py-2 sm:py-3 shadow-[var(--shadow-card)]'
-            : 'bg-transparent border-b border-transparent py-2 sm:py-3.5 md:py-5'
+        className={`fixed top-0 left-0 right-0 z-40 transition-[padding] duration-300 ${
+          isPortfolios ? 'py-2 sm:py-3' : 'py-2 sm:py-3.5 md:py-5'
         }`}
       >
-        <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        {/* Capa de fondo con desenfoque (blur) y sombra con transición de opacidad suave acelerada por GPU (Directivas 1, 3, 4) */}
+        <div
+          aria-hidden="true"
+          className={`absolute inset-0 pointer-events-none bg-[var(--color-bg-base)]/90 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] transition-opacity duration-300 ease-out ${
+            isPortfolios ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+
+        <div className="relative z-10 max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           {/* Título en la barra superior: Solo visible y animado en la vista de portafolios */}
           <div className="flex items-center">
             <AnimatePresence mode="wait">

@@ -104,13 +104,20 @@ function ModalDialogLayer({
         background: 'transparent',
       }}
     >
-      <div
+      <motion.div
         aria-hidden="true"
         data-modal-backdrop
         onPointerDown={handleBackdropPointerDown}
         onPointerUp={handleBackdropPointerUp}
         onPointerLeave={resetBackdropPointer}
         onPointerCancel={resetBackdropPointer}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{
+          duration: prefersReducedMotion ? 0 : MOTION_DURATIONS.normal,
+          ease: MOTION_EASINGS.standard,
+        }}
         className="fixed inset-0 touch-none bg-black/65 backdrop-blur-sm"
       />
       <div className="relative z-10 h-full w-full pointer-events-none [&>*]:pointer-events-auto">
