@@ -1,13 +1,22 @@
 /**
  * @file DualShowcase.tsx
- * @description Portal interactivo con animación cinemática fluida basada en scroll-snap nativo por hardware (120 FPS) y título con física cinética.
+ * @description Portal interactivo con transición cinemática fluida por estados (Apple/Linear style).
+ * Cero rebotes de scroll, presentación impecable de título y tarjetas sin desplazamientos residuales.
  */
 
 import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
-import { ArrowRightIcon, BrandLogoIcon, ChevronDownIcon, MailIcon, CodeIcon, PaletteIcon, UserIcon } from '../icons/Icons';
+import {
+  ArrowRightIcon,
+  BrandLogoIcon,
+  ChevronDownIcon,
+  MailIcon,
+  CodeIcon,
+  PaletteIcon,
+  UserIcon,
+} from '../icons/Icons';
 import KineticTitle from './KineticTitle';
 import TopographicBackground from './TopographicBackground';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -36,7 +45,8 @@ function getCreatorBadge(slug: string, role: string) {
       containerClass: 'bg-[var(--color-bg-subtle)] border-[var(--color-border-subtle)] shadow-xs',
       hoverBorder: 'hover:border-[var(--color-brand-accent)]',
       hoverText: 'group-hover:text-[var(--color-brand-accent)]',
-      hoverButton: 'group-hover:bg-[var(--color-brand-accent)] group-hover:text-white group-hover:border-[var(--color-brand-accent)]',
+      hoverButton:
+        'group-hover:bg-[var(--color-brand-accent)] group-hover:text-white group-hover:border-[var(--color-brand-accent)]',
       hoverShadow: 'hover:shadow-xl',
     };
   }
@@ -52,7 +62,8 @@ function getCreatorBadge(slug: string, role: string) {
       containerClass: 'bg-[var(--color-bg-subtle)] border-[var(--color-border-subtle)] shadow-xs',
       hoverBorder: 'hover:border-[var(--color-brand-primary)]',
       hoverText: 'group-hover:text-[var(--color-brand-primary)]',
-      hoverButton: 'group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)]',
+      hoverButton:
+        'group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)]',
       hoverShadow: 'hover:shadow-xl',
     };
   }
@@ -61,7 +72,8 @@ function getCreatorBadge(slug: string, role: string) {
     containerClass: 'bg-[var(--color-bg-subtle)] border-[var(--color-border-subtle)] shadow-xs',
     hoverBorder: 'hover:border-[var(--color-border-default)]',
     hoverText: 'group-hover:text-[var(--color-brand-accent)]',
-    hoverButton: 'group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)]',
+    hoverButton:
+      'group-hover:bg-[var(--color-brand-primary)] group-hover:text-[var(--color-brand-on-primary)] group-hover:border-[var(--color-brand-primary)]',
     hoverShadow: 'hover:shadow-xl',
   };
 }
@@ -73,57 +85,20 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   const [loginRedirect, setLoginRedirect] = useState('');
   const [loginInitialError, setLoginInitialError] = useState('');
 
-  const heroRef = useRef<HTMLElement>(null);
-  const portfoliosRef = useRef<HTMLElement>(null);
-  const navBackdropRef = useRef<HTMLDivElement>(null);
-
-  const { creators } = data;
   const isTransitioningRef = useRef(false);
+  const { creators } = data;
 
-  const scrollToHero = useCallback(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, []);
-
-  const scrollToPortfolios = useCallback(() => {
-    const portfolioElem = portfoliosRef.current;
-    if (portfolioElem) {
-      window.scrollTo({ top: portfolioElem.offsetTop, behavior: 'smooth' });
-    }
-  }, []);
-
-  // Desenfoque y fondo progresivo gradual en GPU compositor vinculado al desplazamiento del navegador (Directivas 1, 3, 13)
-  useEffect(() => {
-    const navBackdrop = navBackdropRef.current;
-    if (!navBackdrop) return;
-
-    let rafId: number | null = null;
-
-    const updateBlurProgress = () => {
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      // Umbral de transición: de 0px (0% blur) a 140px (100% blur) de forma suave y proporcional
-      const maxDistance = 140;
-      const progress = Math.min(1, Math.max(0, scrollTop / maxDistance));
-      
-      navBackdrop.style.opacity = progress.toString();
-      // Ocultar completamente el backdrop cuando la opacidad es 0 para que la GPU no gaste ciclos de desenfoque
-      navBackdrop.style.visibility = progress > 0 ? 'visible' : 'hidden';
-      rafId = null;
-    };
-
-    const handleScroll = () => {
-      if (rafId === null) {
-        rafId = requestAnimationFrame(updateBlurProgress);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    updateBlurProgress();
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      if (rafId !== null) cancelAnimationFrame(rafId);
-    };
-  }, []);
+  const changeView = useCallback(
+    (nextView: 'hero' | 'portfolios') => {
+      if (isTransitioningRef.current || currentView === nextView) return;
+      isTransitioningRef.current = true;
+      setCurrentView(nextView);
+      setTimeout(() => {
+        isTransitioningRef.current = false;
+      }, 600);
+    },
+    [currentView]
+  );
 
   // Detección de apertura de modal por URL (?login=true o ?error=...)
   useEffect(() => {
@@ -141,91 +116,25 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     }
   }, []);
 
-  // Detección bidireccional por IntersectionObserver de alto rendimiento en viewport nativo
-  useEffect(() => {
-    const portfolioElem = portfoliosRef.current;
-    const heroElem = heroRef.current;
-    if (!portfolioElem || !heroElem) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.target === portfolioElem && entry.isIntersecting && entry.intersectionRatio >= 0.4) {
-            setCurrentView('portfolios');
-          } else if (entry.target === heroElem && entry.isIntersecting && entry.intersectionRatio >= 0.4) {
-            setCurrentView('hero');
-          }
-        }
-      },
-      {
-        root: null, // Viewport nativo del navegador
-        threshold: [0.2, 0.4, 0.7],
-      }
-    );
-
-    observer.observe(heroElem);
-    observer.observe(portfolioElem);
-
-    return () => {
-      observer.disconnect();
-    };
-  }, []);
-
-  // Navegación por teclado accesible sin interferir con modificadores
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      // Prevenir que teclas como Space o ArrowDown desplacen el fondo si un modal está abierto
-      if (isContactOpen || isLoginOpen) return;
-
-      if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentView === 'hero') {
-        e.preventDefault();
-        scrollToPortfolios();
-      } else if (['ArrowUp', 'PageUp'].includes(e.key) && currentView === 'portfolios') {
-        const scrollTop = window.scrollY || document.documentElement.scrollTop;
-        if (scrollTop <= 20) {
-          e.preventDefault();
-          scrollToHero();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentView, scrollToHero, scrollToPortfolios, isContactOpen, isLoginOpen]);
-
-  // Transición automática suave en PC con rueda de ratón (un solo gesto natural)
+  // Transición cinemática por rueda de ratón en PC (un solo impulso natural)
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (isContactOpen || isLoginOpen) return;
       if (isTransitioningRef.current) return;
+      if (Math.abs(e.deltaY) < 15) return;
 
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
-
-      // En la zona del título/hero: cualquier impulso de rueda hacia abajo avanza automáticamente a portafolios
-      if (scrollTop < heroHeight * 0.45 && e.deltaY > 12) {
-        isTransitioningRef.current = true;
-        scrollToPortfolios();
-        setTimeout(() => {
-          isTransitioningRef.current = false;
-        }, 850);
-      }
-      // En la parte superior de portafolios: rueda hacia arriba regresa a la portada
-      else if (scrollTop <= heroHeight + 50 && scrollTop >= heroHeight * 0.5 && e.deltaY < -12) {
-        isTransitioningRef.current = true;
-        scrollToHero();
-        setTimeout(() => {
-          isTransitioningRef.current = false;
-        }, 850);
+      if (e.deltaY > 0 && currentView === 'hero') {
+        changeView('portfolios');
+      } else if (e.deltaY < 0 && currentView === 'portfolios') {
+        changeView('hero');
       }
     };
 
     window.addEventListener('wheel', handleWheel, { passive: true });
     return () => window.removeEventListener('wheel', handleWheel);
-  }, [isContactOpen, isLoginOpen, scrollToHero, scrollToPortfolios]);
+  }, [currentView, changeView, isContactOpen, isLoginOpen]);
 
-  // Transición automática suave en móvil mediante gesto táctil sin interferir con pull-to-refresh
+  // Transición cinemática por gestos táctiles en móvil (preserva pull-to-refresh nativo)
   useEffect(() => {
     let touchStartY = 0;
     let touchStartX = 0;
@@ -243,30 +152,16 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
       const touchEndY = e.changedTouches[0].clientY;
       const touchEndX = e.changedTouches[0].clientX;
-      const deltaY = touchStartY - touchEndY;
-      const deltaX = touchStartX - touchEndX;
+      const diffY = touchStartY - touchEndY;
+      const diffX = touchStartX - touchEndX;
 
       // Descartar si el gesto no es predominantemente vertical
-      if (Math.abs(deltaY) < Math.abs(deltaX) * 1.2) return;
+      if (Math.abs(diffY) < Math.abs(diffX) * 1.2 || Math.abs(diffY) < 30) return;
 
-      const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const heroHeight = heroRef.current?.offsetHeight || window.innerHeight;
-
-      // En portada: swipe hacia arriba de más de 30px avanza automáticamente a portafolios
-      if (scrollTop < heroHeight * 0.4 && deltaY > 30) {
-        isTransitioningRef.current = true;
-        scrollToPortfolios();
-        setTimeout(() => {
-          isTransitioningRef.current = false;
-        }, 850);
-      }
-      // En portafolios: swipe hacia abajo en el tope regresa a la portada
-      else if (scrollTop <= heroHeight + 50 && scrollTop >= heroHeight * 0.5 && deltaY < -35) {
-        isTransitioningRef.current = true;
-        scrollToHero();
-        setTimeout(() => {
-          isTransitioningRef.current = false;
-        }, 850);
+      if (diffY > 30 && currentView === 'hero') {
+        changeView('portfolios');
+      } else if (diffY < -30 && currentView === 'portfolios') {
+        changeView('hero');
       }
     };
 
@@ -277,47 +172,62 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);
     };
-  }, [isContactOpen, isLoginOpen, scrollToHero, scrollToPortfolios]);
+  }, [currentView, changeView, isContactOpen, isLoginOpen]);
+
+  // Navegación por teclado accesible
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (isContactOpen || isLoginOpen) return;
+
+      if (['ArrowDown', 'PageDown', ' '].includes(e.key) && currentView === 'hero') {
+        e.preventDefault();
+        changeView('portfolios');
+      } else if (['ArrowUp', 'PageUp'].includes(e.key) && currentView === 'portfolios') {
+        e.preventDefault();
+        changeView('hero');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentView, changeView, isContactOpen, isLoginOpen]);
 
   const isPortfolios = currentView === 'portfolios';
 
   return (
-    <div className="relative w-full min-h-[100dvh] selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
-      {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional con animación continua fluida */}
+    <div className="relative w-full h-[100dvh] min-h-[100dvh] overflow-hidden flex flex-col justify-between selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
+      {/* Fondo Topográfico Fijo con curvas dinámicas a 120 FPS */}
       <TopographicBackground isPaused={isContactOpen || isLoginOpen} />
 
-      {/* Barra de Navegación Superior Fija con altura y espaciado consistente sin layout thrashing */}
-      <header className="fixed top-0 left-0 right-0 z-40 py-2 sm:py-3">
-        {/* Capa de fondo con desenfoque (blur) y sombra progresiva en GPU vinculada al desplazamiento (Directivas 1, 3, 4, 13) */}
-        <div
-          ref={navBackdropRef}
-          aria-hidden="true"
-          className="absolute inset-0 pointer-events-none bg-[var(--color-bg-base)]/90 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[var(--shadow-card)] will-change-[opacity]"
-          style={{ opacity: 0, visibility: 'hidden' }}
-        />
-
-        <div className="relative z-10 max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          {/* Título en la barra superior: Solo visible y animado en la vista de portafolios */}
-          <div className="flex items-center">
+      {/* Barra de Navegación Superior Fija */}
+      <header
+        className={`fixed top-0 left-0 right-0 z-40 py-2 sm:py-3 transition-[background-color,border-color,box-shadow] duration-300 ${
+          isPortfolios
+            ? 'bg-[var(--color-bg-base)]/90 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-[var(--shadow-card)]'
+            : 'bg-transparent border-b border-transparent'
+        }`}
+      >
+        <div className="max-w-(--container-max-w) mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Título en la barra superior: Visible exclusivamente en la vista de portafolios */}
+          <div className="flex items-center min-h-[40px]">
             <AnimatePresence mode="wait">
               {isPortfolios && (
                 <motion.button
                   key="header-brand"
                   type="button"
-                  onClick={scrollToHero}
+                  onClick={() => changeView('hero')}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
-                  className="group flex items-center gap-3 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1 -ml-1 transition-opacity"
+                  className="group flex items-center gap-3 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1 -ml-1"
                   aria-label="Volver al inicio"
                 >
-                  {/* Caja de Logotipo con Resplandor Sutil */}
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)]/60 shadow-[var(--shadow-card)] flex items-center justify-center transition-[border-color,box-shadow,transform] duration-150 group-hover:scale-105">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)]/60 shadow-[var(--shadow-card)] flex items-center justify-center transition-[border-color,transform] duration-150 group-hover:scale-105">
                     <BrandLogoIcon size={20} className="w-5 h-5 text-[var(--color-text-primary)]" />
                   </div>
 
-                  {/* Título de Marca */}
                   <span className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-[var(--color-text-primary)] leading-none select-none">
                     {i18n.showcase.title}
                   </span>
@@ -326,7 +236,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
             </AnimatePresence>
           </div>
 
-          {/* Acciones de la barra superior: Selector de tema, Contacto y Acceso */}
+          {/* Acciones de la barra superior: Tema, Contacto y Acceso */}
           <div className="flex items-center gap-2 sm:gap-2.5">
             <ThemeToggle />
 
@@ -352,111 +262,130 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
         </div>
       </header>
 
-      {/* Secciones con Scroll-Snap Nativo en el Documento (120 FPS) */}
-      <div className="relative z-10 w-full">
-        {/* Sección 1: Portada Cinemática con Título Cinético */}
-        <section
-          id="hero"
-          ref={heroRef}
-          aria-hidden={isPortfolios}
-          className="w-full min-h-[100dvh] max-h-[100dvh] snap-start relative flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none"
-        >
-          <KineticTitle text={i18n.showcase.title} />
-
-          {/* Botón de acceso a portafolios adaptable para móvil vertical, horizontal y escritorio */}
-          <button
-            type="button"
-            onClick={scrollToPortfolios}
-            className="group absolute bottom-6 sm:bottom-8 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-(--size-touch-target) sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1.5 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
-            aria-label={i18n.showcase.goToPortfolios}
-          >
-            <span>{i18n.showcase.goToPortfolios}</span>
-            <div
-              className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5 animate-bounce-indicator group-hover:translate-y-1 group-hover:animate-none transition-transform duration-150"
+      {/* Escenario de Contenido Principal con Transiciones Cinemáticas por Estado */}
+      <div className="relative z-10 flex-1 w-full h-full flex items-center justify-center overflow-hidden">
+        <AnimatePresence mode="wait">
+          {currentView === 'hero' ? (
+            /* Vista 1: Portada Cinemática con Título Cinético */
+            <motion.section
+              key="hero-view"
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -25 }}
+              transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
+              className="w-full h-full flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none relative"
             >
-              <ChevronDownIcon size={20} className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 [@media(max-height:540px)]:w-3.5 [@media(max-height:540px)]:h-3.5" />
-            </div>
-          </button>
-        </section>
+              <KineticTitle text={i18n.showcase.title} />
 
-        {/* Sección 2: Portafolios Gateway con Scroll Snap y Soporte Responsive Universal */}
-        <section
-          id="portafolios"
-          ref={portfoliosRef}
-          aria-hidden={!isPortfolios}
-          className="w-full min-h-[100dvh] snap-start relative flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 sm:pt-18 md:pt-20 pb-6 sm:pb-8 pb-[max(1.75rem,calc(env(safe-area-inset-bottom)+1rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-3"
-        >
-          <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
-              {creators.map((creator) => {
-                const badge = getCreatorBadge(creator.slug, creator.role);
+              {/* Botón de acceso a portafolios */}
+              <button
+                type="button"
+                onClick={() => changeView('portfolios')}
+                className="group absolute bottom-6 sm:bottom-8 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-(--size-touch-target) sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1.5 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
+                aria-label={i18n.showcase.goToPortfolios}
+              >
+                <span>{i18n.showcase.goToPortfolios}</span>
+                <div className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5 animate-bounce-indicator group-hover:translate-y-1 group-hover:animate-none transition-transform duration-150">
+                  <ChevronDownIcon
+                    size={20}
+                    className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 [@media(max-height:540px)]:w-3.5 [@media(max-height:540px)]:h-3.5"
+                  />
+                </div>
+              </button>
+            </motion.section>
+          ) : (
+            /* Vista 2: Portafolios Gateway */
+            <motion.section
+              key="portfolios-view"
+              initial={{ opacity: 0, y: 25 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 25 }}
+              transition={{ duration: MOTION_DURATIONS.deliberate, ease: MOTION_EASINGS.decelerate }}
+              className="w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-4 sm:pb-6 pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-2 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
+                  {creators.map((creator) => {
+                    const badge = getCreatorBadge(creator.slug, creator.role);
 
-                return (
-                  <a
-                    key={creator.id}
-                    href={`/${creator.slug}`}
-                    className={`group relative flex flex-col justify-between p-4.5 sm:p-6 md:p-8 [@media(max-height:540px)]:p-3.5 rounded-[var(--radius-2xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-md hover:shadow-xl ${badge.hoverShadow} ${badge.hoverBorder} transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
-                  >
-                    {/* Contenido Superior de la Tarjeta */}
-                    <div className="relative z-10 space-y-2.5 sm:space-y-4 [@media(max-height:540px)]:space-y-1.5">
-                      {/* Cabecera con Icono SVG vectorial con color y Slug */}
-                      <div className="flex items-center justify-between">
-                        <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}>
-                          {badge.icon}
-                        </div>
-
-                        <div className={`flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)] text-[11px] sm:text-xs font-mono font-semibold text-[var(--color-text-secondary)] shadow-xs ${badge.hoverText} transition-colors duration-150`}>
-                          <span className="opacity-50">/</span>
-                          <span>{creator.slug}</span>
-                        </div>
-                      </div>
-
-                      {/* Nombre y Especialidad */}
-                      <div className="space-y-0.5 sm:space-y-1 pt-0.5">
-                        <h2 className={`text-lg sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
-                          {creator.name}
-                        </h2>
-                        <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
-                          {creator.role}
-                        </p>
-                      </div>
-
-                      {/* Etiquetas de tecnologías y habilidades */}
-                      {creator.skills && creator.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
-                          {creator.skills.slice(0, 3).map((skill) => (
-                            <span
-                              key={skill}
-                              className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-[var(--radius-md)] text-[11px] sm:text-xs font-semibold bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] shadow-xs"
+                    return (
+                      <a
+                        key={creator.id}
+                        href={`/${creator.slug}`}
+                        className={`group relative flex flex-col justify-between p-4.5 sm:p-6 md:p-8 [@media(max-height:540px)]:p-3.5 rounded-[var(--radius-2xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-md hover:shadow-xl ${badge.hoverShadow} ${badge.hoverBorder} transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
+                      >
+                        {/* Contenido Superior de la Tarjeta */}
+                        <div className="relative z-10 space-y-2.5 sm:space-y-4 [@media(max-height:540px)]:space-y-1.5">
+                          {/* Cabecera con Icono SVG vectorial con color y Slug */}
+                          <div className="flex items-center justify-between">
+                            <div
+                              className={`w-9 h-9 sm:w-12 sm:h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}
                             >
-                              {skill}
-                            </span>
-                          ))}
+                              {badge.icon}
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)] text-[11px] sm:text-xs font-mono font-semibold text-[var(--color-text-secondary)] shadow-xs ${badge.hoverText} transition-colors duration-150`}
+                            >
+                              <span className="opacity-50">/</span>
+                              <span>{creator.slug}</span>
+                            </div>
+                          </div>
+
+                          {/* Nombre y Especialidad */}
+                          <div className="space-y-0.5 sm:space-y-1 pt-0.5">
+                            <h2
+                              className={`text-lg sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}
+                            >
+                              {creator.name}
+                            </h2>
+                            <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
+                              {creator.role}
+                            </p>
+                          </div>
+
+                          {/* Etiquetas de tecnologías y habilidades */}
+                          {creator.skills && creator.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                              {creator.skills.slice(0, 3).map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-[var(--radius-md)] text-[11px] sm:text-xs font-semibold bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] shadow-xs"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Zócalo de Acción Integrado */}
-                    <div className="relative z-10 py-2.5 sm:py-3.5 md:py-4 px-4.5 sm:px-7 md:px-8 -mx-4.5 -mb-4.5 sm:-mx-7 sm:-mb-7 md:-mx-8 md:-mb-8 mt-4 sm:mt-6 [@media(max-height:540px)]:mt-2.5 bg-[var(--color-bg-surface-elevated)] border-t border-[var(--color-border-subtle)] flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
-                      <span className={`text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}>
-                        {i18n.showcase.explorePortfolio}
-                      </span>
+                        {/* Zócalo de Acción Integrado */}
+                        <div className="relative z-10 py-2.5 sm:py-3.5 md:py-4 px-4.5 sm:px-7 md:px-8 -mx-4.5 -mb-4.5 sm:-mx-7 sm:-mb-7 md:-mx-8 md:-mb-8 mt-4 sm:mt-6 [@media(max-height:540px)]:mt-2.5 bg-[var(--color-bg-surface-elevated)] border-t border-[var(--color-border-subtle)] flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
+                          <span
+                            className={`text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}
+                          >
+                            {i18n.showcase.explorePortfolio}
+                          </span>
 
-                      <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-[transform,background-color,border-color,color] duration-150`}>
-                        <ArrowRightIcon size={13} />
-                      </div>
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
+                          <div
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-[transform,background-color,border-color,color] duration-150`}
+                          >
+                            <ArrowRightIcon size={13} />
+                          </div>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Pie de Página con Espaciado de Respiro Completo */}
-          <footer className="pt-2 pb-1 text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70 shrink-0 select-none">
-            <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
-          </footer>
-        </section>
+              {/* Pie de Página */}
+              <footer className="pt-2 pb-1 text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70 shrink-0 select-none">
+                <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
+              </footer>
+            </motion.section>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Modales Accesibles de Contacto e Inicio de Sesión cargados bajo demanda */}
