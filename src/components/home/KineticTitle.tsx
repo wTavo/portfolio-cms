@@ -227,27 +227,11 @@ export default function KineticTitle({
               </defs>
 
               {wordLayout.letters.map((letter) => {
-                // Si la animación introductoria ya finalizó, renderizado vectorial estático limpio y de ultra alto rendimiento
-                if (isIntroComplete) {
-                  return (
-                    <g
-                      key={`letter-group-${wordIdx}-${letter.charIndex}-${letter.char}`}
-                      transform={`translate(${letter.x}, 0)`}
-                    >
-                      <path
-                        d={letter.d}
-                        fillRule="nonzero"
-                        fill={colors.primary}
-                        stroke={colors.primary}
-                        strokeWidth={1}
-                      />
-                    </g>
-                  );
-                }
-
-                // Fase de animación inicial: trazado simultáneo y encendido gradual poco a poco
-                const strokeDelay = initialDelay;
-                const fillDelay = fillStartDelay;
+                // Tiempos coordinados de trazado y posterior iluminación suave
+                const strokeDelay = alreadyPlayed ? 0 : initialDelay;
+                const fillDelay = alreadyPlayed ? 0 : fillStartDelay;
+                const activeStrokeDuration = alreadyPlayed ? 0 : strokeDuration;
+                const activeFillDuration = alreadyPlayed ? 0 : fillDuration;
 
                 return (
                   <g
@@ -260,10 +244,10 @@ export default function KineticTitle({
                       d={letter.d}
                       fillRule="nonzero"
                       fill={colors.glowColor}
-                      initial={{ opacity: 0 }}
+                      initial={alreadyPlayed ? false : { opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{
-                        duration: fillDuration,
+                        duration: activeFillDuration,
                         delay: fillDelay,
                         ease: [0.2, 0, 0, 1],
                       }}
@@ -277,11 +261,11 @@ export default function KineticTitle({
                         {/* Resplandor exterior difuso */}
                         <motion.path
                           d={subD}
-                          initial={{ pathLength: 0, opacity: 0 }}
+                          initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
                           animate={{ pathLength: 1, opacity: 0.45 }}
                           transition={{
-                            pathLength: { duration: strokeDuration, delay: strokeDelay, ease: 'linear' },
-                            opacity: { duration: 0.05, delay: strokeDelay },
+                            pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
+                            opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
                           }}
                           stroke={colors.glowStroke}
                           strokeWidth={7}
@@ -292,11 +276,11 @@ export default function KineticTitle({
                         {/* Resplandor medio */}
                         <motion.path
                           d={subD}
-                          initial={{ pathLength: 0, opacity: 0 }}
+                          initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
                           animate={{ pathLength: 1, opacity: 0.75 }}
                           transition={{
-                            pathLength: { duration: strokeDuration, delay: strokeDelay, ease: 'linear' },
-                            opacity: { duration: 0.05, delay: strokeDelay },
+                            pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
+                            opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
                           }}
                           stroke={colors.glowStroke}
                           strokeWidth={4}
@@ -307,11 +291,11 @@ export default function KineticTitle({
                         {/* Núcleo del filamento nítido */}
                         <motion.path
                           d={subD}
-                          initial={{ pathLength: 0, opacity: 0 }}
+                          initial={alreadyPlayed ? false : { pathLength: 0, opacity: 0 }}
                           animate={{ pathLength: 1, opacity: 1 }}
                           transition={{
-                            pathLength: { duration: strokeDuration, delay: strokeDelay, ease: 'linear' },
-                            opacity: { duration: 0.05, delay: strokeDelay },
+                            pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
+                            opacity: { duration: alreadyPlayed ? 0 : 0.05, delay: strokeDelay },
                           }}
                           stroke={colors.stroke}
                           strokeWidth={2}
@@ -326,10 +310,10 @@ export default function KineticTitle({
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
-                      initial={{ opacity: 0 }}
+                      initial={alreadyPlayed ? false : { opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{
-                        duration: fillDuration,
+                        duration: activeFillDuration,
                         delay: fillDelay,
                         ease: [0.2, 0, 0, 1],
                       }}
