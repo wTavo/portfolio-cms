@@ -24,7 +24,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
   const isMobile = useIsMobile();
 
-  // Reset after the exit animation, canceling it if the modal is reopened first.
+  // Reiniciar estado tras la animación de salida, cancelándolo si el modal se reabre antes.
   useEffect(() => {
     if (isOpen) return;
 
@@ -38,7 +38,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
     return () => clearTimeout(resetTimer);
   }, [isOpen]);
 
-  // Initial focus on desktop only; on mobile opening must follow an explicit tap.
+  // Foco inicial únicamente en escritorio; en móviles la apertura responde al toque voluntario del usuario.
   useEffect(() => {
     if (!isOpen) return;
 

@@ -72,10 +72,11 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 
 ---
 
-## 7. Documentación TSDoc
-- **OBLIGATORIO** que **cada** servicio, helper, validator, guard, tipo e interfaz en `src/lib/` incluya documentación TSDoc (`/** ... */`).
-- **OBLIGATORIO** documentar parámetros (`@param`), retornos (`@returns`) y excepciones posibles (`@throws`).
-- Componentes `.astro` y `.tsx` deben incluir un comentario de cabecera explicando su propósito y Props esperadas.
+## 7. Documentación TSDoc y Comentarios en Español
+- **OBLIGATORIO** que **todos** los comentarios, documentación TSDoc (`/** ... */`), notas de implementación y comentarios de cabecera estén redactados **exclusivamente en español** usando "Sentence case".
+- **OBLIGATORIO** que cada servicio, helper, validator, guard, tipo e interfaz en `src/lib/` incluya documentación TSDoc (`/** ... */`).
+- **OBLIGATORIO** documentar parámetros (`@param`), retornos (`@returns`) y excepciones posibles (`@throws`) en español.
+- Componentes `.astro` y `.tsx` deben incluir un comentario de cabecera en español explicando su propósito y Props esperadas.
 
 ---
 

@@ -29,7 +29,7 @@ function ModalDialogLayer({
   const backdropPointerIdRef = useRef<number | null>(null);
   const prefersReducedMotion = useReducedMotion();
 
-  // This layer remains mounted while Motion completes its exit animation.
+  // Esta capa permanece montada mientras Motion completa su animación de salida.
   useDocumentScrollLock(true);
 
   useEffect(() => {

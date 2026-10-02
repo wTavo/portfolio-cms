@@ -77,7 +77,7 @@ function acquireDocumentScrollLock(): () => void {
   };
 }
 
-/** Prevents document scrolling while one or more modal surfaces are mounted. */
+/** Bloquea el desplazamiento del documento mientras haya una o más superficies modales montadas. */
 export function useDocumentScrollLock(isLocked: boolean): void {
   useEffect(() => {
     if (!isLocked) return;

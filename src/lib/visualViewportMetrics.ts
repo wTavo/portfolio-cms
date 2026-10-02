@@ -9,7 +9,7 @@ export interface CurrentViewportMetrics {
   width: number;
 }
 
-/** Keep height steady during rapid focus changes without rerendering for viewport panning. */
+/** Mantiene la altura estable durante cambios rápidos de foco sin renderizados por desplazamientos de viewport. */
 export function getNextViewportMetrics(
   previous: ViewportMetrics,
   current: CurrentViewportMetrics,
@@ -23,7 +23,7 @@ export function getNextViewportMetrics(
   };
 }
 
-/** Apply visual viewport geometry immediately, outside React's asynchronous render cycle. */
+/** Aplica la geometría del viewport visual de forma inmediata, fuera del ciclo asíncrono de renderizado de React. */
 export function syncVisualViewportBounds(
   element: Pick<HTMLElement, 'style'> | null,
   bounds: { top: number; left: number; width: number; height: number },

@@ -26,7 +26,7 @@ export default function LoginModal({
   const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Reset after the exit animation, canceling it if the modal is reopened first.
+  // Reiniciar estado tras la animación de salida, cancelándolo si el modal se reabre antes.
   useEffect(() => {
     if (isOpen) return;
 
