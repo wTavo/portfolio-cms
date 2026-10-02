@@ -111,14 +111,23 @@ function ModalDialogLayer({
         onPointerUp={handleBackdropPointerUp}
         onPointerLeave={resetBackdropPointer}
         onPointerCancel={resetBackdropPointer}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{
-          duration: prefersReducedMotion ? 0 : MOTION_DURATIONS.normal,
-          ease: MOTION_EASINGS.standard,
+        initial={{
+          opacity: 0,
+          clipPath: 'circle(10% at 50% 50%)',
         }}
-        className="fixed inset-0 touch-none bg-black/65 backdrop-blur-sm"
+        animate={{
+          opacity: 1,
+          clipPath: 'circle(150% at 50% 50%)',
+        }}
+        exit={{
+          opacity: 0,
+          clipPath: 'circle(10% at 50% 50%)',
+        }}
+        transition={{
+          duration: prefersReducedMotion ? 0 : 0.4,
+          ease: [0.16, 1, 0.3, 1],
+        }}
+        className="fixed inset-0 touch-none bg-black/65 backdrop-blur-md will-change-[clip-path,opacity]"
       />
       <div className="relative z-10 h-full w-full pointer-events-none [&>*]:pointer-events-auto">
         {children}

@@ -331,12 +331,12 @@ export default function AdaptiveModal({
           {/* Tarjeta Modal Flotante */}
           <motion.div
             ref={modalRef}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 6 }}
             transition={{
-              duration: prefersReducedMotion ? 0 : MOTION_DURATIONS.normal,
-              ease: MOTION_EASINGS.standard,
+              duration: prefersReducedMotion ? 0 : 0.35,
+              ease: [0.16, 1, 0.3, 1],
             }}
             className={`relative w-full ${maxWidthClass} bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] rounded-[var(--radius-2xl)] shadow-[var(--shadow-modal)] overflow-hidden flex flex-col text-left shrink-0`}
           >
