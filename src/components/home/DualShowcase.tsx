@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback, useRef, lazy, Suspense } from 'react'
 import { motion, AnimatePresence } from 'motion/react';
 import type { ShowcaseData } from '../../lib/types/showcase';
 import { i18n } from '../../lib/i18n/es';
-import { ArrowRightIcon, BrandLogoIcon, ChevronDownIcon, MailIcon, CodeIcon, PaletteIcon, UserIcon } from '../icons/Icons';
+import { ArrowRightIcon, BrandLogoIcon, ChevronDownIcon, MailIcon, CodeIcon, PaletteIcon, UserIcon, RefreshIcon } from '../icons/Icons';
 import KineticTitle from './KineticTitle';
 import TopographicBackground from './TopographicBackground';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -123,6 +123,104 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     };
   }, []);
 
+  // Estado para el gesto interactivo de recarga hacia abajo (Pull-to-Refresh) en dispositivos móviles
+  const [pullState, setPullState] = useState({ distance: 0, progress: 0, isRefreshing: false });
+  const touchStartYRef = useRef<number | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const isPullingRef = useRef(false);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      // Iniciar pull-to-refresh únicamente si el usuario está en el tope superior absoluto, en la portada hero y sin modales activos
+      if (container.scrollTop > 0 || isContactOpen || isLoginOpen || pullState.isRefreshing) {
+        touchStartYRef.current = null;
+        touchStartXRef.current = null;
+        isPullingRef.current = false;
+        return;
+      }
+
+      if (e.touches.length === 1) {
+        touchStartYRef.current = e.touches[0].clientY;
+        touchStartXRef.current = e.touches[0].clientX;
+        isPullingRef.current = false;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (touchStartYRef.current === null || touchStartXRef.current === null || pullState.isRefreshing) return;
+
+      const currentY = e.touches[0].clientY;
+      const currentX = e.touches[0].clientX;
+      const deltaY = currentY - touchStartYRef.current;
+      const deltaX = currentX - touchStartXRef.current;
+
+      // Ignorar si el desplazamiento es predominantemente horizontal
+      if (Math.abs(deltaX) > Math.abs(deltaY)) return;
+
+      // Arrastre hacia abajo en el tope del contenedor
+      if (deltaY > 0 && container.scrollTop <= 0) {
+        isPullingRef.current = true;
+        // Resistencia física orgánica para una respuesta táctil agradable
+        const distance = Math.min(85, Math.pow(deltaY, 0.85));
+        const progress = Math.min(1, distance / 60);
+
+        setPullState({ distance, progress, isRefreshing: false });
+
+        if (distance > 10 && e.cancelable) {
+          e.preventDefault();
+        }
+      } else if (isPullingRef.current) {
+        isPullingRef.current = false;
+        setPullState({ distance: 0, progress: 0, isRefreshing: false });
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (!isPullingRef.current || pullState.isRefreshing) {
+        touchStartYRef.current = null;
+        touchStartXRef.current = null;
+        isPullingRef.current = false;
+        return;
+      }
+
+      touchStartYRef.current = null;
+      touchStartXRef.current = null;
+      isPullingRef.current = false;
+
+      if (pullState.progress >= 1) {
+        setPullState({ distance: 60, progress: 1, isRefreshing: true });
+        try {
+          if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+            navigator.vibrate(15);
+          }
+        } catch {
+          // Ignorar si la vibración no está disponible
+        }
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 350);
+      } else {
+        setPullState({ distance: 0, progress: 0, isRefreshing: false });
+      }
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    container.addEventListener('touchcancel', handleTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
+      container.removeEventListener('touchend', handleTouchEnd);
+      container.removeEventListener('touchcancel', handleTouchEnd);
+    };
+  }, [isContactOpen, isLoginOpen, pullState.isRefreshing, pullState.progress]);
+
   // Detección de apertura de modal por URL (?login=true o ?error=...)
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -199,6 +297,36 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     <div className="relative w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
       {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional con animación continua fluida */}
       <TopographicBackground isPaused={isContactOpen || isLoginOpen} />
+
+      {/* Indicador táctil de recarga hacia abajo (Pull-to-Refresh) para móviles (Directivas 3, 13, 31, 32) */}
+      <div
+        aria-hidden="true"
+        className="fixed top-2.5 sm:top-3.5 left-1/2 -translate-x-1/2 z-50 pointer-events-none flex items-center justify-center will-change-transform"
+        style={{
+          transform: `translate(-50%, ${pullState.distance > 0 || pullState.isRefreshing ? pullState.distance - 44 : -60}px)`,
+          opacity: pullState.distance > 0 || pullState.isRefreshing ? Math.min(1, pullState.progress * 1.4) : 0,
+          transition:
+            pullState.distance === 0 && !pullState.isRefreshing
+              ? 'transform 260ms cubic-bezier(0.2, 0, 0, 1), opacity 200ms ease'
+              : 'none',
+        }}
+      >
+        <div className="w-10 h-10 rounded-full bg-[var(--color-bg-surface-elevated)] border border-[var(--color-border-default)] shadow-[var(--shadow-dropdown)] flex items-center justify-center text-[var(--color-text-secondary)] backdrop-blur-md">
+          <RefreshIcon
+            size={18}
+            className={`transition-colors duration-150 ${
+              pullState.isRefreshing
+                ? 'animate-spin text-[var(--color-brand-accent)]'
+                : pullState.progress >= 1
+                ? 'text-[var(--color-brand-accent)] scale-110'
+                : 'text-[var(--color-text-secondary)]'
+            }`}
+            style={{
+              transform: pullState.isRefreshing ? undefined : `rotate(${pullState.progress * 360}deg)`,
+            }}
+          />
+        </div>
+      </div>
 
       {/* Barra de Navegación Superior Fija */}
       <header

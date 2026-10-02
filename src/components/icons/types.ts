@@ -36,6 +36,7 @@ export type IconName =
   | 'smartphone'
   | 'sun'
   | 'moon'
+  | 'refresh'
   | 'chevron-down';
 
 export interface IconProps {
