@@ -173,24 +173,24 @@ export default function KineticTitle({
         primary: '#fafafa',
         stroke: '#ffffff',
         glowColor: 'rgba(186, 230, 253, 0.85)',
-        staticMoldGlow: 'drop-shadow(0 0 6px rgba(255, 255, 255, 0.8)) drop-shadow(0 0 14px rgba(186, 230, 253, 0.45))',
-        staticBulbGlow: 'drop-shadow(0 0 14px rgba(255, 255, 255, 0.85)) drop-shadow(0 0 30px rgba(186, 230, 253, 0.5))',
+        glowStroke: 'rgba(186, 230, 253, 0.65)',
       }
     : {
         primary: '#09090b',
         stroke: '#18181b',
         glowColor: 'rgba(37, 99, 235, 0.65)',
-        staticMoldGlow: 'drop-shadow(0 0 5px rgba(37, 99, 235, 0.45)) drop-shadow(0 0 12px rgba(99, 102, 241, 0.25))',
-        staticBulbGlow: 'drop-shadow(0 0 10px rgba(37, 99, 235, 0.45)) drop-shadow(0 0 22px rgba(99, 102, 241, 0.25))',
+        glowStroke: 'rgba(59, 130, 246, 0.55)',
       };
 
   return (
     <div
       className={`relative w-full flex flex-col items-center justify-center select-none overflow-visible ${className}`}
     >
-      {/* Contenedor central con sutil flotación orgánica acelerada por hardware (GPU Compositor) */}
+      {/* Contenedor central con sutil flotación orgánica que se activa una vez encendido el foco (Directivas 3 y 13) */}
       <div
-        className="relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1 sm:gap-y-2 md:gap-y-4 [@media(max-height:540px)]:gap-y-1 z-10 overflow-visible transform-gpu animate-float-subtle"
+        className={`relative flex flex-col items-center justify-center w-full max-w-5xl px-3 sm:px-6 gap-y-1 sm:gap-y-2 md:gap-y-4 [@media(max-height:540px)]:gap-y-1 z-10 overflow-visible transform-gpu ${
+          isIntroComplete ? 'animate-float-subtle' : ''
+        }`}
       >
         {wordsLayout.map((wordLayout, wordIdx) => {
           const isFirstLine = wordIdx === 0;
@@ -206,6 +206,17 @@ export default function KineticTitle({
               className={`overflow-visible select-none ${containerClasses}`}
               aria-label={wordLayout.word}
             >
+              {/* Filtro SVG compilado por hardware en GPU una sola vez en <defs> */}
+              <defs>
+                <filter id={`bulb-glow-${wordIdx}`} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="10" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+
               {wordLayout.letters.map((letter) => {
                 // Si la animación introductoria ya finalizó, renderizado vectorial estático limpio y de ultra alto rendimiento
                 if (isIntroComplete) {
@@ -235,7 +246,7 @@ export default function KineticTitle({
                     transform={`translate(${letter.x}, 0)`}
                     className="overflow-visible"
                   >
-                    {/* 1. RESPLANDOR DEL FOCO (Layered Glow Technique: filtro estático en GPU con animación pura de opacidad) */}
+                    {/* 1. RESPLANDOR DEL FOCO (Shader compilado por GPU en <defs>) */}
                     <motion.path
                       d={letter.d}
                       fillRule="nonzero"
@@ -250,41 +261,59 @@ export default function KineticTitle({
                         times: [0, 0.05, 0.09, 0.15, 0.22, 0.39, 0.58, 0.79, 1],
                         ease: 'easeInOut',
                       }}
-                      style={{ filter: colors.staticBulbGlow }}
+                      filter={`url(#bulb-glow-${wordIdx})`}
                       className="pointer-events-none"
                     />
 
-                    {/* 2. SILUETA DEL MOLDE (Trazado de cables y filamentos) */}
+                    {/* 2. SILUETA DEL MOLDE (Trazado de cables y filamentos iluminados con técnica Multi-Stroke a 120 FPS sin filtros lentos) */}
                     {letter.subpaths.map((subD, subIdx) => (
-                      <motion.path
-                        key={`mold-stroke-${subIdx}`}
-                        d={subD}
-                        initial={{
-                          pathLength: 0,
-                          opacity: 0,
-                        }}
-                        animate={{
-                          pathLength: 1,
-                          opacity: 1,
-                        }}
-                        transition={{
-                          pathLength: {
-                            duration: strokeDuration,
-                            delay: strokeDelay,
-                            ease: 'linear',
-                          },
-                          opacity: {
-                            duration: 0.05,
-                            delay: strokeDelay,
-                          },
-                        }}
-                        stroke={colors.stroke}
-                        strokeWidth={3}
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        fill="transparent"
-                        style={{ filter: colors.staticMoldGlow }}
-                      />
+                      <g key={`mold-strokes-${subIdx}`}>
+                        {/* Resplandor exterior difuso */}
+                        <motion.path
+                          d={subD}
+                          initial={{ pathLength: 0, opacity: 0 }}
+                          animate={{ pathLength: 1, opacity: 0.45 }}
+                          transition={{
+                            pathLength: { duration: strokeDuration, delay: strokeDelay, ease: 'linear' },
+                            opacity: { duration: 0.05, delay: strokeDelay },
+                          }}
+                          stroke={colors.glowStroke}
+                          strokeWidth={7}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="transparent"
+                        />
+                        {/* Resplandor medio */}
+                        <motion.path
+                          d={subD}
+                          initial={{ pathLength: 0, opacity: 0 }}
+                          animate={{ pathLength: 1, opacity: 0.75 }}
+                          transition={{
+                            pathLength: { duration: strokeDuration, delay: strokeDelay, ease: 'linear' },
+                            opacity: { duration: 0.05, delay: strokeDelay },
+                          }}
+                          stroke={colors.glowStroke}
+                          strokeWidth={4}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="transparent"
+                        />
+                        {/* Núcleo del filamento nítido */}
+                        <motion.path
+                          d={subD}
+                          initial={{ pathLength: 0, opacity: 0 }}
+                          animate={{ pathLength: 1, opacity: 1 }}
+                          transition={{
+                            pathLength: { duration: strokeDuration, delay: strokeDelay, ease: 'linear' },
+                            opacity: { duration: 0.05, delay: strokeDelay },
+                          }}
+                          stroke={colors.stroke}
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          fill="transparent"
+                        />
+                      </g>
                     ))}
 
                     {/* 3. RELLENO SÓLIDO NÍTIDO (Parpadeo eléctrico y corriente con opacidad en GPU) */}
