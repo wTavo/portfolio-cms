@@ -37,6 +37,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
 
     let animationFrameId: number;
     let lastTime = performance.now();
+    let accumulatedTime = 0;
 
     // Cadencia adaptativa: 30 FPS en móviles para reducir el consumo de GPU/batería en un 50%, 60 FPS en escritorio
     const isMobile = window.innerWidth < 768 || window.matchMedia('(pointer: coarse)').matches;
@@ -62,12 +63,12 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
       (document.documentElement.getAttribute('data-theme') === 'dark' ||
         window.matchMedia('(prefers-color-scheme: dark)').matches);
 
-    const drawFrame = (time: number) => {
+    const drawFrame = (virtualTime: number) => {
       ctx.clearRect(0, 0, width, height);
 
       const lineCount = 7;
       const segmentCount = 16;
-      const t = prefersReduced ? 1000 : time * 0.0006;
+      const t = prefersReduced ? 1000 : virtualTime * 0.0006;
 
       const amp1 = 28;
       const amp2 = 14;
@@ -126,7 +127,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
     const themeObserver = new MutationObserver(() => {
       const themeAttr = document.documentElement.getAttribute('data-theme');
       isDark = themeAttr === 'dark' || (!themeAttr && window.matchMedia('(prefers-color-scheme: dark)').matches);
-      drawFrame(lastTime || 1000);
+      drawFrame(accumulatedTime);
     });
     themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
@@ -149,7 +150,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
         canvas.style.height = `${height}px`;
         ctx.scale(dpr, dpr);
 
-        drawFrame(lastTime || 1000);
+        drawFrame(accumulatedTime);
       }, 150);
     };
 
@@ -164,7 +165,11 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
       if (delta < fpsInterval) return;
       lastTime = time - (delta % fpsInterval);
 
-      drawFrame(time);
+      // Tiempo virtual con límite para garantizar continuidad absoluta sin saltos bruscos
+      const clampedDelta = Math.min(delta, 100);
+      accumulatedTime += clampedDelta;
+
+      drawFrame(accumulatedTime);
     };
 
     const startAnimation = () => {
@@ -175,7 +180,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
         lastTime = performance.now();
         animationFrameId = requestAnimationFrame(render);
       } else {
-        drawFrame(lastTime || 1000);
+        drawFrame(accumulatedTime);
       }
     };
 
@@ -199,7 +204,7 @@ export default function TopographicBackground({ isPaused = false }: TopographicB
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [isPaused]);
+  }, []);
 
   return (
     <div
