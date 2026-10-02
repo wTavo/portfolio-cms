@@ -296,18 +296,10 @@ export default function AdaptiveModal({
       <div
         ref={scrollContainerRef}
         onScroll={handleContainerScroll}
-        onTouchStart={() => {
-          isUserDraggingScroll.current = true;
-        }}
-        onTouchEnd={() => {
-          isUserDraggingScroll.current = false;
-        }}
-        onMouseDown={() => {
-          isUserDraggingScroll.current = true;
-        }}
-        onMouseUp={() => {
-          isUserDraggingScroll.current = false;
-        }}
+        onTouchStart={() => { isUserDraggingScroll.current = true; }}
+        onTouchEnd={() => { isUserDraggingScroll.current = false; }}
+        onMouseDown={() => { isUserDraggingScroll.current = true; }}
+        onMouseUp={() => { isUserDraggingScroll.current = false; }}
         onFocusCapture={handleInputFocus}
         className={`fixed [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
           isScrollable
