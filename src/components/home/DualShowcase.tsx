@@ -117,7 +117,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     }
   }, []);
 
-  // Transición cinemática por rueda de ratón en PC (soporta ambas direcciones para máxima intuición)
+  // Transición cinemática por rueda de ratón en PC
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
       if (isContactOpen || isLoginOpen) return;
@@ -127,19 +127,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       const container = portfoliosContainerRef.current;
 
       if (currentView === 'hero') {
+        // En portada: rueda hacia abajo avanza a portafolios
         if (e.deltaY > 0) {
           changeView('portfolios');
         }
       } else if (currentView === 'portfolios') {
-        // 1. Rueda hacia arriba en el tope de portafolios regresa a la portada
+        // En portafolios: rueda hacia arriba en el tope regresa a la portada
         if (e.deltaY < -10) {
-          if (!container || container.scrollTop <= 10) {
-            changeView('hero');
-          }
-        }
-        // 2. Rueda hacia abajo cuando ya se llegó al final de portafolios regresa a la portada (ciclo continuo)
-        else if (e.deltaY > 10) {
-          if (!container || container.scrollHeight - container.scrollTop - container.clientHeight <= 15) {
+          if (!container || container.scrollTop <= 5) {
             changeView('hero');
           }
         }
@@ -150,7 +145,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     return () => window.removeEventListener('wheel', handleWheel);
   }, [currentView, changeView, isContactOpen, isLoginOpen]);
 
-  // Transición cinemática por gestos táctiles en móvil (detección reactiva en touchmove y touchend)
+  // Transición cinemática por gestos táctiles en móvil (swipe hacia abajo regresa al título sin activar pull-to-refresh)
   useEffect(() => {
     let touchStartY = 0;
     let touchStartX = 0;
@@ -183,18 +178,16 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           hasTriggered = true;
           changeView('portfolios');
         }
-        // Swipe hacia abajo en portada: diffY < 0 -> no hace nada para permitir pull-to-refresh nativo
+        // En portada si diffY < 0 (hacia abajo), no interceptar para que funcione el pull-to-refresh nativo
       } else if (currentView === 'portfolios') {
-        // En portafolios: swipe hacia abajo (diffY < -30) estando en el tope regresa al título
-        if (diffY < -30) {
-          if (!container || container.scrollTop <= 10) {
-            hasTriggered = true;
-            changeView('hero');
-          }
-        }
-        // En portafolios: swipe hacia arriba (diffY > 35) al final del contenedor regresa al título (ciclo continuo)
-        else if (diffY > 35) {
-          if (!container || container.scrollHeight - container.scrollTop - container.clientHeight <= 15) {
+        // En portafolios: swipe hacia abajo (diffY < -20) para regresar al título
+        if (diffY < -20) {
+          const isAtTop = !container || container.scrollTop <= 5;
+          if (isAtTop) {
+            // Cancelar el pull-to-refresh del navegador para que no interfiera con el regreso al título
+            if (e.cancelable) {
+              e.preventDefault();
+            }
             hasTriggered = true;
             changeView('hero');
           }
@@ -211,7 +204,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
       const diffY = touchStartY - touchEndY;
       const diffX = touchStartX - touchEndX;
 
-      if (Math.abs(diffY) < Math.abs(diffX) * 1.1 || Math.abs(diffY) < 25) return;
+      if (Math.abs(diffY) < Math.abs(diffX) * 1.1) return;
 
       const container = portfoliosContainerRef.current;
 
@@ -220,12 +213,8 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
           changeView('portfolios');
         }
       } else if (currentView === 'portfolios') {
-        if (diffY < -25) {
-          if (!container || container.scrollTop <= 10) {
-            changeView('hero');
-          }
-        } else if (diffY > 30) {
-          if (!container || container.scrollHeight - container.scrollTop - container.clientHeight <= 15) {
+        if (diffY < -20) {
+          if (!container || container.scrollTop <= 5) {
             changeView('hero');
           }
         }
@@ -233,7 +222,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     };
 
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleTouchEnd, { passive: true });
     window.addEventListener('touchcancel', handleTouchEnd, { passive: true });
 
@@ -373,7 +362,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 25 }}
               transition={{ duration: MOTION_DURATIONS.deliberate, ease: MOTION_EASINGS.decelerate }}
-              className="w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-4 sm:pb-6 pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-2 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-4 sm:pb-6 pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-2 overflow-y-auto overscroll-y-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
