@@ -80,6 +80,7 @@ function getCreatorBadge(slug: string, role: string) {
 
 export default function DualShowcase({ data }: DualShowcaseProps) {
   const [currentView, setCurrentView] = useState<'hero' | 'portfolios'>('hero');
+  const [navigationDirection, setNavigationDirection] = useState<'forward' | 'backward'>('forward');
   const [isContactOpen, setIsContactOpen] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [loginRedirect, setLoginRedirect] = useState('');
@@ -93,13 +94,14 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
     (nextView: 'hero' | 'portfolios') => {
       if (isTransitioningRef.current || currentView === nextView) return;
       isTransitioningRef.current = true;
+      setNavigationDirection(nextView === 'portfolios' ? 'forward' : 'backward');
       setCurrentView(nextView);
       if (nextView === 'portfolios' && portfoliosContainerRef.current) {
         portfoliosContainerRef.current.scrollTop = 0;
       }
       setTimeout(() => {
         isTransitioningRef.current = false;
-      }, 350);
+      }, 500);
     },
     [currentView]
   );
@@ -327,131 +329,161 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
 
       {/* Escenario de Contenido Principal con Transiciones Cinemáticas por Estado */}
       <div className="relative z-10 flex-1 w-full h-full flex items-center justify-center overflow-hidden">
-        {/* Vista 1: Portada Cinemática con Título Cinético (Persistente para preservar estado de animación) */}
-        <section
-          key="hero-view"
-          aria-hidden={currentView !== 'hero'}
-          inert={currentView !== 'hero' ? true : undefined}
-          className={`absolute inset-0 w-full h-full flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.2,0,0,1)] will-change-transform ${
-            currentView === 'hero'
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 -translate-y-6 pointer-events-none'
-          }`}
-        >
-          <KineticTitle text={i18n.showcase.title} />
+        <AnimatePresence mode="wait" custom={navigationDirection}>
+          {currentView === 'hero' ? (
+            /* Vista 1: Portada Cinemática con Título Cinético */
+            <motion.section
+              key="hero-view"
+              custom={navigationDirection}
+              initial={{
+                opacity: 0,
+                y: navigationDirection === 'backward' ? -25 : 20,
+              }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{
+                opacity: 0,
+                y: -25,
+              }}
+              transition={{
+                duration: MOTION_DURATIONS.normal,
+                ease: MOTION_EASINGS.decelerate,
+              }}
+              className="w-full h-full flex flex-col items-center justify-center text-center px-3 sm:px-6 max-w-7xl mx-auto select-none relative"
+            >
+              <KineticTitle text={i18n.showcase.title} />
 
-          {/* Botón de acceso a portafolios */}
-          <button
-            type="button"
-            onClick={() => changeView('portfolios')}
-            tabIndex={currentView === 'hero' ? 0 : -1}
-            className="group absolute bottom-6 sm:bottom-8 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-(--size-touch-target) sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1.5 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
-            aria-label={i18n.showcase.goToPortfolios}
-          >
-            <span>{i18n.showcase.goToPortfolios}</span>
-            <div className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5 animate-bounce-indicator group-hover:translate-y-1 group-hover:animate-none transition-transform duration-150">
-              <ChevronDownIcon
-                size={20}
-                className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 [@media(max-height:540px)]:w-3.5 [@media(max-height:540px)]:h-3.5"
-              />
-            </div>
-          </button>
-        </section>
+              {/* Botón de acceso a portafolios */}
+              <button
+                type="button"
+                onClick={() => changeView('portfolios')}
+                className="group absolute bottom-6 sm:bottom-8 md:bottom-12 [@media(max-height:540px)]:bottom-1.5 left-1/2 -translate-x-1/2 min-h-(--size-touch-target) sm:min-h-[50px] md:min-h-[64px] [@media(max-height:540px)]:min-h-[34px] px-4 sm:px-7 py-1.5 sm:py-2 [@media(max-height:540px)]:py-0.5 bg-transparent text-xs sm:text-sm md:text-base [@media(max-height:540px)]:text-[11px] font-bold tracking-wide text-[var(--color-text-primary)] hover:opacity-90 transition-opacity duration-150 flex flex-col items-center justify-center gap-0.5 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-xl active:scale-[0.98] pb-[max(0.25rem,env(safe-area-inset-bottom))]"
+                aria-label={i18n.showcase.goToPortfolios}
+              >
+                <span>{i18n.showcase.goToPortfolios}</span>
+                <div className="text-[var(--color-brand-accent)] flex items-center justify-center -mt-0.5 animate-bounce-indicator group-hover:translate-y-1 group-hover:animate-none transition-transform duration-150">
+                  <ChevronDownIcon
+                    size={20}
+                    className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 [@media(max-height:540px)]:w-3.5 [@media(max-height:540px)]:h-3.5"
+                  />
+                </div>
+              </button>
+            </motion.section>
+          ) : (
+            /* Vista 2: Portafolios Gateway */
+            <motion.section
+              key="portfolios-view"
+              ref={portfoliosContainerRef}
+              custom={navigationDirection}
+              initial={{
+                opacity: 0,
+                y: 30,
+              }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{
+                opacity: 0,
+                y: navigationDirection === 'backward' ? 30 : -25,
+              }}
+              transition={{
+                duration: MOTION_DURATIONS.slow,
+                ease: MOTION_EASINGS.decelerate,
+              }}
+              className="w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-4 sm:pb-6 pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-2 overflow-y-auto overscroll-y-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
+                  {creators.map((creator, idx) => {
+                    const badge = getCreatorBadge(creator.slug, creator.role);
 
-        {/* Vista 2: Portafolios Gateway (Persistente para navegación instantánea) */}
-        <section
-          key="portfolios-view"
-          ref={portfoliosContainerRef}
-          aria-hidden={currentView !== 'portfolios'}
-          inert={currentView !== 'portfolios' ? true : undefined}
-          className={`absolute inset-0 w-full h-full flex flex-col justify-between max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 sm:pt-20 md:pt-24 pb-4 sm:pb-6 pb-[max(1.25rem,calc(env(safe-area-inset-bottom)+0.5rem))] [@media(max-height:540px)]:pt-12 [@media(max-height:540px)]:pb-2 overflow-y-auto overscroll-y-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.2,0,0,1)] will-change-transform ${
-            currentView === 'portfolios'
-              ? 'opacity-100 translate-y-0 pointer-events-auto'
-              : 'opacity-0 translate-y-6 pointer-events-none'
-          }`}
-        >
-          <div className="flex-1 flex flex-col justify-center py-2 sm:py-0">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8 w-full max-w-4xl mx-auto">
-              {creators.map((creator) => {
-                const badge = getCreatorBadge(creator.slug, creator.role);
-
-                return (
-                  <a
-                    key={creator.id}
-                    href={`/${creator.slug}`}
-                    tabIndex={currentView === 'portfolios' ? 0 : -1}
-                    className={`group relative flex flex-col justify-between p-4.5 sm:p-6 md:p-8 [@media(max-height:540px)]:p-3.5 rounded-[var(--radius-2xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-md hover:shadow-xl ${badge.hoverShadow} ${badge.hoverBorder} transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
-                  >
-                    {/* Contenido Superior de la Tarjeta */}
-                    <div className="relative z-10 space-y-2.5 sm:space-y-4 [@media(max-height:540px)]:space-y-1.5">
-                      {/* Cabecera con Icono SVG vectorial con color y Slug */}
-                      <div className="flex items-center justify-between">
-                        <div
-                          className={`w-9 h-9 sm:w-12 sm:h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}
-                        >
-                          {badge.icon}
-                        </div>
-
-                        <div
-                          className={`flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)] text-[11px] sm:text-xs font-mono font-semibold text-[var(--color-text-secondary)] shadow-xs ${badge.hoverText} transition-colors duration-150`}
-                        >
-                          <span className="opacity-50">/</span>
-                          <span>{creator.slug}</span>
-                        </div>
-                      </div>
-
-                      {/* Nombre y Especialidad */}
-                      <div className="space-y-0.5 sm:space-y-1 pt-0.5">
-                        <h2
-                          className={`text-lg sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}
-                        >
-                          {creator.name}
-                        </h2>
-                        <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
-                          {creator.role}
-                        </p>
-                      </div>
-
-                      {/* Etiquetas de tecnologías y habilidades */}
-                      {creator.skills && creator.skills.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
-                          {creator.skills.slice(0, 3).map((skill) => (
-                            <span
-                              key={skill}
-                              className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-[var(--radius-md)] text-[11px] sm:text-xs font-semibold bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] shadow-xs"
+                    return (
+                      <motion.a
+                        key={creator.id}
+                        href={`/${creator.slug}`}
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: MOTION_DURATIONS.slow,
+                          delay: idx * 0.1 + 0.05,
+                          ease: MOTION_EASINGS.decelerate,
+                        }}
+                        className={`group relative flex flex-col justify-between p-4.5 sm:p-6 md:p-8 [@media(max-height:540px)]:p-3.5 rounded-[var(--radius-2xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-md hover:shadow-xl ${badge.hoverShadow} ${badge.hoverBorder} transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-1.5 overflow-hidden cursor-pointer block`}
+                      >
+                        {/* Contenido Superior de la Tarjeta */}
+                        <div className="relative z-10 space-y-2.5 sm:space-y-4 [@media(max-height:540px)]:space-y-1.5">
+                          {/* Cabecera con Icono SVG vectorial con color y Slug */}
+                          <div className="flex items-center justify-between">
+                            <div
+                              className={`w-9 h-9 sm:w-12 sm:h-12 rounded-[var(--radius-xl)] border flex items-center justify-center group-hover:scale-105 transition-transform duration-150 ${badge.containerClass}`}
                             >
-                              {skill}
-                            </span>
-                          ))}
+                              {badge.icon}
+                            </div>
+
+                            <div
+                              className={`flex items-center gap-1 px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-full bg-[var(--color-bg-subtle)] border border-[var(--color-border-default)] text-[11px] sm:text-xs font-mono font-semibold text-[var(--color-text-secondary)] shadow-xs ${badge.hoverText} transition-colors duration-150`}
+                            >
+                              <span className="opacity-50">/</span>
+                              <span>{creator.slug}</span>
+                            </div>
+                          </div>
+
+                          {/* Nombre y Especialidad */}
+                          <div className="space-y-0.5 sm:space-y-1 pt-0.5">
+                            <h2
+                              className={`text-lg sm:text-2xl font-bold tracking-tight text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}
+                            >
+                              {creator.name}
+                            </h2>
+                            <p className="text-xs sm:text-sm font-medium text-[var(--color-text-secondary)] leading-relaxed">
+                              {creator.role}
+                            </p>
+                          </div>
+
+                          {/* Etiquetas de tecnologías y habilidades */}
+                          {creator.skills && creator.skills.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5 sm:gap-2 pt-1">
+                              {creator.skills.slice(0, 3).map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="px-2.5 py-0.5 sm:px-3 sm:py-1 rounded-[var(--radius-md)] text-[11px] sm:text-xs font-semibold bg-[var(--color-bg-subtle)] text-[var(--color-text-secondary)] border border-[var(--color-border-subtle)] shadow-xs"
+                                >
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
 
-                    {/* Zócalo de Acción Integrado */}
-                    <div className="relative z-10 py-2.5 sm:py-3.5 md:py-4 px-4.5 sm:px-7 md:px-8 -mx-4.5 -mb-4.5 sm:-mx-7 sm:-mb-7 md:-mx-8 md:-mb-8 mt-4 sm:mt-6 [@media(max-height:540px)]:mt-2.5 bg-[var(--color-bg-surface-elevated)] border-t border-[var(--color-border-subtle)] flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
-                      <span
-                        className={`text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}
-                      >
-                        {i18n.showcase.explorePortfolio}
-                      </span>
+                        {/* Zócalo de Acción Integrado */}
+                        <div className="relative z-10 py-2.5 sm:py-3.5 md:py-4 px-4.5 sm:px-7 md:px-8 -mx-4.5 -mb-4.5 sm:-mx-7 sm:-mb-7 md:-mx-8 md:-mb-8 mt-4 sm:mt-6 [@media(max-height:540px)]:mt-2.5 bg-[var(--color-bg-surface-elevated)] border-t border-[var(--color-border-subtle)] flex items-center justify-end gap-3 rounded-b-[var(--radius-2xl)]">
+                          <span
+                            className={`text-xs font-semibold uppercase tracking-wider text-[var(--color-text-primary)] ${badge.hoverText} transition-colors duration-150`}
+                          >
+                            {i18n.showcase.explorePortfolio}
+                          </span>
 
-                      <div
-                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-[transform,background-color,border-color,color] duration-150`}
-                      >
-                        <ArrowRightIcon size={13} />
-                      </div>
-                    </div>
-                  </a>
-                );
-              })}
-            </div>
-          </div>
+                          <div
+                            className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] shadow-xs flex items-center justify-center text-[var(--color-text-primary)] ${badge.hoverButton} group-hover:translate-x-1 transition-[transform,background-color,border-color,color] duration-150`}
+                          >
+                            <ArrowRightIcon size={13} />
+                          </div>
+                        </div>
+                      </motion.a>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Pie de Página */}
-          <footer className="pt-2 pb-1 text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] opacity-70 shrink-0 select-none">
-            <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
-          </footer>
-        </section>
+              {/* Pie de Página */}
+              <motion.footer
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.7 }}
+                transition={{ duration: MOTION_DURATIONS.normal, delay: 0.25 }}
+                className="pt-2 pb-1 text-center text-[11px] sm:text-xs text-[var(--color-text-muted)] shrink-0 select-none"
+              >
+                <p>© {new Date().getFullYear()} Portafolio Builder • Crafted with Astro, React & Cloudflare</p>
+              </motion.footer>
+            </motion.section>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Modales Accesibles de Contacto e Inicio de Sesión cargados bajo demanda */}
