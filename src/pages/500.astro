@@ -1,0 +1,39 @@
+---
+/**
+ * @file 500.astro
+ * @description Página de error 500 Internal Server Error (Directiva 10).
+ */
+
+import SEOHead from '../components/ui/SEOHead.astro';
+import '../styles/global.css';
+import { i18n } from '../lib/i18n/es';
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <SEOHead
+      title="Error del servidor — 500"
+      description={i18n.errors.serverErrorDesc}
+    />
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-[var(--color-bg-base)] text-[var(--color-text-primary)] px-4">
+    <div class="text-center max-w-md p-8 rounded-[var(--radius-xl)] bg-[var(--color-bg-surface)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-modal)]">
+      <span class="text-5xl font-extrabold text-[var(--color-status-error)] block mb-4">500</span>
+      <h1 class="text-2xl font-bold tracking-tight mb-2">{i18n.errors.serverError}</h1>
+      <p class="text-sm text-[var(--color-text-secondary)] mb-6 leading-relaxed">
+        {i18n.errors.serverErrorDesc}
+      </p>
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+        <a
+          href="/"
+          class="w-full sm:w-auto min-h-(--size-touch-target) inline-flex items-center justify-center px-6 py-2.5 rounded-[var(--radius-md)] bg-[var(--color-brand-primary)] text-[var(--color-brand-on-primary)] text-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          {i18n.common.back} al inicio
+        </a>
+      </div>
+    </div>
+  </body>
+</html>

@@ -50,7 +50,7 @@ export default function LoginModal({
   const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email.trim() || !password) {
-      setErrorMessage('Por favor completa todos los campos.');
+      setErrorMessage(i18n.auth.fillAllFields);
       setStatus('error');
       return;
     }
@@ -78,7 +78,7 @@ export default function LoginModal({
       const target = redirectUrl || result.data?.redirectUrl || '/dashboard';
       window.location.href = target;
     } catch {
-      setErrorMessage('Error de conexión. Intenta nuevamente.');
+      setErrorMessage(i18n.auth.connectionError);
       setStatus('error');
     }
   };
@@ -102,7 +102,7 @@ export default function LoginModal({
             <span className="w-4 h-4 border-2 border-[var(--color-brand-on-primary)] border-t-transparent rounded-full animate-spin" />
           )}
           <span>
-            {status === 'loading' ? 'Verificando...' : i18n.auth.loginButton}
+            {status === 'loading' ? i18n.auth.verifying : i18n.auth.loginButton}
           </span>
         </button>
       }

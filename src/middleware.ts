@@ -88,6 +88,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 8. Control de Cache por zona de ruta (DIR-18)
   if (pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/api')) {
     response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  } else if (!response.headers.has('Cache-Control')) {
+    response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
   }
 
   return response;

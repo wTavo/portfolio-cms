@@ -5,7 +5,8 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 ---
 
 ## 1. Escala Tipográfica y Tokens de Diseño Centralizados
-- **PROHIBIDO** quemar tamaños de texto, colores, fuentes o pesos directamente en los componentes (ej. `text-[16px]`, `text-gray-500`, `font-bold` sueltos y repetidos).
+- **PROHIBIDO** quemar valores arbitrarios sin tokenizar (ej. `text-[16px]`, `p-[13px]`) o colores fijos de la paleta estándar de Tailwind (ej. `text-gray-500`, `bg-blue-600`) en lugar de los tokens semánticos del tema (`text-[var(--color-text-primary)]`, `bg-[var(--color-brand-accent)]`).
+- **PERMITIDO** el uso de las clases de escala tipográfica y peso estándar de Tailwind (`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-xl`, `font-medium`, `font-semibold`, `font-bold`), combinadas siempre con los tokens semánticos de color y fuentes del tema.
 - **OBLIGATORIO** definir y consumir una escala tipográfica y tokens de diseño centralizados en `src/styles/tokens/` a través de CSS custom properties y clases utilitarias del tema:
   - `--font-display`: Para títulos hero y de alto impacto visual.
   - `--font-heading`: Para títulos de secciones y tarjetas.
@@ -146,6 +147,7 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 ## 14. Modularidad de Archivos
 - **PROHIBIDO** crear o mantener archivos que superen **300–400 líneas de código**.
 - **OBLIGATORIO** descomponer módulos especializados ante crecimiento de líneas, manteniendo una única responsabilidad (SRP).
+- **EXCEPCIÓN:** Los catálogos y diccionarios centralizados de iconos vectoriales SVG (`Icons.tsx`, `Icon.astro`) y las definiciones de tipos generadas automáticamente por base de datos (`types.ts`) están exentos de este límite numérico para evitar fragmentación innecesaria del catálogo.
 
 ---
 
@@ -210,7 +212,9 @@ Este archivo define las directivas y estándares obligatorios de desarrollo que 
 ---
 
 ## 25. Linting y Formato
-- **OBLIGATORIO** ESLint estricto con TypeScript, Prettier y `astro check` sin advertencias.
+- **OBLIGATORIO** verificación automatizada de tipos y diagnóstico con `astro check` sin advertencias ni errores en el 100% de los archivos del proyecto.
+- **OBLIGATORIO** modo estricto en TypeScript (`strict: true`) y validación de tipos e interfaces antes de cada despliegue.
+- **RECOMENDADO** formateo y linting estandarizado con Prettier y ESLint para desarrollo local.
 
 ---
 

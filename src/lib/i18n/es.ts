@@ -33,6 +33,9 @@ export const i18n = {
     invalidCredentials: 'Las credenciales ingresadas son incorrectas',
     accountSuspended: 'Tu cuenta ha sido suspendida. Contacta al administrador',
     sessionExpired: 'Tu sesión ha expirado. Por favor inicia sesión nuevamente',
+    fillAllFields: 'Por favor completa todos los campos',
+    connectionError: 'Error de conexión. Intenta nuevamente',
+    verifying: 'Verificando...',
   },
   admin: {
     title: 'Panel de administración',
@@ -91,6 +94,10 @@ export const i18n = {
     successTitle: '¡Mensaje enviado!',
     successMessage: 'Gracias por ponerte en contacto. Te responderemos a la brevedad.',
     closeButton: 'Cerrar',
+    namePlaceholder: 'Tu nombre o empresa',
+    emailPlaceholder: 'nombre@ejemplo.com',
+    messagePlaceholder: '¿En qué podemos colaborar o ayudarte?',
+    privacyNotice: 'Al enviar este mensaje, aceptas el tratamiento de tus datos para responder a tu consulta.',
   },
   errors: {
     generic: 'Ocurrió un error inesperado. Intenta de nuevo',
@@ -100,5 +107,7 @@ export const i18n = {
     payloadTooLarge: 'El archivo o solicitud excede el tamaño máximo permitido',
     rateLimited: 'Demasiadas solicitudes. Por favor espera un momento',
     validationFailed: 'Por favor verifica los datos ingresados',
+    serverError: 'Error interno del servidor',
+    serverErrorDesc: 'Ocurrió un problema inesperado en el servidor. Por favor intenta más tarde.',
   },
 } as const;

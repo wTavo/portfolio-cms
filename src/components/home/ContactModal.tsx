@@ -141,7 +141,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 onChange={(e) => setName(e.target.value)}
                 disabled={status === 'sending'}
                 className="w-full min-h-(--size-input-height) px-3.5 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-base)] border border-[var(--color-border-default)] text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-brand-accent)] focus:ring-1 focus:ring-[var(--color-brand-accent)] transition-all"
-                placeholder="Tu nombre o empresa"
+                placeholder={i18n.contact.namePlaceholder}
               />
             </div>
 
@@ -163,7 +163,7 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={status === 'sending'}
                 className="w-full min-h-(--size-input-height) px-3.5 py-2 rounded-[var(--radius-md)] bg-[var(--color-bg-base)] border border-[var(--color-border-default)] text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-brand-accent)] focus:ring-1 focus:ring-[var(--color-brand-accent)] transition-all"
-                placeholder="nombre@ejemplo.com"
+                placeholder={i18n.contact.emailPlaceholder}
               />
             </div>
 
@@ -183,9 +183,13 @@ export default function ContactModal({ isOpen, onClose }: ContactModalProps) {
                 onChange={(e) => setMessage(e.target.value)}
                 disabled={status === 'sending'}
                 className="w-full px-3.5 py-2.5 rounded-[var(--radius-md)] bg-[var(--color-bg-base)] border border-[var(--color-border-default)] text-base sm:text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-brand-accent)] focus:ring-1 focus:ring-[var(--color-brand-accent)] transition-all resize-none"
-                placeholder="¿En qué podemos colaborar o ayudarte?"
+                placeholder={i18n.contact.messagePlaceholder}
               />
             </div>
+
+            <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed pt-1">
+              {i18n.contact.privacyNotice}
+            </p>
           </form>
         )}
       </div>
