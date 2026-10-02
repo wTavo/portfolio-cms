@@ -160,7 +160,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
   return (
     <div className="relative w-full h-full min-h-[100dvh] max-h-[100dvh] overflow-hidden selection:bg-[var(--color-brand-primary)] selection:text-[var(--color-brand-on-primary)]">
       {/* Fondo Topográfico Fijo de Curvas de Trayectoria y Relieve Profesional con ahorro de energía */}
-      <TopographicBackground isPaused={currentView !== 'hero' || isContactOpen || isLoginOpen} />
+      <TopographicBackground isPaused={isContactOpen || isLoginOpen} />
 
       {/* Barra de Navegación Superior Fija */}
       <header
