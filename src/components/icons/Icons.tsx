@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import type { IconName, IconProps } from './types';
+import type { IconProps } from './types';
 
 export interface BaseSvgProps extends React.SVGProps<SVGSVGElement> {
   size?: number | string;
@@ -608,35 +608,8 @@ export function MoonIcon({ size = 16, className = 'w-4 h-4', ariaLabel, ...props
   );
 }
 
-export function RefreshIcon({ size = 18, className = 'w-4 h-4', ariaLabel, ...props }: BaseSvgProps) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.25"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      width={size}
-      height={size}
-      className={className}
-      aria-hidden={ariaLabel ? undefined : 'true'}
-      aria-label={ariaLabel}
-      {...props}
-    >
-      <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-      <path d="M3 3v5h5" />
-      <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-      <path d="M21 21v-5h-5" />
-    </svg>
-  );
-}
-
 export function Icon({ name, ...props }: IconProps) {
   switch (name) {
-    case 'refresh':
-      return <RefreshIcon {...props} />;
     case 'brand-logo':
       return <BrandLogoIcon {...props} />;
     case 'rocket':

@@ -7,7 +7,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useReducedMotion } from 'motion/react';
-import { MOTION_DURATIONS, MOTION_EASINGS } from '../../lib/motion';
 import { i18n } from '../../lib/i18n/es';
 import { XIcon } from '../icons/Icons';
 import ModalDialog from './ModalDialog';

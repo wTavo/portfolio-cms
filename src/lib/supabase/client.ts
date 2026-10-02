@@ -3,7 +3,7 @@
  * @description Factory del cliente Supabase para entornos SSR con manejo seguro de cookies HttpOnly.
  */
 
-import { createServerClient, parseCookieHeader } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import type { AstroCookies } from 'astro';
 import type { Database } from './types';
 
