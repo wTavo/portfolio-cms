@@ -286,15 +286,15 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -10 }}
                   transition={{ duration: MOTION_DURATIONS.normal, ease: MOTION_EASINGS.decelerate }}
-                  className="group flex items-center gap-1 sm:gap-1.5 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1 -ml-1 select-none"
+                  className="group flex items-center gap-2.5 sm:gap-3 cursor-pointer text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-brand-accent)] rounded-[var(--radius-md)] p-1 -ml-1 select-none"
                   aria-label="Volver al inicio"
                 >
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)]/60 shadow-[var(--shadow-card)] flex items-center justify-center transition-[border-color,transform] duration-150 group-hover:scale-105 shrink-0">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-[var(--radius-md)] bg-[var(--color-bg-surface)] border border-[var(--color-border-default)] group-hover:border-[var(--color-brand-accent)]/60 shadow-[var(--shadow-card)] flex items-center justify-center transition-[border-color,transform] duration-150 group-hover:scale-105 shrink-0">
                     <BrandLogoIcon size={18} className="w-4.5 h-4.5 text-[var(--color-text-primary)]" />
                   </div>
 
                   <span className="text-sm sm:text-base md:text-lg font-extrabold tracking-tight text-[var(--color-text-primary)] leading-none select-none truncate">
-                    {i18n.showcase.headerTitle}
+                    {i18n.showcase.title}
                   </span>
                 </motion.button>
               )}

@@ -114,8 +114,8 @@ function KineticTitleComponent({
 
       for (let charIndex = 0; charIndex < word.length; charIndex++) {
         const char = word[charIndex];
-        // Opción 1: Únicamente la P inicial de la primera palabra (PORTAFOLIO) usa el monograma BrandLogo
-        const isBrandP = wordIndex === 0 && charIndex === 0 && char === 'P';
+        // La P inicial de PORTAFOLIO y la P inicial de PROFESIONAL usan el monograma BrandLogo
+        const isBrandP = charIndex === 0 && char === 'P';
         const glyph = isBrandP ? BRAND_P_GLYPH : (GLYPH_PATHS[char] || { d: '', subpaths: [], advanceWidth: 400 });
 
         letters.push({
