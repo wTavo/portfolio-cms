@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { GLYPH_PATHS } from '../../src/lib/typography/glyphPaths';
+import { GLYPH_PATHS, BRAND_P_GLYPH } from '../../src/lib/typography/glyphPaths';
 
 describe('glyphPaths - Diccionario Tipográfico Vectorial', () => {
   const targetChars = 'PORTAFOLIO PROFESIONAL'.split('');
@@ -42,5 +42,17 @@ describe('glyphPaths - Diccionario Tipográfico Vectorial', () => {
     expect(space).toBeDefined();
     expect(space.d).toBe('');
     expect(space.advanceWidth).toBeGreaterThan(100);
+  });
+
+  it('verifica la consistencia geométrica del glifo del monograma de marca BRAND_P_GLYPH', () => {
+    expect(BRAND_P_GLYPH).toBeDefined();
+    expect(BRAND_P_GLYPH.advanceWidth).toBe(740);
+    expect(BRAND_P_GLYPH.subpaths).toHaveLength(3);
+    expect(BRAND_P_GLYPH.pillarPath).toBeTruthy();
+    expect(BRAND_P_GLYPH.loopPath).toBeTruthy();
+    BRAND_P_GLYPH.subpaths.forEach((sub) => {
+      expect(sub.startsWith('M')).toBe(true);
+      expect(sub.endsWith('Z')).toBe(true);
+    });
   });
 });

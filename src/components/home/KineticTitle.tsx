@@ -3,43 +3,46 @@
  * @description Título Cinético: "Cierre de Circuito Vectorial y Encendido de Foco con Parpadeo Eléctrico".
  * Las siluetas se trazan iluminadas simulando cables/filamentos. Al conectarse y cerrar el circuito,
  * la corriente eléctrica fluye y el color interior se enciende con un parpadeo de foco antes de quedar fijo.
+ * Integra el monograma oficial de la marca (BrandLogoIcon) como «P» inicial de «PORTAFOLIO».
  */
 
 import { useState, useEffect, useMemo, memo } from 'react';
-import { motion } from 'motion/react';
-import { GLYPH_PATHS } from '../../lib/typography/glyphPaths';
+import { GLYPH_PATHS, BRAND_P_GLYPH } from '../../lib/typography/glyphPaths';
+import {
+  KineticWordSvg,
+  type LetterLayout,
+  type WordLayoutData,
+  type ThemeColorsPalette,
+} from './KineticWordSvg';
 
 interface KineticTitleProps {
   text?: string;
   className?: string;
 }
 
-interface LetterLayout {
-  char: string;
-  x: number;
-  d: string;
-  subpaths: string[];
-  advanceWidth: number;
-  globalIndex: number;
-  wordIndex: number;
-  charIndex: number;
-}
-
 /** Paleta visual adaptativa inmutable (Modo Oscuro / Modo Claro) sin recreación en cada render */
-const THEME_COLORS = {
+const THEME_COLORS: { dark: ThemeColorsPalette; light: ThemeColorsPalette } = {
   dark: {
     primary: '#fafafa',
     stroke: '#ffffff',
     glowColor: 'rgba(186, 230, 253, 0.85)',
     glowStroke: 'rgba(186, 230, 253, 0.65)',
+    brandAccent: '#38bdf8',
+    brandStroke: '#38bdf8',
+    brandGlowColor: 'rgba(56, 189, 248, 0.85)',
+    brandGlowStroke: 'rgba(56, 189, 248, 0.65)',
   },
   light: {
     primary: '#09090b',
     stroke: '#18181b',
     glowColor: 'rgba(37, 99, 235, 0.65)',
     glowStroke: 'rgba(59, 130, 246, 0.55)',
+    brandAccent: '#0284c7',
+    brandStroke: '#0284c7',
+    brandGlowColor: 'rgba(2, 132, 199, 0.65)',
+    brandGlowStroke: 'rgba(2, 132, 199, 0.55)',
   },
-} as const;
+};
 
 /** Variable en tiempo de ejecución para recordar que la animación introductoria ya se ejecutó y no repetirla al scrollear */
 let hasCompletedKineticIntro = false;
@@ -103,7 +106,7 @@ function KineticTitleComponent({
   // Calcular la disposición geométrica precisa de cada palabra y letra con índice global secuencial
   const { wordsLayout } = useMemo(() => {
     let globalCounter = 0;
-    const layouts = words.map((word, wordIndex) => {
+    const layouts: WordLayoutData[] = words.map((word, wordIndex) => {
       // Espaciado entre letras equilibrado
       const letterSpacing = wordIndex === 0 ? 34 : 56;
       let currentX = 0;
@@ -111,7 +114,9 @@ function KineticTitleComponent({
 
       for (let charIndex = 0; charIndex < word.length; charIndex++) {
         const char = word[charIndex];
-        const glyph = GLYPH_PATHS[char] || { d: '', subpaths: [], advanceWidth: 400 };
+        // Opción 1: Únicamente la P inicial de la primera palabra (PORTAFOLIO) usa el monograma BrandLogo
+        const isBrandP = wordIndex === 0 && charIndex === 0 && char === 'P';
+        const glyph = isBrandP ? BRAND_P_GLYPH : (GLYPH_PATHS[char] || { d: '', subpaths: [], advanceWidth: 400 });
 
         letters.push({
           char,
@@ -122,6 +127,7 @@ function KineticTitleComponent({
           globalIndex: globalCounter++,
           wordIndex,
           charIndex,
+          isBrandP,
         });
 
         currentX += glyph.advanceWidth + letterSpacing;
@@ -203,221 +209,19 @@ function KineticTitleComponent({
           isFloatingActive ? 'animate-float-subtle' : ''
         }`}
       >
-        {wordsLayout.map((wordLayout, wordIdx) => {
-          const isFirstLine = wordIdx === 0;
-          const containerClasses = isFirstLine
-            ? 'w-full max-w-5xl max-h-[min(15dvh,160px)] [@media(max-height:540px)]:max-h-[46px] h-auto object-contain'
-            : 'w-[90%] max-w-4xl max-h-[min(13dvh,140px)] [@media(max-height:540px)]:max-h-[38px] h-auto object-contain';
-
-            return (
-            <svg
-              key={`word-svg-${wordLayout.word}-${wordIdx}`}
-              viewBox={`0 75 ${wordLayout.totalWidth} 750`}
-              preserveAspectRatio="xMidYMid meet"
-              className={`overflow-visible select-none ${containerClasses}`}
-              aria-label={wordLayout.word}
-            >
-              {/* Filtro SVG optimizado de pase único en GPU en <defs> */}
-              <defs>
-                <filter id={`bulb-glow-${wordIdx}`} x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="8" />
-                </filter>
-              </defs>
-
-              {/* Tiempos coordinados de trazado y posterior iluminación suave */}
-              {(() => {
-                if (alreadyPlayed) {
-                  return (
-                    <>
-                      {/* 1. Capa de resplandor fija */}
-                      <g filter={`url(#bulb-glow-${wordIdx})`} className="pointer-events-none opacity-100">
-                        {wordLayout.letters.map((letter) => (
-                          <path
-                            key={`glow-letter-${wordIdx}-${letter.charIndex}`}
-                            d={letter.d}
-                            transform={`translate(${letter.x}, 0)`}
-                            fillRule="nonzero"
-                            fill={colors.glowColor}
-                          />
-                        ))}
-                      </g>
-
-                      {/* 2. Silueta del molde con trazos estáticos */}
-                      {wordLayout.letters.map((letter) => (
-                        <g
-                          key={`letter-mold-${wordIdx}-${letter.charIndex}-${letter.char}`}
-                          transform={`translate(${letter.x}, 0)`}
-                          className="overflow-visible"
-                        >
-                          {letter.subpaths.map((subD, subIdx) => (
-                            <g key={`mold-strokes-${subIdx}`}>
-                              <path
-                                d={subD}
-                                stroke={colors.glowStroke}
-                                strokeWidth={7}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                fill="transparent"
-                                opacity={0.45}
-                              />
-                              <path
-                                d={subD}
-                                stroke={colors.glowStroke}
-                                strokeWidth={4}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                fill="transparent"
-                                opacity={0.75}
-                              />
-                              <path
-                                d={subD}
-                                stroke={colors.stroke}
-                                strokeWidth={2}
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                fill="transparent"
-                                opacity={1}
-                              />
-                            </g>
-                          ))}
-                        </g>
-                      ))}
-
-                      {/* 3. Capa de relleno sólido estática */}
-                      <g opacity={1}>
-                        {wordLayout.letters.map((letter) => (
-                          <path
-                            key={`fill-letter-${wordIdx}-${letter.charIndex}`}
-                            d={letter.d}
-                            transform={`translate(${letter.x}, 0)`}
-                            fillRule="nonzero"
-                            fill={colors.primary}
-                            stroke={colors.primary}
-                            strokeWidth={1}
-                          />
-                        ))}
-                      </g>
-                    </>
-                  );
-                }
-
-                const strokeDelay = initialDelay;
-                const fillDelay = fillStartDelay;
-                const activeStrokeDuration = strokeDuration;
-                const activeFillDuration = fillDuration;
-
-                return (
-                  <>
-                    {/* 1. CAPA DE RESPLANDOR AGRUPADA POR PALABRA (1 único pase de filtro GPU por palabra en vez de 7) */}
-                    <motion.g
-                      filter={`url(#bulb-glow-${wordIdx})`}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{
-                        duration: activeFillDuration,
-                        delay: fillDelay,
-                        ease: [0.2, 0, 0, 1],
-                      }}
-                      className="pointer-events-none"
-                    >
-                      {wordLayout.letters.map((letter) => (
-                        <path
-                          key={`glow-letter-${wordIdx}-${letter.charIndex}`}
-                          d={letter.d}
-                          transform={`translate(${letter.x}, 0)`}
-                          fillRule="nonzero"
-                          fill={colors.glowColor}
-                        />
-                      ))}
-                    </motion.g>
-
-                    {/* 2. SILUETA DEL MOLDE (Trazado simultáneo de cables y filamentos con técnica Multi-Stroke a 120 FPS) */}
-                    {wordLayout.letters.map((letter) => (
-                      <g
-                        key={`letter-mold-${wordIdx}-${letter.charIndex}-${letter.char}`}
-                        transform={`translate(${letter.x}, 0)`}
-                        className="overflow-visible"
-                      >
-                        {letter.subpaths.map((subD, subIdx) => (
-                          <g key={`mold-strokes-${subIdx}`}>
-                            {/* Resplandor exterior difuso */}
-                            <motion.path
-                              d={subD}
-                              initial={{ pathLength: 0, opacity: 0 }}
-                              animate={{ pathLength: 1, opacity: 0.45 }}
-                              transition={{
-                                pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
-                                opacity: { duration: 0.05, delay: strokeDelay },
-                              }}
-                              stroke={colors.glowStroke}
-                              strokeWidth={7}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              fill="transparent"
-                            />
-                            {/* Resplandor medio */}
-                            <motion.path
-                              d={subD}
-                              initial={{ pathLength: 0, opacity: 0 }}
-                              animate={{ pathLength: 1, opacity: 0.75 }}
-                              transition={{
-                                pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
-                                opacity: { duration: 0.05, delay: strokeDelay },
-                              }}
-                              stroke={colors.glowStroke}
-                              strokeWidth={4}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              fill="transparent"
-                            />
-                            {/* Núcleo del filamento nítido */}
-                            <motion.path
-                              d={subD}
-                              initial={{ pathLength: 0, opacity: 0 }}
-                              animate={{ pathLength: 1, opacity: 1 }}
-                              transition={{
-                                pathLength: { duration: activeStrokeDuration, delay: strokeDelay, ease: 'linear' },
-                                opacity: { duration: 0.05, delay: strokeDelay },
-                              }}
-                              stroke={colors.stroke}
-                              strokeWidth={2}
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              fill="transparent"
-                            />
-                          </g>
-                        ))}
-                      </g>
-                    ))}
-
-                    {/* 3. CAPA DE RELLENO SÓLIDO AGRUPADA POR PALABRA (Iluminación simultánea suave sin carga múltiple de observers) */}
-                    <motion.g
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{
-                        duration: activeFillDuration,
-                        delay: fillDelay,
-                        ease: [0.2, 0, 0, 1],
-                      }}
-                    >
-                      {wordLayout.letters.map((letter) => (
-                        <path
-                          key={`fill-letter-${wordIdx}-${letter.charIndex}`}
-                          d={letter.d}
-                          transform={`translate(${letter.x}, 0)`}
-                          fillRule="nonzero"
-                          fill={colors.primary}
-                          stroke={colors.primary}
-                          strokeWidth={1}
-                        />
-                      ))}
-                    </motion.g>
-                  </>
-                );
-              })()}
-            </svg>
-          );
-        })}
+        {wordsLayout.map((wordLayout, wordIdx) => (
+          <KineticWordSvg
+            key={`kinetic-word-${wordLayout.word}-${wordIdx}`}
+            wordLayout={wordLayout}
+            wordIdx={wordIdx}
+            alreadyPlayed={alreadyPlayed}
+            colors={colors}
+            strokeDelay={initialDelay}
+            fillDelay={fillStartDelay}
+            strokeDuration={strokeDuration}
+            fillDuration={fillDuration}
+          />
+        ))}
       </div>
     </div>
   );

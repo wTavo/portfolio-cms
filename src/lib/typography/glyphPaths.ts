@@ -9,6 +9,31 @@ export interface GlyphData {
   advanceWidth: number;
 }
 
+/**
+ * Monograma oficial de la marca (`BrandLogoIcon` - "Dual Facet"):
+ * Adaptado con precisión matemática a la cuadrícula tipográfica estándar (cap-height 700: y=100 a y=800).
+ * Subpaths:
+ * - 0: Pilar izquierdo redondeado (Ingeniería de Software / Código)
+ * - 1: Bucle superior exterior (Diseño Creativo)
+ * - 2: Núcleo de apertura circular interior (Corte negativo / Apertura focal)
+ */
+export interface BrandLogoGlyphData extends GlyphData {
+  pillarPath: string;
+  loopPath: string;
+}
+
+export const BRAND_P_GLYPH: BrandLogoGlyphData = {
+  d: "M50 187.5A87.5 87.5 0 0 1 225 187.5L225 712.5A87.5 87.5 0 0 1 50 712.5Z M320.5 100L479.5 100A238.6 238.6 0 0 1 479.5 577.3L320.5 577.3A47.7 47.7 0 0 1 272.7 529.6L272.7 147.7A47.7 47.7 0 0 1 320.5 100Z M392.1 338.6A103.4 103.4 0 1 0 598.9 338.6A103.4 103.4 0 1 0 392.1 338.6Z",
+  subpaths: [
+    "M50 187.5A87.5 87.5 0 0 1 225 187.5L225 712.5A87.5 87.5 0 0 1 50 712.5Z",
+    "M320.5 100L479.5 100A238.6 238.6 0 0 1 479.5 577.3L320.5 577.3A47.7 47.7 0 0 1 272.7 529.6L272.7 147.7A47.7 47.7 0 0 1 320.5 100Z",
+    "M392.1 338.6A103.4 103.4 0 1 0 598.9 338.6A103.4 103.4 0 1 0 392.1 338.6Z"
+  ],
+  pillarPath: "M50 187.5A87.5 87.5 0 0 1 225 187.5L225 712.5A87.5 87.5 0 0 1 50 712.5Z",
+  loopPath: "M320.5 100L479.5 100A238.6 238.6 0 0 1 479.5 577.3L320.5 577.3A47.7 47.7 0 0 1 272.7 529.6L272.7 147.7A47.7 47.7 0 0 1 320.5 100Z M392.1 338.6A103.4 103.4 0 1 0 598.9 338.6A103.4 103.4 0 1 0 392.1 338.6Z",
+  advanceWidth: 740,
+};
+
 export const GLYPH_PATHS: Record<string, GlyphData> = {
   "0": {
     "d": "M283.7 812.2L283.7 812.2Q33.7 812.2 33.7 461.1L33.7 461.1Q33.7 279.0 101.3 183.5Q168.9 88.1 297.4 88.1L297.4 88.1Q541.5 88.1 541.5 445.0L541.5 445.0Q541.5 622.8 474.9 717.5Q408.2 812.2 283.7 812.2ZM290.5 205.8L290.5 205.8Q190.4 205.8 190.4 457.2L190.4 457.2Q190.4 694.0 288.6 694.0L288.6 694.0Q384.3 694.0 384.3 449.9L384.3 449.9Q384.3 205.8 290.5 205.8Z",
