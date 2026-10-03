@@ -294,7 +294,7 @@ export default function DualShowcase({ data }: DualShowcaseProps) {
                   </div>
 
                   <span className="text-sm sm:text-base md:text-lg font-extrabold tracking-tight text-[var(--color-text-primary)] leading-none select-none truncate">
-                    {i18n.showcase.title}
+                    {i18n.showcase.headerTitle}
                   </span>
                 </motion.button>
               )}
